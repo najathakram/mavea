@@ -1,9 +1,13 @@
 # Sri Lanka — the 25 districts (checkout address data)
 
-WooCommerce core ships Sri Lanka's **9 provinces**, but couriers quote, route and price by
-**district**. This is the list `slk-checkout` installs via the `woocommerce_states` filter
-(plan §5). Keys must eventually match Koombiyo's district names exactly — confirm against their
-merchant portal before the first live dispatch.
+**Measured on WooCommerce 11.0.1: `WC()->countries->get_states('LK')` returns ZERO entries.**
+Core ships no provinces *or* districts for Sri Lanka, so the address field renders as a free-text
+box — which is exactly how courier addresses get mistyped. The list below is entirely ours to
+install via the `woocommerce_states` filter in `slk-checkout` (plan §5); nothing is overridden,
+so there is no conflict risk with a future core update adding provinces.
+
+Keys must eventually match Koombiyo's district names exactly — confirm against their merchant
+portal before the first live dispatch.
 
 | Province | Districts |
 |---|---|

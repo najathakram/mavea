@@ -37,7 +37,7 @@ else
     --skip-email
   printf '%s\n' "$ADMIN_PASS" > .admin-password
   chmod 600 .admin-password 2>/dev/null || true
-  echo "    admin password written to sister-lk/local/.admin-password (gitignored)"
+  echo "    admin password written to local/.admin-password (gitignored)"
 fi
 
 echo "==> permalinks (WooCommerce needs pretty permalinks)"
