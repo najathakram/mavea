@@ -1085,9 +1085,60 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .woocommerce-products-header {
   padding-block: var(--slk-space-6) var(--slk-space-2);
 }
+/* Measured on /shop/: Blocksy moves the title into its hero band, leaving this
+   header EMPTY — 72px of padded nothing between title and grid. Remove it when
+   it has no content rather than unconditionally, so a future subtitle still
+   renders. */
+.woocommerce-products-header:empty,
+.woocommerce-products-header:not(:has(*)) {
+  display: none;
+  padding: 0;
+}
+/* The archive's .ct-container adds 60px on top of the (now compact) hero band.
+   The design goes title → controls → grid with one rhythm step between each. */
+.woocommerce.archive .site-main > .ct-container {
+  padding-top: var(--slk-space-3);
+}
 .woocommerce-products-header__title.page-title {
   font-size: 27px;
   margin: 0;
+}
+
+/* Blocksy renders its OWN full-bleed hero band (div.hero-section >
+   header.entry-header > h1.page-title) on product archives instead of
+   WooCommerce's products-header — measured live: a 250px-tall centred band
+   putting 317px of dead space between the pill and the grid. The design has
+   no band at all: the archive leads with a compact left-aligned title inside
+   the 1140 column, straight into filters + grid. Restyle rather than hide so
+   the page keeps its h1. */
+.woocommerce.archive .hero-section {
+  padding: 0;
+  min-height: 0;
+}
+.woocommerce.archive .hero-section .entry-header {
+  max-width: var(--slk-container);
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--slk-space-8) var(--slk-gutter) 0;
+  text-align: left;
+  min-height: 0;   /* Blocksy hero type-2 sets min-height:250px HERE, on the
+                      inner header — the section itself is innocent. Measured. */
+}
+.woocommerce.archive .hero-section .page-title {
+  font-family: var(--slk-font-display);
+  font-size: 27px;
+  font-weight: 300;
+  margin: 0;
+}
+
+/* Count left, sort pill right, one baseline — Blocksy's .woo-listing-top
+   already wraps exactly these two. */
+.slk-shop-results .woo-listing-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--slk-space-3);
+  margin-bottom: var(--slk-space-4);
 }
 .woocommerce .woocommerce-result-count {
   margin: 0;
