@@ -1,0 +1,241 @@
+[
+  {
+    "section": "gaps",
+    "file": "01-gaps.html",
+    "lines": "33-251",
+    "bytes": 21432,
+    "screens": [
+      {
+        "label": "Checkout errors",
+        "line": 39
+      },
+      {
+        "label": "Payment variants",
+        "line": 89
+      },
+      {
+        "label": "Wordmark system",
+        "line": 138
+      },
+      {
+        "label": "Photography spec",
+        "line": 177
+      },
+      {
+        "label": "Share card",
+        "line": 210
+      }
+    ]
+  },
+  {
+    "section": "moments",
+    "file": "02-moments.html",
+    "lines": "252-556",
+    "bytes": 31095,
+    "screens": [
+      {
+        "label": "Filter sheet",
+        "line": 258
+      },
+      {
+        "label": "Added to bag",
+        "line": 305
+      },
+      {
+        "label": "Image zoom",
+        "line": 342
+      },
+      {
+        "label": "Sold out",
+        "line": 365
+      },
+      {
+        "label": "Addresses",
+        "line": 417
+      },
+      {
+        "label": "Exchange request",
+        "line": 470
+      },
+      {
+        "label": "Connection and language",
+        "line": 520
+      }
+    ]
+  },
+  {
+    "section": "components",
+    "file": "03-components.html",
+    "lines": "557-738",
+    "bytes": 18438,
+    "screens": []
+  },
+  {
+    "section": "pages",
+    "file": "04-pages.html",
+    "lines": "739-1087",
+    "bytes": 39338,
+    "screens": [
+      {
+        "label": "Mobile nav",
+        "line": 745
+      },
+      {
+        "label": "Hijabs browse",
+        "line": 780
+      },
+      {
+        "label": "Search",
+        "line": 823
+      },
+      {
+        "label": "Empty cart",
+        "line": 854
+      },
+      {
+        "label": "Track order",
+        "line": 885
+      },
+      {
+        "label": "Exchange policy",
+        "line": 935
+      },
+      {
+        "label": "FAQ",
+        "line": 977
+      },
+      {
+        "label": "Contact",
+        "line": 1016
+      },
+      {
+        "label": "Not found",
+        "line": 1061
+      }
+    ]
+  },
+  {
+    "section": "account",
+    "file": "05-account.html",
+    "lines": "1088-1432",
+    "bytes": 31625,
+    "screens": [
+      {
+        "label": "Sign in",
+        "line": 1094
+      },
+      {
+        "label": "Account",
+        "line": 1132
+      },
+      {
+        "label": "Orders",
+        "line": 1201
+      },
+      {
+        "label": "Order tracking",
+        "line": 1239
+      },
+      {
+        "label": "Desktop account",
+        "line": 1333
+      }
+    ]
+  },
+  {
+    "section": "mobile",
+    "file": "06-mobile.html",
+    "lines": "1433-1988",
+    "bytes": 59246,
+    "screens": [
+      {
+        "label": "Home",
+        "line": 1439
+      },
+      {
+        "label": "Shop",
+        "line": 1523
+      },
+      {
+        "label": "Product",
+        "line": 1574
+      },
+      {
+        "label": "Cart",
+        "line": 1649
+      },
+      {
+        "label": "Checkout",
+        "line": 1709
+      },
+      {
+        "label": "Order received",
+        "line": 1806
+      },
+      {
+        "label": "Size guide",
+        "line": 1845
+      },
+      {
+        "label": "Delivery and COD",
+        "line": 1891
+      },
+      {
+        "label": "Our story",
+        "line": 1948
+      }
+    ]
+  },
+  {
+    "section": "desktop",
+    "file": "07-desktop.html",
+    "lines": "1989-2462",
+    "bytes": 50477,
+    "screens": [
+      {
+        "label": "Desktop home",
+        "line": 1995
+      },
+      {
+        "label": "Desktop shop",
+        "line": 2112
+      },
+      {
+        "label": "Desktop product",
+        "line": 2212
+      },
+      {
+        "label": "Desktop cart",
+        "line": 2285
+      },
+      {
+        "label": "Desktop checkout",
+        "line": 2351
+      }
+    ]
+  },
+  {
+    "section": "desktop2",
+    "file": "08-desktop2.html",
+    "lines": "2463-2627",
+    "bytes": 19754,
+    "screens": [
+      {
+        "label": "Desktop order received",
+        "line": 2469
+      },
+      {
+        "label": "Desktop size guide",
+        "line": 2503
+      },
+      {
+        "label": "Desktop delivery and COD",
+        "line": 2544
+      },
+      {
+        "label": "Desktop our story",
+        "line": 2592
+      }
+    ]
+  }
+]

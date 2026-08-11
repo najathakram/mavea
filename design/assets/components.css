@@ -1,0 +1,250 @@
+/* SL Dress — component layer
+   Porcelain Glass. Depends on assets/design-tokens.css (load it first).
+   Paste both into local/themes/slk-child/style.css. Nothing outside this
+   file should be hand-styled; extend here, not in the template.
+*/
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+body {
+  background: var(--slk-color-ground);
+  color: var(--slk-color-ink);
+  font-family: var(--slk-font-ui);
+  font-size: var(--slk-text-base);
+  line-height: var(--slk-leading-body);
+}
+h1, h2, h3 {
+  font-family: var(--slk-font-display);
+  font-weight: 300;
+  line-height: var(--slk-leading-tight);
+  letter-spacing: -0.01em;
+}
+.slk-eyebrow {
+  font: 500 var(--slk-text-xs)/1 var(--slk-font-ui);
+  letter-spacing: var(--slk-track-label);
+  text-transform: uppercase;
+  color: var(--slk-color-muted);
+}
+.slk-muted { color: var(--slk-color-muted); }
+
+:focus-visible {
+  outline: 2px solid var(--slk-color-ink);
+  outline-offset: 2px;
+}
+
+/* ── Glass ────────────────────────────────────────────────────────────── */
+/* Over imagery */
+.slk-glass {
+  background: var(--slk-glass);
+  backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: var(--slk-radius-card);
+  box-shadow: var(--slk-shadow-float);
+}
+/* Over the ground — no blur needed, raise the fill */
+.slk-panel {
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: var(--slk-radius-card);
+}
+.slk-panel--lifted { box-shadow: var(--slk-shadow-lift); }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.slk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--slk-space-2);
+  min-height: var(--slk-touch);
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--slk-radius-pill);
+  font: 500 13px/1 var(--slk-font-ui);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--slk-motion-base) var(--slk-ease),
+              box-shadow var(--slk-motion-base) var(--slk-ease),
+              background var(--slk-motion-base) var(--slk-ease);
+}
+.slk-btn--primary { background: var(--slk-color-ink); color: var(--slk-color-on-ink); }
+.slk-btn--primary:hover { transform: translateY(-2px); box-shadow: var(--slk-shadow-press); }
+.slk-btn--primary:active { transform: scale(0.97); box-shadow: none; }
+
+.slk-btn--secondary {
+  background: var(--slk-glass-solid);
+  border: 1px solid rgba(35,34,32,.16);
+  color: var(--slk-color-ink);
+}
+.slk-btn--secondary:hover { background: #fff; }
+.slk-btn--secondary:active { transform: scale(0.97); }
+
+.slk-btn--ghost {
+  background: none; padding: 0 10px; color: var(--slk-color-muted);
+  text-decoration: underline; text-underline-offset: 4px;
+}
+
+.slk-btn[disabled], .slk-btn--disabled {
+  opacity: .35; cursor: not-allowed; transform: none; box-shadow: none;
+}
+/* Loading — keep the button, swap the label; never hide it */
+.slk-btn--loading { cursor: wait; }
+.slk-btn--loading::before {
+  content: ""; width: 15px; height: 15px; border-radius: 50%;
+  border: 2px solid rgba(250,249,246,.35);
+  border-top-color: var(--slk-color-on-ink);
+  animation: slk-spin 700ms linear infinite;
+}
+@keyframes slk-spin { to { transform: rotate(360deg); } }
+
+.slk-btn--icon {
+  width: var(--slk-touch); height: var(--slk-touch);
+  padding: 0; border-radius: 50%;
+}
+
+/* ── Fields ───────────────────────────────────────────────────────────── */
+.slk-field { display: block; margin-bottom: var(--slk-space-3); }
+.slk-field > label {
+  display: block;
+  font: 500 12px/1 var(--slk-font-ui);
+  margin-bottom: 7px;
+}
+.slk-input, .slk-select, .slk-textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--slk-field-border);
+  background: #fff;
+  border-radius: var(--slk-radius-field);
+  padding: 0 16px;
+  font: 400 14px var(--slk-font-ui);
+  color: var(--slk-color-ink);
+  transition: border-color var(--slk-motion-base) var(--slk-ease);
+}
+.slk-textarea { padding: 14px 16px; line-height: 1.5; resize: vertical; }
+.slk-input:disabled {
+  background: rgba(35,34,32,.03);
+  border-color: rgba(35,34,32,.08);
+  color: #b5b1a9;
+}
+.slk-field--error > label { color: var(--slk-color-error); }
+.slk-field--error .slk-input,
+.slk-field--error .slk-select { border: 1.5px solid var(--slk-color-error); }
+.slk-field__error {
+  display: flex; gap: var(--slk-space-2); padding-top: var(--slk-space-2);
+  font: 400 12px/1.5 var(--slk-font-ui); color: var(--slk-color-error);
+}
+.slk-field__hint {
+  padding-top: 6px;
+  font: 400 11.5px/1.55 var(--slk-font-ui); color: var(--slk-color-faint);
+}
+/* Labels never collapse into placeholders — Sinhala and Tamil run longer. */
+
+/* ── Product card ─────────────────────────────────────────────────────── */
+.slk-card { display: block; text-decoration: none; color: inherit;
+  transition: transform 320ms var(--slk-ease); }
+.slk-card:hover { transform: translateY(-4px); }
+.slk-card__media {
+  aspect-ratio: var(--slk-ratio-portrait);
+  border-radius: var(--slk-radius-tile);
+  overflow: hidden;
+  box-shadow: var(--slk-shadow-lift);
+}
+.slk-card__media img { width: 100%; height: 100%; object-fit: cover; }
+.slk-card__name { font: 500 13.5px/1.4 var(--slk-font-ui); padding-top: 10px; }
+.slk-card__price { font: 400 13.5px/1.4 var(--slk-font-ui); color: var(--slk-color-muted); }
+.slk-swatches { display: flex; gap: 6px; padding-top: 7px; }
+.slk-swatch { width: 13px; height: 13px; border-radius: 50%; }
+
+/* Hijab card — colour-led, not silhouette-led */
+.slk-card--colour .slk-card__media {
+  aspect-ratio: 1; border-radius: 50%;
+}
+
+/* ── Size selector ────────────────────────────────────────────────────── */
+.slk-sizes { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--slk-space-2); }
+.slk-size {
+  min-height: 46px; border: 1px solid rgba(35,34,32,.16);
+  background: var(--slk-glass-solid); border-radius: var(--slk-radius-pill);
+  font: 500 13px/1 var(--slk-font-ui); cursor: pointer;
+  transition: background var(--slk-motion-base) var(--slk-ease);
+}
+.slk-size:hover { background: #fff; }
+.slk-size[aria-pressed="true"] { background: var(--slk-color-ink); color: var(--slk-color-on-ink); border-color: transparent; }
+/* Sold out stays visible and struck through — never hidden */
+.slk-size[disabled] {
+  color: #b5b1a9; background: none; border-color: rgba(35,34,32,.1);
+  cursor: not-allowed; position: relative; overflow: hidden;
+}
+.slk-size[disabled]::after {
+  content: ""; position: absolute; left: 8px; right: 8px; top: 50%;
+  height: 1px; background: rgba(35,34,32,.18);
+}
+
+/* ── Price ────────────────────────────────────────────────────────────── */
+/* Rs. 12,500 — prefix, space, comma thousands, zero decimals.
+   There is no compare-at, no strikethrough, no discount badge. If a
+   .slk-price--was ever appears in this file, something has gone wrong. */
+.slk-price { font: 500 20px/1 var(--slk-font-ui); }
+
+/* ── Feedback ─────────────────────────────────────────────────────────── */
+.slk-toast {
+  display: flex; align-items: center; gap: var(--slk-space-3);
+  padding: 14px 16px;
+  background: var(--slk-glass);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 20px;
+  box-shadow: var(--slk-shadow-lift);
+  font: 400 12.5px/1.45 var(--slk-font-ui);
+}
+.slk-toast--error {
+  background: var(--slk-color-error-tint);
+  border-color: rgba(154,40,32,.2);
+  color: #7a1f19;
+}
+.slk-skeleton { background: rgba(35,34,32,.06); border-radius: var(--slk-radius-tile); }
+/* Reserve the box: width/height declared on every img so nothing shifts. */
+
+/* ── Sheets & docks ───────────────────────────────────────────────────── */
+.slk-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: rgba(250,249,246,.92);
+  backdrop-filter: blur(30px) saturate(1.4);
+  -webkit-backdrop-filter: blur(30px) saturate(1.4);
+  border-top: 1px solid var(--slk-glass-edge);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -20px 50px rgba(35,34,32,.24);
+  transform: translateY(0);
+  transition: transform var(--slk-motion-base) var(--slk-ease);
+}
+.slk-sheet[hidden] { transform: translateY(100%); }
+.slk-sheet__grabber {
+  width: 38px; height: 4px; border-radius: 2px;
+  background: rgba(35,34,32,.18); margin: 10px auto 4px;
+}
+.slk-scrim { position: fixed; inset: 0; background: rgba(35,34,32,.30); }
+
+/* ── Order timeline ───────────────────────────────────────────────────── */
+.slk-step { display: flex; gap: var(--slk-space-4); }
+.slk-step__rail { display: flex; flex-direction: column; align-items: center; width: 26px; flex: none; }
+.slk-step__dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--slk-color-ink); color: var(--slk-color-on-ink);
+  font-size: 11px;
+}
+.slk-step__line { width: 2px; flex: 1; min-height: 26px; background: var(--slk-color-ink); }
+.slk-step--now .slk-step__dot {
+  background: #fff; border: 2px solid var(--slk-color-ink);
+}
+.slk-step--now .slk-step__dot::after {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--slk-color-ink);
+}
+.slk-step--todo .slk-step__dot { background: none; border: 1.5px solid rgba(35,34,32,.25); }
+.slk-step--todo .slk-step__line,
+.slk-step--now .slk-step__line { background: rgba(35,34,32,.14); }
+
+/* ── Touch & motion guarantees ────────────────────────────────────────── */
+.slk-btn, .slk-size, .slk-input, .slk-select, a[class*="slk-"] { min-height: var(--slk-touch); }
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}

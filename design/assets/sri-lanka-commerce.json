@@ -1,0 +1,66 @@
+{
+  "currency": {
+    "code": "LKR",
+    "format": "Rs. {amount}",
+    "decimals": 0,
+    "thousands": ","
+  },
+  "phone": {
+    "country_code": "+94",
+    "national_length": 9,
+    "placeholder": "77 123 4567",
+    "hint": "Mobile number we can reach you on"
+  },
+  "address_fields": [
+    { "name": "full_name", "label": "Full name", "required": true },
+    { "name": "phone", "label": "Mobile number", "required": true, "type": "tel", "note": "Primary identity — used for the confirmation call" },
+    { "name": "address_line", "label": "Address", "required": true },
+    { "name": "landmark", "label": "Nearest landmark or junction", "required": false, "note": "Couriers navigate by this, not postcodes" },
+    { "name": "city", "label": "City / town", "required": true },
+    { "name": "district", "label": "District", "required": true, "type": "select" },
+    { "name": "postcode", "label": "Postal code", "required": false },
+    { "name": "email", "label": "Email", "required": false, "note": "Required only for card payment" }
+  ],
+  "districts": [
+    { "name": "Ampara", "province": "Eastern" },
+    { "name": "Anuradhapura", "province": "North Central" },
+    { "name": "Badulla", "province": "Uva" },
+    { "name": "Batticaloa", "province": "Eastern" },
+    { "name": "Colombo", "province": "Western" },
+    { "name": "Galle", "province": "Southern" },
+    { "name": "Gampaha", "province": "Western" },
+    { "name": "Hambantota", "province": "Southern" },
+    { "name": "Jaffna", "province": "Northern" },
+    { "name": "Kalutara", "province": "Western" },
+    { "name": "Kandy", "province": "Central" },
+    { "name": "Kegalle", "province": "Sabaragamuwa" },
+    { "name": "Kilinochchi", "province": "Northern" },
+    { "name": "Kurunegala", "province": "North Western" },
+    { "name": "Mannar", "province": "Northern" },
+    { "name": "Matale", "province": "Central" },
+    { "name": "Matara", "province": "Southern" },
+    { "name": "Monaragala", "province": "Uva" },
+    { "name": "Mullaitivu", "province": "Northern" },
+    { "name": "Nuwara Eliya", "province": "Central" },
+    { "name": "Polonnaruwa", "province": "North Central" },
+    { "name": "Puttalam", "province": "North Western" },
+    { "name": "Ratnapura", "province": "Sabaragamuwa" },
+    { "name": "Trincomalee", "province": "Eastern" },
+    { "name": "Vavuniya", "province": "Northern" }
+  ],
+  "delivery": {
+    "zones": [
+      { "label": "Colombo & Gampaha", "days": "1–2 working days", "fee": 350 },
+      { "label": "Kandy, Galle, Kalutara, Kurunegala", "days": "2–3 working days", "fee": 400 },
+      { "label": "All other districts", "days": "3–5 working days", "fee": 450 }
+    ],
+    "free_over": 15000,
+    "cod_handling_fee": 150
+  },
+  "payment_methods": [
+    { "id": "cod", "label": "Cash on delivery", "note": "We call or WhatsApp to confirm before dispatch", "fee": 150, "default": true },
+    { "id": "payhere", "label": "Pay now by card, eZ Cash, helaPay or LankaQR", "requires_email": true },
+    { "id": "bank", "label": "Bank transfer", "note": "Send the slip on WhatsApp" },
+    { "id": "koko", "label": "Pay in 3 with Koko", "min_cart": 10000 }
+  ]
+}

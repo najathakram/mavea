@@ -1,0 +1,181 @@
+<section class="sec" id="components">
+<h2 class="sec-h">Porcelain Glass — components &amp; states</h2>
+<p class="sec-s">Every state a developer has to build: default, hover, focus, active, disabled, loading, error, empty, success. Hover and press the live ones. Focus rings are shown as static examples so they read on the sheet.</p>
+<div class="row" style="gap:22px">
+
+<div class="scr" style="width:390px"><span class="scr-l">BUTTONS</span>
+<div class="fr" style="width:390px;padding:22px 20px;display:grid;gap:16px">
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:10px">Primary · lifts on hover, squashes on press</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <button style="min-height:46px;border:0;background:#232220;color:#faf9f6;border-radius:23px;padding:0 22px;font:500 13px/1 Archivo;cursor:pointer;transition:transform 280ms cubic-bezier(.22,1,.36,1),box-shadow 280ms cubic-bezier(.22,1,.36,1)" style-hover="transform:translateY(-2px);box-shadow:0 12px 26px rgba(35,34,32,.3)" style-active="transform:scale(.97)">Add to bag</button>
+      <button style="min-height:46px;border:0;background:#232220;color:#faf9f6;border-radius:23px;padding:0 22px;font:500 13px/1 Archivo;outline:2px solid #232220;outline-offset:3px">Focus</button>
+      <button disabled style="min-height:46px;border:0;background:#232220;color:#faf9f6;border-radius:23px;padding:0 22px;font:500 13px/1 Archivo;opacity:.35;cursor:not-allowed">Choose a size</button>
+      <button style="min-height:46px;border:0;background:#232220;color:#faf9f6;border-radius:23px;padding:0 22px;font:500 13px/1 Archivo;display:inline-flex;align-items:center;gap:10px;cursor:wait"><span style="width:14px;height:14px;border-radius:50%;border:2px solid rgba(250,249,246,.35);border-top-color:#faf9f6"></span>Adding…</button>
+      <button style="min-height:46px;border:0;background:#232220;color:#faf9f6;border-radius:23px;padding:0 22px;font:500 13px/1 Archivo;display:inline-flex;align-items:center;gap:9px">✓ In your bag</button>
+    </div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:10px">Secondary &amp; glass</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <button style="min-height:46px;border:1px solid rgba(35,34,32,.16);background:rgba(255,255,255,.6);border-radius:23px;padding:0 22px;font:500 13px/1 Archivo;cursor:pointer;transition:background 280ms cubic-bezier(.22,1,.36,1)" style-hover="background:#fff">Show more</button>
+      <button style="min-height:46px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.5);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:23px;padding:0 22px;font:500 13px/1 Archivo;cursor:pointer">On glass</button>
+      <button style="min-height:46px;border:0;background:none;padding:0 10px;font:500 13px/1 Archivo;color:#5f5c56;cursor:pointer;text-decoration:underline;text-underline-offset:4px">Text link</button>
+      <button style="width:46px;height:46px;border:1px solid rgba(35,34,32,.16);background:rgba(255,255,255,.6);border-radius:50%;cursor:pointer;font:600 12px Archivo;transition:transform 280ms cubic-bezier(.22,1,.36,1)" style-hover="transform:scale(1.06)" style-active="transform:scale(.92)" aria-label="WhatsApp">W</button>
+    </div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:10px">Size selector</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <button style="min-height:46px;border:1px solid rgba(35,34,32,.16);background:rgba(255,255,255,.6);border-radius:23px;font:500 13px/1 Archivo;cursor:pointer;transition:background 280ms cubic-bezier(.22,1,.36,1)" style-hover="background:#fff">S</button>
+      <button style="min-height:46px;border:0;background:#232220;color:#faf9f6;border-radius:23px;font:500 13px/1 Archivo;cursor:pointer">M</button>
+      <button style="min-height:46px;border:1px solid rgba(35,34,32,.16);background:rgba(255,255,255,.6);border-radius:23px;font:500 13px/1 Archivo;outline:2px solid #232220;outline-offset:3px">L</button>
+      <button disabled style="min-height:46px;border:1px solid rgba(35,34,32,.1);background:none;border-radius:23px;font:400 13px/1 Archivo;color:#b5b1a9;cursor:not-allowed;position:relative;overflow:hidden">XL<span style="position:absolute;left:8px;right:8px;top:50%;height:1px;background:rgba(35,34,32,.18)"></span></button>
+    </div>
+    <div style="font:400 11.5px/1.6 Archivo;color:#8a867e;padding-top:8px">Sold-out sizes stay visible and struck through — never hidden.</div>
+  </div>
+</div>
+</div>
+
+<div class="scr" style="width:390px"><span class="scr-l">FORM FIELDS</span>
+<div class="fr" style="width:390px;padding:22px 20px;display:grid;gap:16px">
+  <div>
+    <label style="display:block;font:500 12px/1 Archivo;margin-bottom:7px" for="st-1">Default — label always visible</label>
+    <input id="st-1" placeholder="77 123 4567" style="width:100%;min-height:48px;border:1px solid rgba(35,34,32,.14);background:#fff;border-radius:16px;padding:0 16px;font:400 14px Archivo;color:#232220">
+  </div>
+  <div>
+    <label style="display:block;font:500 12px/1 Archivo;margin-bottom:7px" for="st-2">Focused</label>
+    <input id="st-2" value="77 123 456" style="width:100%;min-height:48px;border:1px solid rgba(35,34,32,.14);background:#fff;border-radius:16px;padding:0 16px;font:400 14px Archivo;color:#232220;outline:2px solid #232220;outline-offset:2px">
+  </div>
+  <div>
+    <label style="display:block;font:500 12px/1 Archivo;margin-bottom:7px;color:#9a2820" for="st-3">Error</label>
+    <input id="st-3" value="77 123 456" style="width:100%;min-height:48px;border:1.5px solid #9a2820;background:#fff;border-radius:16px;padding:0 16px;font:400 14px Archivo;color:#232220">
+    <div style="display:flex;gap:8px;align-items:flex-start;padding-top:8px"><span style="color:#9a2820;font-size:12px;line-height:1.5">!</span><span style="font:400 12px/1.5 Archivo;color:#9a2820">A Sri Lankan mobile number is 9 digits after +94. Yours has 8.</span></div>
+  </div>
+  <div>
+    <label style="display:block;font:500 12px/1 Archivo;margin-bottom:7px" for="st-4">Filled &amp; valid</label>
+    <input id="st-4" value="Fathima R." style="width:100%;min-height:48px;border:1px solid rgba(35,34,32,.14);background:#fff;border-radius:16px;padding:0 16px;font:400 14px Archivo;color:#232220">
+  </div>
+  <div>
+    <label style="display:block;font:500 12px/1 Archivo;margin-bottom:7px;color:#8a867e" for="st-5">Disabled — waiting on district</label>
+    <input id="st-5" disabled placeholder="Select a district first" style="width:100%;min-height:48px;border:1px solid rgba(35,34,32,.08);background:rgba(35,34,32,.03);border-radius:16px;padding:0 16px;font:400 14px Archivo;color:#b5b1a9">
+  </div>
+  <div style="font:400 11.5px/1.6 Archivo;color:#8a867e">Labels never collapse into placeholders — they must survive Sinhala and Tamil, which run 15–30% longer.</div>
+</div>
+</div>
+
+<div class="scr" style="width:390px"><span class="scr-l">FEEDBACK &amp; STATES</span>
+<div class="fr" style="width:390px;padding:22px 20px;display:grid;gap:14px">
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(250,249,246,.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.7);border-radius:20px;box-shadow:0 12px 30px rgba(35,34,32,.16)">
+    <span style="width:26px;height:26px;border-radius:50%;background:#232220;color:#faf9f6;display:grid;place-items:center;font-size:11px;flex:none">✓</span>
+    <span style="flex:1;font:400 12.5px/1.45 Archivo">Nayana Abaya · M added to your bag</span>
+    <a href="#components" style="font:500 12px Archivo;text-decoration:underline;text-underline-offset:3px">View</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(247,227,224,.9);border:1px solid rgba(154,40,32,.2);border-radius:20px">
+    <span style="width:26px;height:26px;border-radius:50%;background:#9a2820;color:#fff;display:grid;place-items:center;font-size:12px;flex:none">!</span>
+    <span style="flex:1;font:400 12.5px/1.45 Archivo;color:#7a1f19">That size just sold out. We can make it — ask on WhatsApp.</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);border-radius:20px">
+    <span style="width:26px;height:26px;border-radius:50%;border:2px solid rgba(35,34,32,.2);border-top-color:#232220;flex:none"></span>
+    <span style="flex:1;font:400 12.5px/1.45 Archivo;color:#5f5c56">Checking delivery to Batticaloa…</span>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin:6px 0 10px">Skeleton — reserved dimensions, no layout shift</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><div style="aspect-ratio:3/4;border-radius:20px;background:rgba(35,34,32,.06)"></div><div style="height:12px;border-radius:6px;background:rgba(35,34,32,.06);margin-top:10px"></div><div style="height:12px;width:60%;border-radius:6px;background:rgba(35,34,32,.06);margin-top:7px"></div></div>
+      <div><div style="aspect-ratio:3/4;border-radius:20px;background:rgba(35,34,32,.06)"></div><div style="height:12px;border-radius:6px;background:rgba(35,34,32,.06);margin-top:10px"></div><div style="height:12px;width:60%;border-radius:6px;background:rgba(35,34,32,.06);margin-top:7px"></div></div>
+    </div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin:6px 0 10px">Empty result</div>
+    <div style="background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);border-radius:20px;padding:24px 18px;text-align:center">
+      <div style="font:500 13.5px/1.4 Archivo;margin-bottom:6px">No pieces match those filters</div>
+      <div style="font:400 12.5px/1.6 Archivo;color:#5f5c56;margin-bottom:14px">Clear the price filter and there are eleven.</div>
+      <button style="min-height:44px;border:1px solid rgba(35,34,32,.16);background:rgba(255,255,255,.7);border-radius:22px;padding:0 20px;font:500 12.5px/1 Archivo;cursor:pointer">Clear filters</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="scr" style="width:390px"><span class="scr-l">CARDS · PRICE · CHIPS</span>
+<div class="fr" style="width:390px;padding:22px 20px;display:grid;gap:16px">
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:10px">Dress card vs hijab card</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+      <div>
+        <div style="aspect-ratio:3/4;position:relative;border-radius:20px;overflow:hidden;box-shadow:0 12px 30px rgba(35,34,32,.12)"><image-slot id="cs-1" shape="rect" placeholder="3:4 head to hem"></image-slot></div>
+        <div style="font:500 13.5px/1.4 Archivo;padding-top:10px">Nayana Linen Abaya</div>
+        <div style="font:400 13.5px/1.4 Archivo;color:#5f5c56">Rs. 12,500</div>
+        <div style="display:flex;gap:6px;padding-top:7px"><span style="width:12px;height:12px;border-radius:50%;background:#2e2d2b"></span><span style="width:12px;height:12px;border-radius:50%;background:#b5ac9c"></span><span style="width:12px;height:12px;border-radius:50%;background:#6d5747"></span></div>
+        <div style="font:400 11px/1.5 Archivo;color:#8a867e;padding-top:6px">Silhouette sells it — never crop head or hem.</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:100%;aspect-ratio:1;border-radius:50%;background:#565e56;box-shadow:0 10px 24px rgba(35,34,32,.18)"></div>
+        <div style="font:500 13px/1.4 Archivo;padding-top:10px">Olive</div>
+        <div style="font:400 12.5px/1.4 Archivo;color:#5f5c56">Rs. 1,450 · 3 for 3,900</div>
+        <div style="font:400 11px/1.5 Archivo;color:#8a867e;padding-top:6px">Colour sells it — bought in multiples.</div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:10px">Price display — one form only</div>
+    <div style="background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);border-radius:18px;padding:16px">
+      <div style="font:500 20px/1 Archivo;margin-bottom:8px">Rs. 12,500</div>
+      <div style="font:400 12px/1.6 Archivo;color:#5f5c56">Prefix, space, comma thousands, zero decimals. No strikethrough, no "compare at", no discount badge, no countdown — anywhere on the site, ever.</div>
+    </div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:10px">Chips &amp; quantity</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <span style="min-height:40px;display:inline-flex;align-items:center;padding:0 14px;background:#232220;color:#faf9f6;border-radius:20px;font:500 12px/1 Archivo">Selected ✕</span>
+      <span style="min-height:40px;display:inline-flex;align-items:center;padding:0 14px;background:rgba(255,255,255,.65);border:1px solid rgba(35,34,32,.1);border-radius:20px;font:400 12px/1 Archivo">Unselected</span>
+      <div style="display:flex;align-items:center;gap:2px;background:rgba(35,34,32,.05);border-radius:22px;padding:2px">
+        <button style="width:40px;height:40px;border:0;background:none;border-radius:50%;font-size:16px;cursor:pointer;transition:background 280ms cubic-bezier(.22,1,.36,1)" style-hover="background:rgba(255,255,255,.85)" aria-label="Fewer">−</button>
+        <span style="font:500 13px Archivo;min-width:16px;text-align:center">1</span>
+        <button style="width:40px;height:40px;border:0;background:none;border-radius:50%;font-size:15px;cursor:pointer;transition:background 280ms cubic-bezier(.22,1,.36,1)" style-hover="background:rgba(255,255,255,.85)" aria-label="More">＋</button>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:10px">Trust strip</div>
+    <div style="display:grid;gap:8px">
+      <div style="display:flex;gap:11px;align-items:center;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);border-radius:16px;padding:12px 14px"><span>✓</span><span style="font:400 12.5px/1.5 Archivo">Cash on delivery — we call to confirm first</span></div>
+      <div style="display:flex;gap:11px;align-items:center;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);border-radius:16px;padding:12px 14px"><span>⇄</span><span style="font:400 12.5px/1.5 Archivo">Exchange within 7 days, courier collects</span></div>
+      <div style="display:flex;gap:11px;align-items:center;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);border-radius:16px;padding:12px 14px"><span>◷</span><span style="font:400 12.5px/1.5 Archivo">Colombo 1–2 days · island-wide 3–5</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="scr" style="width:390px"><span class="scr-l">FOUNDATIONS</span>
+<div class="fr" style="width:390px;padding:22px 20px;display:grid;gap:18px">
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:12px">Neutrals — all text pairs clear 4.5:1</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div><div style="height:56px;border-radius:14px;background:#f2f0ec;border:1px solid rgba(35,34,32,.1)"></div><div style="font:400 10.5px/1.5 Archivo;padding-top:6px">ground<br>#f2f0ec</div></div>
+      <div><div style="height:56px;border-radius:14px;background:#232220"></div><div style="font:400 10.5px/1.5 Archivo;padding-top:6px">ink · 13.8:1<br>#232220</div></div>
+      <div><div style="height:56px;border-radius:14px;background:#5f5c56"></div><div style="font:400 10.5px/1.5 Archivo;padding-top:6px">muted · 5.6:1<br>#5f5c56</div></div>
+      <div><div style="height:56px;border-radius:14px;background:#44413c"></div><div style="font:400 10.5px/1.5 Archivo;padding-top:6px">ink-soft<br>#44413c</div></div>
+      <div><div style="height:56px;border-radius:14px;background:#8a867e"></div><div style="font:400 10.5px/1.5 Archivo;padding-top:6px">faint · meta only<br>#8a867e</div></div>
+      <div><div style="height:56px;border-radius:14px;background:#9a2820"></div><div style="font:400 10.5px/1.5 Archivo;padding-top:6px">error · 6.4:1<br>#9a2820</div></div>
+    </div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:12px">Type</div>
+    <div style="font-family:Newsreader,serif;font-weight:300;font-size:30px;line-height:1.14">Newsreader 300 · display</div>
+    <div style="font:400 14.5px/1.6 Archivo;padding-top:6px">Archivo 400 · body, 14.5px minimum</div>
+    <div style="font:500 12px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#5f5c56;padding-top:10px">Archivo 500 · eyebrow, 0.18em</div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:12px">Glass recipe</div>
+    <div style="font:400 12px/1.7 Archivo;color:#5f5c56">Fill <code style="font-size:11px">rgba(250,249,246,.55)</code> · <code style="font-size:11px">backdrop-filter: blur(22px) saturate(1.4)</code> · 1px <code style="font-size:11px">rgba(255,255,255,.55)</code> edge · shadow <code style="font-size:11px">0 18px 44px rgba(35,34,32,.16)</code>. Over the ground rather than imagery, raise the fill to <code style="font-size:11px">rgba(255,255,255,.60)</code> and drop the blur.</div>
+  </div>
+  <div>
+    <div style="font:500 10.5px/1 Archivo;letter-spacing:.18em;text-transform:uppercase;color:#8a867e;margin-bottom:12px">Motion &amp; touch</div>
+    <div style="font:400 12px/1.7 Archivo;color:#5f5c56">280ms <code style="font-size:11px">cubic-bezier(.22,1,.36,1)</code> throughout. Hover lifts 2–5px, press scales to .97. Radii 16 field / 20 tile / 24 panel / pill buttons. Targets 44px, 8px apart. All durations collapse to 0 under <code style="font-size:11px">prefers-reduced-motion</code>.</div>
+  </div>
+</div>
+</div>
+
+</div>
+</section>

@@ -1,0 +1,83 @@
+/* SL Dress — design tokens
+   Direction: Porcelain Glass (3a) — warm neutrals, frosted glass, soft depth.
+   Paste into local/themes/slk-child/style.css. Nothing outside this token set
+   should be hand-styled.
+   Wordmark is a single swappable asset: --slk-wordmark-font + /assets/wordmark.svg.
+*/
+
+:root {
+
+  /* ── Colour ───────────────────────────────────────────────────────────── */
+  /* Neutral system: the garments are the only colour on the page. */
+  --slk-color-ground:          #f2f0ec;  /* page ground (porcelain) */
+  --slk-color-ink:             #232220;  /* text, primary buttons — 13.8:1 on ground */
+  --slk-color-ink-soft:        #44413c;  /* long-form body */
+  --slk-color-muted:           #5f5c56;  /* secondary text — 5.6:1 on ground */
+  --slk-color-faint:           #8a867e;  /* meta/disabled only, never body copy */
+  --slk-color-on-ink:          #faf9f6;  /* text on ink fills */
+
+  /* Glass surfaces — always over blur(20-26px) saturate(1.4) */
+  --slk-glass:                 rgba(250,249,246,.55);
+  --slk-glass-solid:           rgba(255,255,255,.60); /* panels on the ground */
+  --slk-glass-edge:            rgba(255,255,255,.60); /* 1px border on all glass */
+  --slk-hairline:              rgba(35,34,32,.10);
+  --slk-field-border:          rgba(35,34,32,.14);
+
+  /* Status */
+  --slk-color-error:           #9a2820;
+  --slk-color-error-tint:      #f7e3e0;
+  --slk-color-success:         #1f5c33;
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
+  --slk-font-display: "Newsreader", Georgia, serif;   /* headlines, weight 300 */
+  --slk-font-ui:      "Archivo", system-ui, sans-serif; /* everything else */
+  --slk-wordmark-font: var(--slk-font-display);
+  --slk-wordmark-tracking: 0.26em;
+
+  --slk-text-xs:   11px;   /* meta, never below this */
+  --slk-text-sm:   12.5px;
+  --slk-text-base: 14.5px;
+  --slk-text-lg:   17px;
+  --slk-text-xl:   20px;
+  --slk-display-s: 24px;
+  --slk-display-m: 30px;
+  --slk-display-l: 40px;   /* desktop hero */
+
+  --slk-leading-tight: 1.12;
+  --slk-leading-body:  1.55;
+  --slk-track-label:   0.16em;  /* uppercase eyebrows */
+
+  /* ── Space ────────────────────────────────────────────────────────────── */
+  --slk-space-1:  4px;
+  --slk-space-2:  8px;
+  --slk-space-3:  12px;
+  --slk-space-4:  16px;   /* mobile gutter */
+  --slk-space-6:  24px;
+  --slk-space-8:  32px;
+  --slk-space-12: 48px;
+  --slk-space-16: 64px;   /* desktop section rhythm */
+
+  /* ── Shape ────────────────────────────────────────────────────────────── */
+  --slk-radius-card:  24px;  /* glass panels */
+  --slk-radius-tile:  20px;  /* image tiles */
+  --slk-radius-field: 16px;  /* inputs */
+  --slk-radius-pill:  999px; /* buttons, chips, docks */
+  --slk-blur:         22px;  /* backdrop-filter: blur(var(--slk-blur)) saturate(1.4) */
+  --slk-shadow-lift:  0 12px 30px rgba(35,34,32,.12);
+  --slk-shadow-float: 0 18px 44px rgba(35,34,32,.16);
+  --slk-shadow-press: 0 12px 26px rgba(35,34,32,.30);
+
+  /* ── Touch + motion ───────────────────────────────────────────────────── */
+  --slk-touch:        44px;  /* minimum hit target, 8px apart */
+  --slk-motion-fast:  150ms;
+  --slk-motion-base:  280ms;   /* the house feel: butter, not snap */
+  --slk-ease:         cubic-bezier(.22, 1, .36, 1);
+
+  /* ── Imagery ──────────────────────────────────────────────────────────── */
+  --slk-ratio-portrait: 3 / 4;  /* grid cards — never crops head or hem */
+  --slk-ratio-hero:     2 / 3;  /* PDP + hero, full silhouette */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --slk-motion-fast: 0ms; --slk-motion-base: 0ms; }
+}
