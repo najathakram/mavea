@@ -53,14 +53,37 @@ def load(path: Path) -> Image.Image:
     return im.convert("RGB")
 
 
-def cover(im: Image.Image, w: int, h: int, top_anchor: bool = True) -> Image.Image:
+def cover(
+    im: Image.Image,
+    w: int,
+    h: int,
+    top_anchor: bool = True,
+    focus_x: float = 0.5,
+    focus_y: float = 0.5,
+) -> Image.Image:
+    """Cover-crop to w×h.
+
+    focus_x / focus_y place the crop window as a fraction of the available
+    slack (0 = hard left/top, 1 = hard right/bottom). They exist because a
+    centred crop of a studio frame keeps the empty wall above the model: on the
+    home hero that dead band sat directly against the porcelain ground and read
+    as a rendering fault rather than as space. Pulling the window down removes
+    the headroom; pulling it left seats the group RIGHT of centre, which is
+    where the design puts it so the glass panel can sit bottom-left.
+    """
     sw, sh = im.size
     scale = max(w / sw, h / sh)
     im = im.resize((max(1, round(sw * scale)), max(1, round(sh * scale))), Image.LANCZOS)
-    left = (im.width - w) // 2
-    top = 0 if top_anchor else (im.height - h) // 2
-    if not top_anchor:
-        top = max(0, min(top, im.height - h))
+
+    if top_anchor:
+        left = round((im.width - w) * focus_x)
+        top = 0
+    else:
+        left = round((im.width - w) * focus_x)
+        top = round((im.height - h) * focus_y)
+
+    left = max(0, min(left, im.width - w))
+    top = max(0, min(top, im.height - h))
     return im.crop((left, top, left + w, top + h))
 
 
@@ -98,7 +121,13 @@ def main() -> int:
             continue
         out = temp / f"editorial-{name}.jpg"
         if name.startswith("hero"):
-            cover(load(src), HERO_W, HERO_H, top_anchor=False).save(out, quality=84, optimize=True, progressive=True)
+            # Down and to the left: drop the empty studio wall above the models,
+            # and seat them right of centre so the design's glass panel has
+            # clear ground bottom-left to sit on.
+            cover(
+                load(src), HERO_W, HERO_H,
+                top_anchor=False, focus_x=0.34, focus_y=0.82,
+            ).save(out, quality=84, optimize=True, progressive=True)
         else:
             cover(load(src), STORY_W, STORY_H).save(out, quality=82, optimize=True, progressive=True)
         manifest.append((str(out.relative_to(root)), str(src), out.stat().st_size))
