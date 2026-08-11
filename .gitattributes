@@ -1,0 +1,7 @@
+# Keep LF endings. bootstrap.sh runs under bash and CRLF would break it
+# ($'\r': command not found), and PHP files are deployed to a Linux host.
+* text=auto eol=lf
+*.sh text eol=lf
+*.php text eol=lf
+*.yml text eol=lf
+*.ini text eol=lf
