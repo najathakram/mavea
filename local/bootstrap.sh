@@ -27,7 +27,11 @@ if wp core is-installed 2>/dev/null; then
   echo "==> WordPress already installed, skipping core install"
 else
   echo "==> installing WordPress core"
-  ADMIN_PASS="$(head -c 18 /dev/urandom | base64 | tr -d '/+=' | head -c 18)"
+  # Alphanumeric only. The previous version base64'd /dev/urandom, and a
+  # password containing shell-significant bytes did not survive the trip
+  # through `docker compose run` intact — the file on disk and the hash in the
+  # database disagreed, and the recorded password simply did not work.
+  ADMIN_PASS="$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 18)"
   wp core install \
     --url="$SITE_URL" \
     --title="Sister LK (working title)" \
@@ -35,9 +39,32 @@ else
     --admin_password="$ADMIN_PASS" \
     --admin_email="$ADMIN_EMAIL" \
     --skip-email
-  printf '%s\n' "$ADMIN_PASS" > .admin-password
-  chmod 600 .admin-password 2>/dev/null || true
-  echo "    admin password written to local/.admin-password (gitignored)"
+
+  # Never record a credential without proving it works. A password file that
+  # lies is worse than no password file: it sends you hunting a phantom
+  # "expired session" instead of a wrong string.
+  if wp eval "exit( wp_check_password( '$ADMIN_PASS', get_user_by( 'login', '$ADMIN_USER' )->user_pass, 1 ) ? 0 : 1 );"; then
+    printf '%s\n' "$ADMIN_PASS" > .admin-password
+    chmod 600 .admin-password 2>/dev/null || true
+    echo "    admin password verified and written to local/.admin-password (gitignored)"
+  else
+    echo "    !! password did not verify against the stored hash — resetting"
+    # `wp user update`, never wp_set_password() inside `wp eval`. Measured: the
+    # eval path reported success and verified within its own process, but the
+    # row was never committed, so the next request still saw the old hash. A
+    # reset that only works inside the process that performed it is not a reset.
+    ADMIN_PASS="$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 18)"
+    wp user update 1 --user_pass="$ADMIN_PASS" --skip-email >/dev/null
+    # Prove it in a FRESH process before recording it.
+    if wp eval "exit( wp_check_password( '$ADMIN_PASS', get_user_by( 'id', 1 )->user_pass, 1 ) ? 0 : 1 );"; then
+      printf '%s\n' "$ADMIN_PASS" > .admin-password
+      chmod 600 .admin-password 2>/dev/null || true
+      echo "    admin password reset, verified, and written to local/.admin-password"
+    else
+      echo "    !! RESET FAILED — no password file written rather than write one that lies"
+      rm -f .admin-password
+    fi
+  fi
 fi
 
 echo "==> permalinks (WooCommerce needs pretty permalinks)"

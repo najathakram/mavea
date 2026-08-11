@@ -1,0 +1,306 @@
+<?php
+/**
+ * Delivery & COD / Exchange policy / FAQ.
+ *
+ * Provisions the three editorial pages this file owns and holds the data
+ * each template renders (delivery zones/fees, FAQ copy) so the templates in
+ * page-templates/ stay pure presentation. Numbers mirror
+ * design/assets/sri-lanka-commerce.json (the source of truth for fees and
+ * timings) — kept as a plain PHP array here rather than a runtime file read,
+ * because that JSON lives in design/ and is not shipped with the theme.
+ *
+ * @package slk-child
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+/* -------------------------------------------------------------------------
+ * 1. Provision the pages.
+ * ---------------------------------------------------------------------- */
+
+add_action(
+	'init',
+	static function () {
+		slk_ensure_page( 'delivery', __( 'Delivery & COD', 'slk' ), 'page-templates/delivery.php' );
+		slk_ensure_page( 'exchanges', __( 'Exchanges', 'slk' ), 'page-templates/exchange.php' );
+		slk_ensure_page( 'faq', __( 'FAQ', 'slk' ), 'page-templates/faq.php' );
+	},
+	15
+);
+
+/* -------------------------------------------------------------------------
+ * 2. Delivery zones, free-delivery threshold, COD handling fee.
+ *
+ * design/assets/sri-lanka-commerce.json: delivery.zones / free_over /
+ * cod_handling_fee. Kept consistent by hand — see the file header.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * @return array<int,array{label:string,days:string,fee:int}>
+ */
+function slk_delivery_zones() {
+	return array(
+		array(
+			'label' => __( 'Colombo & Gampaha', 'slk' ),
+			'days'  => __( '1–2 working days', 'slk' ),
+			'fee'   => 350,
+		),
+		array(
+			'label' => __( 'Kandy · Galle · Kalutara · Kurunegala', 'slk' ),
+			'days'  => __( '2–3 working days', 'slk' ),
+			'fee'   => 400,
+		),
+		array(
+			'label' => __( 'All other districts', 'slk' ),
+			'days'  => __( '3–5 working days', 'slk' ),
+			'fee'   => 450,
+		),
+	);
+}
+
+/** @return int Rupees. */
+function slk_delivery_free_over() {
+	return 15000;
+}
+
+/** @return int Rupees. */
+function slk_delivery_cod_fee() {
+	return 150;
+}
+
+/** @return int Rupees. Exchange courier's contribution toward the new size going out. */
+function slk_exchange_send_fee() {
+	return 350;
+}
+
+/* -------------------------------------------------------------------------
+ * 3. FAQ content, grouped by the design's category chips.
+ *
+ * Only the "Paying" group and its first answer are drawn verbatim from
+ * design/sections/04-pages.html; the design left the remaining answers (and
+ * the other three categories) unwritten. Those are filled in here in the
+ * same voice, from facts already established elsewhere in this file, in
+ * sri-lanka-commerce.json and in design/docs/brand-guidelines.md — nothing
+ * invented beyond what the store already states.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * @return array<string,array{label:string,items:array<int,array{q:string,a:string}>}>
+ */
+function slk_faq_groups() {
+	$cod_fee = wp_strip_all_tags( wc_price( slk_delivery_cod_fee() ) );
+
+	$size_guide_url = slk_page_id( 'size-guide' ) ? slk_page_url( 'size-guide' ) : '';
+	$exchanges_url  = slk_page_url( 'exchanges' );
+
+	return array(
+		'paying'   => array(
+			'label' => __( 'Paying', 'slk' ),
+			'items' => array(
+				array(
+					'q' => __( 'Do I pay anything before it arrives?', 'slk' ),
+					/* translators: %s: COD handling fee, e.g. "Rs. 150". */
+					'a' => sprintf(
+						__( 'No. With cash on delivery nothing is charged when you order. You pay the courier at your door, in cash. %s handling is added and shown before you place the order.', 'slk' ),
+						$cod_fee
+					),
+				),
+				array(
+					'q' => __( 'Why do you call before shipping?', 'slk' ),
+					'a' => __( 'So the piece, the size and the address are right before anything leaves Galle. A real person calls or WhatsApps you — whichever suits you — and nothing ships until you say yes.', 'slk' ),
+				),
+				array(
+					'q' => __( 'Can I pay by card or eZ Cash?', 'slk' ),
+					'a' => __( 'Yes. Card, eZ Cash, helaPay and LankaQR all run through one secure PayHere screen at checkout, with no COD handling fee added.', 'slk' ),
+				),
+				array(
+					'q' => __( 'Can I pay in instalments?', 'slk' ),
+					'a' => __( 'Yes, with Koko — pay in 3. It appears as a payment option at checkout once your cart passes Rs. 10,000.', 'slk' ),
+				),
+				array(
+					'q' => __( 'What if I am not home when it arrives?', 'slk' ),
+					'a' => __( 'The courier calls before arriving, and tries again the next working day if you miss them. If a time still does not work, message us on WhatsApp and we will arrange one that does.', 'slk' ),
+				),
+			),
+		),
+		'delivery' => array(
+			'label' => __( 'Delivery', 'slk' ),
+			'items' => array(
+				array(
+					'q' => __( 'How much does delivery cost?', 'slk' ),
+					'a' => __( 'Rs. 350 to Colombo and Gampaha, Rs. 400 to Kandy, Galle, Kalutara and Kurunegala, Rs. 450 everywhere else — free over Rs. 15,000.', 'slk' ),
+				),
+				array(
+					'q' => __( 'Which areas do you deliver to?', 'slk' ),
+					'a' => __( 'All 25 districts, through one courier partner. There is nowhere in Sri Lanka we cannot reach.', 'slk' ),
+				),
+				array(
+					'q' => __( 'How long will my order take?', 'slk' ),
+					'a' => __( '1–2 working days to Colombo and Gampaha, 2–3 to Kandy, Galle, Kalutara and Kurunegala, 3–5 to every other district — counted from the confirmation call, not from checkout.', 'slk' ),
+				),
+				array(
+					'q' => __( 'Can I change my delivery address after ordering?', 'slk' ),
+					'a' => __( 'Yes. Nothing ships until the confirmation call, so message us on WhatsApp any time before then and we will update it.', 'slk' ),
+				),
+			),
+		),
+		'sizing'   => array(
+			'label' => __( 'Sizing', 'slk' ),
+			'items' => array(
+				array(
+					'q' => __( 'How do I know my size?', 'slk' ),
+					'a' => __( 'Send us your bust and height on WhatsApp before you order and we will measure the actual piece against you, not a chart.', 'slk' ),
+				),
+				array(
+					'q' => __( 'What if it doesn\'t fit?', 'slk' ),
+					/* translators: %s: URL of the exchanges page. */
+					'a' => sprintf(
+						__( 'Exchange it within 7 days — the courier collects from your door. The full policy is on our <a href="%s">exchanges page</a>.', 'slk' ),
+						esc_url( $exchanges_url )
+					),
+				),
+				array(
+					'q' => __( 'Do you have a size guide?', 'slk' ),
+					'a' => $size_guide_url
+						/* translators: %s: URL of the size guide page. */
+						? sprintf( __( 'Yes — see our <a href="%s">size guide</a>. Send your bust and height on WhatsApp first if you would rather we check for you.', 'slk' ), esc_url( $size_guide_url ) )
+						: __( 'Send us your bust and height on WhatsApp and we will check your size against the actual piece before you order.', 'slk' ),
+				),
+			),
+		),
+		'clothes'  => array(
+			'label' => __( 'The clothes', 'slk' ),
+			'items' => array(
+				array(
+					'q' => __( 'What are the dresses made from?', 'slk' ),
+					'a' => __( 'Mostly linen and cotton blends — loose, opaque and unlined for the Colombo heat. Each product page lists its exact fabric.', 'slk' ),
+				),
+				array(
+					'q' => __( 'How many of each piece do you make?', 'slk' ),
+					'a' => __( 'Never more than twenty of a cut. Once a size sells out in a print, it does not come back.', 'slk' ),
+				),
+				array(
+					'q' => __( 'Are the abayas lined?', 'slk' ),
+					'a' => __( 'Most are unlined by design, for the climate. Where a piece is lined, its product page says so.', 'slk' ),
+				),
+			),
+		),
+	);
+}
+
+/* -------------------------------------------------------------------------
+ * 4. Shared styling for delivery.php / exchange.php / faq.php.
+ *
+ * Built from the tokens and the §2 component contract only — .slk-panel,
+ * .slk-btn, .slk-eyebrow are reused as-is; everything below is the small
+ * amount of layout components.css does not already provide (the reading
+ * column, the numbered/step cards, the accordion, the category chips).
+ * ---------------------------------------------------------------------- */
+
+add_action(
+	'wp_enqueue_scripts',
+	static function () {
+		$css = <<<'CSS'
+.slk-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.slk-help-main{max-width:var(--slk-container);margin:0 auto;padding:var(--slk-space-6) var(--slk-space-4) var(--slk-space-16)}
+.slk-help-col{max-width:880px;margin:0 auto}
+.slk-help-hero h1{font-size:var(--slk-display-s);margin:0 0 var(--slk-space-2)}
+.slk-help-hero p{font:400 var(--slk-text-base)/1.7 var(--slk-font-ui);color:var(--slk-color-muted);margin:0 0 var(--slk-space-6);max-width:62ch}
+.slk-help-section{margin-bottom:var(--slk-space-8)}
+.slk-help-section h2{font-size:var(--slk-display-s);margin:0 0 var(--slk-space-2)}
+.slk-help-section > p{font:400 var(--slk-text-base)/1.7 var(--slk-font-ui);color:var(--slk-color-muted);margin:0 0 var(--slk-space-4);max-width:62ch}
+
+/* -- zone table ----------------------------------------------------------- */
+.slk-zones{width:100%;border-collapse:collapse;overflow:hidden}
+.slk-zones th,.slk-zones td{padding:var(--slk-space-3) var(--slk-space-4);text-align:left;font:400 var(--slk-text-base)/1.4 var(--slk-font-ui);border-bottom:1px solid var(--slk-hairline)}
+.slk-zones tr:last-child td{border-bottom:0}
+.slk-zones td:last-child,.slk-zones th:last-child{text-align:right;color:var(--slk-color-muted);white-space:nowrap}
+
+/* -- numbered step cards --------------------------------------------------- */
+.slk-help-steps{list-style:none;margin:0;padding:0;display:grid;gap:var(--slk-space-3)}
+.slk-help-step{display:flex;gap:var(--slk-space-4);padding:var(--slk-space-4)}
+.slk-help-step__num{flex:none;width:28px;height:28px;border-radius:50%;background:var(--slk-color-ink);color:var(--slk-color-on-ink);display:grid;place-items:center;font:500 12px/1 var(--slk-font-ui)}
+.slk-help-step p{margin:0;font:400 var(--slk-text-base)/1.6 var(--slk-font-ui)}
+
+/* -- generic info cards (payment methods, exchange rules) ----------------- */
+.slk-help-cards{display:grid;gap:var(--slk-space-3);grid-template-columns:1fr}
+.slk-help-card{padding:var(--slk-space-4)}
+.slk-help-card h3{font-family:var(--slk-font-ui);font-weight:500;font-size:var(--slk-text-base);margin:0 0 4px}
+.slk-help-card p{margin:0;font:400 var(--slk-text-sm)/1.6 var(--slk-font-ui);color:var(--slk-color-muted)}
+
+/* -- dark CTA card ---------------------------------------------------------- */
+.slk-help-cta{background:var(--slk-color-ink);color:var(--slk-color-on-ink);border-radius:var(--slk-radius-card);padding:var(--slk-space-6)}
+.slk-help-cta h3{font-family:var(--slk-font-ui);font-weight:500;font-size:var(--slk-text-base);margin:0 0 6px}
+.slk-help-cta p{margin:0 0 var(--slk-space-4);font:300 var(--slk-text-sm)/1.6 var(--slk-font-ui);opacity:.75}
+.slk-help-cta .slk-btn--primary{background:var(--slk-color-on-ink);color:var(--slk-color-ink)}
+
+/* -- WhatsApp prompt -------------------------------------------------------- */
+.slk-help-wa{display:flex;align-items:center;gap:var(--slk-space-3);min-height:56px;padding:var(--slk-space-2) 10px var(--slk-space-2) var(--slk-space-4);text-decoration:none;color:inherit;box-shadow:var(--slk-shadow-lift)}
+.slk-help-wa__text{flex:1;font:500 var(--slk-text-sm)/1.35 var(--slk-font-ui)}
+.slk-help-wa__text small{display:block;font-weight:400;color:var(--slk-color-muted);font-size:var(--slk-text-xs)}
+.slk-help-wa__mark{flex:none;width:38px;height:38px;border-radius:50%;background:var(--slk-color-ink);color:var(--slk-color-on-ink);display:grid;place-items:center;font:600 12px var(--slk-font-ui)}
+
+/* -- FAQ category chips ----------------------------------------------------- */
+.slk-faq-tabs{display:flex;gap:var(--slk-space-2);flex-wrap:wrap;margin:0 0 var(--slk-space-4);padding:0;list-style:none}
+.slk-faq-tab{min-height:40px;border:1px solid rgba(35,34,32,.14);padding:0 var(--slk-space-4);background:var(--slk-glass-solid);border-radius:var(--slk-radius-pill);font:400 12px/1 var(--slk-font-ui);cursor:pointer;color:var(--slk-color-ink)}
+.slk-faq-tab[aria-pressed="true"]{background:var(--slk-color-ink);color:var(--slk-color-on-ink);border-color:transparent;font-weight:500}
+
+/* -- accordion --------------------------------------------------------------- */
+.slk-faq-group{padding:0 var(--slk-space-4)}
+.slk-faq-group + .slk-faq-group{margin-top:var(--slk-space-4)}
+.slk-faq-item{border-bottom:1px solid var(--slk-hairline)}
+.slk-faq-item:last-child{border-bottom:0}
+.slk-faq-item[hidden]{display:none}
+.slk-faq-item__trigger{width:100%;border:0;background:none;padding:var(--slk-space-4) 0;display:flex;justify-content:space-between;gap:var(--slk-space-3);align-items:center;cursor:pointer;color:var(--slk-color-ink);text-align:left;font:500 var(--slk-text-base)/1.4 var(--slk-font-ui)}
+.slk-faq-item__icon{flex:none;font-size:16px;font-weight:300;color:var(--slk-color-faint)}
+.slk-faq-item__panel{margin:0;font:400 var(--slk-text-sm)/1.65 var(--slk-font-ui);color:var(--slk-color-muted);padding:0 0 var(--slk-space-4)}
+.slk-faq-item__panel[hidden]{display:none}
+.slk-faq-item__panel a{color:var(--slk-color-ink)}
+
+@media (min-width:1000px){
+	.slk-help-hero h1{font-size:var(--slk-display-l)}
+	.slk-help-section h2{font-size:var(--slk-display-m)}
+	.slk-help-steps{grid-template-columns:repeat(3,1fr)}
+	.slk-help-cards{grid-template-columns:1fr 1fr}
+}
+CSS;
+
+		wp_add_inline_style( 'slk-child', $css );
+
+		wp_register_script( 'slk-help', '', array(), null, true );
+		wp_enqueue_script( 'slk-help' );
+
+		$js = <<<'JS'
+(function () {
+	document.addEventListener('click', function (e) {
+		var trigger = e.target.closest('.slk-faq-item__trigger');
+		if (trigger) {
+			var panel = document.getElementById(trigger.getAttribute('aria-controls'));
+			var open = trigger.getAttribute('aria-expanded') === 'true';
+			trigger.setAttribute('aria-expanded', open ? 'false' : 'true');
+			if (panel) { panel.hidden = open; }
+			var icon = trigger.querySelector('.slk-faq-item__icon');
+			if (icon) { icon.textContent = open ? '＋' : '−'; }
+			return;
+		}
+
+		var tab = e.target.closest('.slk-faq-tab');
+		if (tab) {
+			var list = tab.closest('.slk-faq-tabs');
+			if (!list) { return; }
+			Array.prototype.forEach.call(list.querySelectorAll('.slk-faq-tab'), function (t) {
+				t.setAttribute('aria-pressed', t === tab ? 'true' : 'false');
+			});
+			var target = tab.getAttribute('data-faq-target');
+			Array.prototype.forEach.call(document.querySelectorAll('.slk-faq-group'), function (group) {
+				group.hidden = target !== 'all' && group.getAttribute('data-faq-group') !== target;
+			});
+		}
+	});
+})();
+JS;
+
+		wp_add_inline_script( 'slk-help', $js );
+	},
+	31
+);
