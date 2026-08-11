@@ -1,0 +1,183 @@
+<?php
+/**
+ * Payment rules: COD handling fee, gateway order, Koko threshold.
+ *
+ * @package slk
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+final class SLK_Payments {
+
+	/** Rs. 150, from design/assets/sri-lanka-commerce.json. Whole rupees. */
+	public const COD_FEE = 150;
+
+	/** Koko / pay-in-3 appears from Rs. 10,000. */
+	public const KOKO_MIN = 10000;
+
+	public static function init(): void {
+		add_action( 'woocommerce_cart_calculate_fees', array( __CLASS__, 'cod_handling_fee' ), 20 );
+		add_filter( 'woocommerce_available_payment_gateways', array( __CLASS__, 'sort_and_gate' ), 20 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'record_cod_fee' ), 30, 2 );
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* COD handling fee                                                    */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Rs. 150, added only when cash on delivery is the selected method.
+	 *
+	 * The fee is stated up front in the design ("+ Rs. 150" on the COD option,
+	 * and a "COD handling" line in the summary), so it must appear in the total
+	 * the moment the shopper picks COD and disappear the moment they pick
+	 * anything else. WooCommerce reads the selection from the session, which
+	 * WC_AJAX::update_order_review writes from the posted form before it calls
+	 * calculate_totals() — so the only missing piece is a client-side trigger
+	 * for that AJAX call on payment-method change. Core does not ship one (it
+	 * only toggles the payment box), so we add it: assets/js/checkout.js.
+	 *
+	 * @param WC_Cart $cart Cart being totalled.
+	 */
+	public static function cod_handling_fee( $cart ) {
+		if ( ! $cart instanceof WC_Cart || $cart->is_empty() ) {
+			return;
+		}
+		if ( is_admin() && ! wp_doing_ajax() ) {
+			return;
+		}
+		if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+			return;
+		}
+		if ( ! $cart->needs_payment() ) {
+			return;
+		}
+
+		// Checkout only. The session remembers the last chosen method, so
+		// without this the fee would surface on the cart page before the
+		// shopper has chosen anything — and the design deliberately says there
+		// that COD handling is "shown before you place the order".
+		// WOOCOMMERCE_CHECKOUT is defined by both WC_AJAX::update_order_review
+		// and WC_Checkout::process_checkout.
+		if ( ! defined( 'WOOCOMMERCE_CHECKOUT' ) && ! ( function_exists( 'is_checkout' ) && is_checkout() ) ) {
+			return;
+		}
+
+		if ( 'cod' !== (string) WC()->session->get( 'chosen_payment_method' ) ) {
+			return;
+		}
+
+		$fee = SLK_Money::rupees( apply_filters( 'slk_cod_handling_fee', self::COD_FEE ) );
+		if ( $fee <= 0 ) {
+			return;
+		}
+
+		// Not taxable: it is a courier handling charge, not a sale of goods.
+		// Whole rupees in, whole rupees out — nothing here can introduce a
+		// fractional cent that would shift the amount string a gateway hashes.
+		$cart->add_fee( __( 'Cash on delivery handling', 'slk' ), $fee, false );
+	}
+
+	/**
+	 * Stamp the fee on the order so a later reconciliation (or the courier
+	 * remittance check) can tell the collected amount from the goods value
+	 * without re-deriving it from the fee lines.
+	 *
+	 * @param WC_Order $order Order under construction.
+	 * @param array    $data  Posted data.
+	 */
+	public static function record_cod_fee( $order, $data ) {
+		if ( ! $order instanceof WC_Order ) {
+			return;
+		}
+		if ( 'cod' !== (string) $order->get_payment_method() ) {
+			return;
+		}
+
+		$order->update_meta_data( '_slk_cod_fee', (string) SLK_Money::rupees( apply_filters( 'slk_cod_handling_fee', self::COD_FEE ) ) );
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Gateway order and availability                                      */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * COD first, then pay-now, then bank transfer, then BNPL — the order the
+	 * design puts them in, and the order that matches how this market buys.
+	 * Gateway IDs not in the list keep their relative position at the end.
+	 *
+	 * Koko is removed below its minimum cart value. Its absence is explained in
+	 * the design's copy rather than left silent, but that line is the theme's
+	 * to render; this only decides availability.
+	 *
+	 * @param array $gateways Available gateways, keyed by id.
+	 */
+	public static function sort_and_gate( $gateways ) {
+		if ( ! is_array( $gateways ) || empty( $gateways ) ) {
+			return $gateways;
+		}
+
+		// Koko threshold.
+		$total = self::cart_items_total();
+		if ( null !== $total ) {
+			$minimum = SLK_Money::rupees( apply_filters( 'slk_koko_minimum_total', self::KOKO_MIN ) );
+			if ( $total < $minimum ) {
+				foreach ( (array) apply_filters( 'slk_koko_gateway_ids', array( 'koko', 'kokopayments', 'koko_payment' ) ) as $koko_id ) {
+					unset( $gateways[ $koko_id ] );
+				}
+			}
+		}
+
+		$preferred = (array) apply_filters(
+			'slk_gateway_order',
+			array( 'cod', 'payhere', 'payhere_gateway', 'bacs', 'koko', 'kokopayments' )
+		);
+
+		$sorted = array();
+		foreach ( $preferred as $id ) {
+			if ( isset( $gateways[ $id ] ) ) {
+				$sorted[ $id ] = $gateways[ $id ];
+				unset( $gateways[ $id ] );
+			}
+		}
+
+		return $sorted + $gateways;
+	}
+
+	/**
+	 * Value of the goods in the cart, or null when there is no cart to read.
+	 *
+	 * Deliberately the cart CONTENTS total, not get_total(): the grand total is
+	 * still being assembled while gateways are resolved (fees and shipping both
+	 * depend on the chosen gateway), and reading it here invites a feedback
+	 * loop. "Over Rs. 10,000" in the design is about what is in the bag anyway,
+	 * not about what delivery costs. On the order-pay page and in the admin
+	 * there is no cart, and the gate is skipped rather than guessed.
+	 */
+	private static function cart_items_total(): ?float {
+		if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() ) {
+			return null;
+		}
+
+		return SLK_Money::round( (float) WC()->cart->get_cart_contents_total() + (float) WC()->cart->get_cart_contents_tax() );
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Recalculation trigger                                               */
+	/* ------------------------------------------------------------------ */
+
+	public static function enqueue(): void {
+		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() || is_order_received_page() ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'slk-checkout',
+			plugins_url( 'assets/js/checkout.js', SLK_CHECKOUT_FILE ),
+			array( 'jquery', 'wc-checkout' ),
+			SLK_CHECKOUT_VERSION,
+			true
+		);
+	}
+}

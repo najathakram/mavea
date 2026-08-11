@@ -1,7 +1,2208 @@
 /*
 Theme Name: SLK Child
 Template: blocksy
-Version: 0.1.0-scaffold
-Description: Child theme for the Sri Lanka sister store. Brand styling lands here after the naming and design gates.
+Version: 1.0.0
+Description: Porcelain Glass — child theme for the Sri Lanka store. Warm neutrals, frosted glass, Newsreader display, 280ms butter motion. Tokens and the component contract are copied verbatim from design/assets/; the WooCommerce + Blocksy mapping below is the only hand-written layer.
 Text Domain: slk
 */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILE MAP
+   1. TOKENS          — verbatim from design/assets/design-tokens.css
+   2. COMPONENTS      — verbatim from design/assets/components.css
+   3. MAPPING         — the system onto real WooCommerce 11.0.1 + Blocksy DOM
+   4. PRINT / MOTION  — tail
+
+   Rules this file is built under:
+   · No brand name is ever written here. The wordmark is text supplied by the
+     `slk_wordmark` filter and rendered by the header/footer partial; this file
+     only sizes and tracks it (see 3.2).
+   · No currency symbol is ever written here. Prices come from wc_price().
+   · No sale theatre. §3.8 deletes the sale badge and the struck price outright.
+   · Every colour/space/radius/duration is a token. No raw hex below §2.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. TOKENS — design/assets/design-tokens.css, verbatim
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* SL Dress — design tokens
+   Direction: Porcelain Glass (3a) — warm neutrals, frosted glass, soft depth.
+   Paste into local/themes/slk-child/style.css. Nothing outside this token set
+   should be hand-styled.
+   Wordmark is a single swappable asset: --slk-wordmark-font + /assets/wordmark.svg.
+*/
+
+:root {
+
+  /* ── Colour ───────────────────────────────────────────────────────────── */
+  /* Neutral system: the garments are the only colour on the page. */
+  --slk-color-ground:          #f2f0ec;  /* page ground (porcelain) */
+  --slk-color-ink:             #232220;  /* text, primary buttons — 13.8:1 on ground */
+  --slk-color-ink-soft:        #44413c;  /* long-form body */
+  --slk-color-muted:           #5f5c56;  /* secondary text — 5.6:1 on ground */
+  --slk-color-faint:           #8a867e;  /* meta/disabled only, never body copy */
+  --slk-color-on-ink:          #faf9f6;  /* text on ink fills */
+
+  /* Glass surfaces — always over blur(20-26px) saturate(1.4) */
+  --slk-glass:                 rgba(250,249,246,.55);
+  --slk-glass-solid:           rgba(255,255,255,.60); /* panels on the ground */
+  --slk-glass-edge:            rgba(255,255,255,.60); /* 1px border on all glass */
+  --slk-hairline:              rgba(35,34,32,.10);
+  --slk-field-border:          rgba(35,34,32,.14);
+
+  /* Status */
+  --slk-color-error:           #9a2820;
+  --slk-color-error-tint:      #f7e3e0;
+  --slk-color-success:         #1f5c33;
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
+  --slk-font-display: "Newsreader", Georgia, serif;   /* headlines, weight 300 */
+  --slk-font-ui:      "Archivo", system-ui, sans-serif; /* everything else */
+  --slk-wordmark-font: var(--slk-font-display);
+  --slk-wordmark-tracking: 0.26em;
+
+  --slk-text-xs:   11px;   /* meta, never below this */
+  --slk-text-sm:   12.5px;
+  --slk-text-base: 14.5px;
+  --slk-text-lg:   17px;
+  --slk-text-xl:   20px;
+  --slk-display-s: 24px;
+  --slk-display-m: 30px;
+  --slk-display-l: 40px;   /* desktop hero */
+
+  --slk-leading-tight: 1.12;
+  --slk-leading-body:  1.55;
+  --slk-track-label:   0.16em;  /* uppercase eyebrows */
+
+  /* ── Space ────────────────────────────────────────────────────────────── */
+  --slk-space-1:  4px;
+  --slk-space-2:  8px;
+  --slk-space-3:  12px;
+  --slk-space-4:  16px;   /* mobile gutter */
+  --slk-space-6:  24px;
+  --slk-space-8:  32px;
+  --slk-space-12: 48px;
+  --slk-space-16: 64px;   /* desktop section rhythm */
+
+  /* ── Shape ────────────────────────────────────────────────────────────── */
+  --slk-radius-card:  24px;  /* glass panels */
+  --slk-radius-tile:  20px;  /* image tiles */
+  --slk-radius-field: 16px;  /* inputs */
+  --slk-radius-pill:  999px; /* buttons, chips, docks */
+  --slk-blur:         22px;  /* backdrop-filter: blur(var(--slk-blur)) saturate(1.4) */
+  --slk-shadow-lift:  0 12px 30px rgba(35,34,32,.12);
+  --slk-shadow-float: 0 18px 44px rgba(35,34,32,.16);
+  --slk-shadow-press: 0 12px 26px rgba(35,34,32,.30);
+
+  /* ── Touch + motion ───────────────────────────────────────────────────── */
+  --slk-touch:        44px;  /* minimum hit target, 8px apart */
+  --slk-motion-fast:  150ms;
+  --slk-motion-base:  280ms;   /* the house feel: butter, not snap */
+  --slk-ease:         cubic-bezier(.22, 1, .36, 1);
+
+  /* ── Imagery ──────────────────────────────────────────────────────────── */
+  --slk-ratio-portrait: 3 / 4;  /* grid cards — never crops head or hem */
+  --slk-ratio-hero:     2 / 3;  /* PDP + hero, full silhouette */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --slk-motion-fast: 0ms; --slk-motion-base: 0ms; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. COMPONENTS — design/assets/components.css, verbatim
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* SL Dress — component layer
+   Porcelain Glass. Depends on assets/design-tokens.css (load it first).
+   Paste both into local/themes/slk-child/style.css. Nothing outside this
+   file should be hand-styled; extend here, not in the template.
+*/
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+body {
+  background: var(--slk-color-ground);
+  color: var(--slk-color-ink);
+  font-family: var(--slk-font-ui);
+  font-size: var(--slk-text-base);
+  line-height: var(--slk-leading-body);
+}
+h1, h2, h3 {
+  font-family: var(--slk-font-display);
+  font-weight: 300;
+  line-height: var(--slk-leading-tight);
+  letter-spacing: -0.01em;
+}
+.slk-eyebrow {
+  font: 500 var(--slk-text-xs)/1 var(--slk-font-ui);
+  letter-spacing: var(--slk-track-label);
+  text-transform: uppercase;
+  color: var(--slk-color-muted);
+}
+.slk-muted { color: var(--slk-color-muted); }
+
+:focus-visible {
+  outline: 2px solid var(--slk-color-ink);
+  outline-offset: 2px;
+}
+
+/* ── Glass ────────────────────────────────────────────────────────────── */
+/* Over imagery */
+.slk-glass {
+  background: var(--slk-glass);
+  backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: var(--slk-radius-card);
+  box-shadow: var(--slk-shadow-float);
+}
+/* Over the ground — no blur needed, raise the fill */
+.slk-panel {
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: var(--slk-radius-card);
+}
+.slk-panel--lifted { box-shadow: var(--slk-shadow-lift); }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.slk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--slk-space-2);
+  min-height: var(--slk-touch);
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--slk-radius-pill);
+  font: 500 13px/1 var(--slk-font-ui);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--slk-motion-base) var(--slk-ease),
+              box-shadow var(--slk-motion-base) var(--slk-ease),
+              background var(--slk-motion-base) var(--slk-ease);
+}
+.slk-btn--primary { background: var(--slk-color-ink); color: var(--slk-color-on-ink); }
+.slk-btn--primary:hover { transform: translateY(-2px); box-shadow: var(--slk-shadow-press); }
+.slk-btn--primary:active { transform: scale(0.97); box-shadow: none; }
+
+.slk-btn--secondary {
+  background: var(--slk-glass-solid);
+  border: 1px solid rgba(35,34,32,.16);
+  color: var(--slk-color-ink);
+}
+.slk-btn--secondary:hover { background: #fff; }
+.slk-btn--secondary:active { transform: scale(0.97); }
+
+.slk-btn--ghost {
+  background: none; padding: 0 10px; color: var(--slk-color-muted);
+  text-decoration: underline; text-underline-offset: 4px;
+}
+
+.slk-btn[disabled], .slk-btn--disabled {
+  opacity: .35; cursor: not-allowed; transform: none; box-shadow: none;
+}
+/* Loading — keep the button, swap the label; never hide it */
+.slk-btn--loading { cursor: wait; }
+.slk-btn--loading::before {
+  content: ""; width: 15px; height: 15px; border-radius: 50%;
+  border: 2px solid rgba(250,249,246,.35);
+  border-top-color: var(--slk-color-on-ink);
+  animation: slk-spin 700ms linear infinite;
+}
+@keyframes slk-spin { to { transform: rotate(360deg); } }
+
+.slk-btn--icon {
+  width: var(--slk-touch); height: var(--slk-touch);
+  padding: 0; border-radius: 50%;
+}
+
+/* ── Fields ───────────────────────────────────────────────────────────── */
+.slk-field { display: block; margin-bottom: var(--slk-space-3); }
+.slk-field > label {
+  display: block;
+  font: 500 12px/1 var(--slk-font-ui);
+  margin-bottom: 7px;
+}
+.slk-input, .slk-select, .slk-textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--slk-field-border);
+  background: #fff;
+  border-radius: var(--slk-radius-field);
+  padding: 0 16px;
+  font: 400 14px var(--slk-font-ui);
+  color: var(--slk-color-ink);
+  transition: border-color var(--slk-motion-base) var(--slk-ease);
+}
+.slk-textarea { padding: 14px 16px; line-height: 1.5; resize: vertical; }
+.slk-input:disabled {
+  background: rgba(35,34,32,.03);
+  border-color: rgba(35,34,32,.08);
+  color: #b5b1a9;
+}
+.slk-field--error > label { color: var(--slk-color-error); }
+.slk-field--error .slk-input,
+.slk-field--error .slk-select { border: 1.5px solid var(--slk-color-error); }
+.slk-field__error {
+  display: flex; gap: var(--slk-space-2); padding-top: var(--slk-space-2);
+  font: 400 12px/1.5 var(--slk-font-ui); color: var(--slk-color-error);
+}
+.slk-field__hint {
+  padding-top: 6px;
+  font: 400 11.5px/1.55 var(--slk-font-ui); color: var(--slk-color-faint);
+}
+/* Labels never collapse into placeholders — Sinhala and Tamil run longer. */
+
+/* ── Product card ─────────────────────────────────────────────────────── */
+.slk-card { display: block; text-decoration: none; color: inherit;
+  transition: transform 320ms var(--slk-ease); }
+.slk-card:hover { transform: translateY(-4px); }
+.slk-card__media {
+  aspect-ratio: var(--slk-ratio-portrait);
+  border-radius: var(--slk-radius-tile);
+  overflow: hidden;
+  box-shadow: var(--slk-shadow-lift);
+}
+.slk-card__media img { width: 100%; height: 100%; object-fit: cover; }
+.slk-card__name { font: 500 13.5px/1.4 var(--slk-font-ui); padding-top: 10px; }
+.slk-card__price { font: 400 13.5px/1.4 var(--slk-font-ui); color: var(--slk-color-muted); }
+.slk-swatches { display: flex; gap: 6px; padding-top: 7px; }
+.slk-swatch { width: 13px; height: 13px; border-radius: 50%; }
+
+/* Hijab card — colour-led, not silhouette-led */
+.slk-card--colour .slk-card__media {
+  aspect-ratio: 1; border-radius: 50%;
+}
+
+/* ── Size selector ────────────────────────────────────────────────────── */
+.slk-sizes { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--slk-space-2); }
+.slk-size {
+  min-height: 46px; border: 1px solid rgba(35,34,32,.16);
+  background: var(--slk-glass-solid); border-radius: var(--slk-radius-pill);
+  font: 500 13px/1 var(--slk-font-ui); cursor: pointer;
+  transition: background var(--slk-motion-base) var(--slk-ease);
+}
+.slk-size:hover { background: #fff; }
+.slk-size[aria-pressed="true"] { background: var(--slk-color-ink); color: var(--slk-color-on-ink); border-color: transparent; }
+/* Sold out stays visible and struck through — never hidden */
+.slk-size[disabled] {
+  color: #b5b1a9; background: none; border-color: rgba(35,34,32,.1);
+  cursor: not-allowed; position: relative; overflow: hidden;
+}
+.slk-size[disabled]::after {
+  content: ""; position: absolute; left: 8px; right: 8px; top: 50%;
+  height: 1px; background: rgba(35,34,32,.18);
+}
+
+/* ── Price ────────────────────────────────────────────────────────────── */
+/* Rs. 12,500 — prefix, space, comma thousands, zero decimals.
+   There is no compare-at, no strikethrough, no discount badge. If a
+   .slk-price--was ever appears in this file, something has gone wrong. */
+.slk-price { font: 500 20px/1 var(--slk-font-ui); }
+
+/* ── Feedback ─────────────────────────────────────────────────────────── */
+.slk-toast {
+  display: flex; align-items: center; gap: var(--slk-space-3);
+  padding: 14px 16px;
+  background: var(--slk-glass);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 20px;
+  box-shadow: var(--slk-shadow-lift);
+  font: 400 12.5px/1.45 var(--slk-font-ui);
+}
+.slk-toast--error {
+  background: var(--slk-color-error-tint);
+  border-color: rgba(154,40,32,.2);
+  color: #7a1f19;
+}
+.slk-skeleton { background: rgba(35,34,32,.06); border-radius: var(--slk-radius-tile); }
+/* Reserve the box: width/height declared on every img so nothing shifts. */
+
+/* ── Sheets & docks ───────────────────────────────────────────────────── */
+.slk-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: rgba(250,249,246,.92);
+  backdrop-filter: blur(30px) saturate(1.4);
+  -webkit-backdrop-filter: blur(30px) saturate(1.4);
+  border-top: 1px solid var(--slk-glass-edge);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -20px 50px rgba(35,34,32,.24);
+  transform: translateY(0);
+  transition: transform var(--slk-motion-base) var(--slk-ease);
+}
+.slk-sheet[hidden] { transform: translateY(100%); }
+.slk-sheet__grabber {
+  width: 38px; height: 4px; border-radius: 2px;
+  background: rgba(35,34,32,.18); margin: 10px auto 4px;
+}
+.slk-scrim { position: fixed; inset: 0; background: rgba(35,34,32,.30); }
+
+/* ── Order timeline ───────────────────────────────────────────────────── */
+.slk-step { display: flex; gap: var(--slk-space-4); }
+.slk-step__rail { display: flex; flex-direction: column; align-items: center; width: 26px; flex: none; }
+.slk-step__dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--slk-color-ink); color: var(--slk-color-on-ink);
+  font-size: 11px;
+}
+.slk-step__line { width: 2px; flex: 1; min-height: 26px; background: var(--slk-color-ink); }
+.slk-step--now .slk-step__dot {
+  background: #fff; border: 2px solid var(--slk-color-ink);
+}
+.slk-step--now .slk-step__dot::after {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--slk-color-ink);
+}
+.slk-step--todo .slk-step__dot { background: none; border: 1.5px solid rgba(35,34,32,.25); }
+.slk-step--todo .slk-step__line,
+.slk-step--now .slk-step__line { background: rgba(35,34,32,.14); }
+
+/* ── Touch & motion guarantees ────────────────────────────────────────── */
+.slk-btn, .slk-size, .slk-input, .slk-select, a[class*="slk-"] { min-height: var(--slk-touch); }
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. MAPPING — the system onto WooCommerce 11.0.1 + Blocksy
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Method notes, so the next person does not have to re-derive them:
+
+   · MOBILE FIRST. Everything outside a media query is the 390px design.
+     Desktop is a single breakpoint at 1000px, written literally in every
+     query because media conditions cannot read a custom property — that is a
+     CSS limitation, not a slip. 1000px is the only breakpoint in the file.
+   · SPECIFICITY, NOT !important. WooCommerce ships its rules at roughly
+     `.woocommerce ul.products li.product` weight. This file matches that
+     weight and wins on source order, because a child theme stylesheet is
+     enqueued after both woocommerce.css and Blocksy's own woo layer.
+     Every `!important` below carries a comment saying why it is unavoidable;
+     there are four reasons in total — the sale badge and struck price (brand
+     law), the screen-reader clip, the gallery opacity Woo sets inline, and
+     the print sheet.
+   · Blocksy is a real parent theme with a stable custom-property API. Where a
+     Blocksy internal class is targeted it is written so that a miss is a
+     no-op, never a broken layout.
+   · Class names come from the real templates in
+     design/_reference/woocommerce-templates/ — not from memory.
+   ─────────────────────────────────────────────────────────────────────── */
+
+
+/* ── 3.1 Foundations: ground, container, rhythm ───────────────────────── */
+
+/* NOTE: `html:root`, not `:root`, and the reason matters.
+   Blocksy prints its generated palette into an INLINE <style> in <head>, which
+   the browser sees AFTER this stylesheet. Its `:root { --theme-palette-color-7 }`
+   therefore beat an identical `:root` here on source order, and the page painted
+   Blocksy's stock #FAFBFC blue-grey instead of the porcelain ground — measured,
+   not guessed. `html:root` scores (0,1,1) against `:root`'s (0,1,0), so it wins
+   on specificity no matter where the inline block lands. That is why the whole
+   parent-theme bridge is bound here rather than fought rule-by-rule with
+   !important further down. */
+html:root {
+  /* Content column. 1140px is the design's desktop measure; the gutter is the
+     mobile 16px token. Blocksy reads its own variables for the boxed
+     container — setting them here keeps the parent theme and this file
+     agreeing on one number instead of fighting over two. */
+  --slk-container: 1140px;
+  --slk-gutter: var(--slk-space-4);
+
+  --theme-content-width: var(--slk-container);
+  --theme-normal-container-max-width: var(--slk-container);
+  --container-max-width: var(--slk-container);
+
+  /* Hand Blocksy the palette so its own components (comments, widgets,
+     pagination) land on brand instead of on its defaults. */
+  --theme-text-color: var(--slk-color-ink);
+  --theme-headings-color: var(--slk-color-ink);
+  --theme-link-initial-color: var(--slk-color-ink);
+  --theme-link-hover-color: var(--slk-color-muted);
+  --theme-border-color: var(--slk-hairline);
+  /* All eight slots are bound, not just the ones we obviously use. Blocksy
+     paints secondary surfaces (the page-title band, pagination, widget wells)
+     from slots 4-6; leaving those at stock values left a cold blue-grey band
+     sitting directly above the porcelain ground. Every slot resolves to a
+     Porcelain Glass token so no Blocksy surface can fall back to its defaults. */
+  --theme-palette-color-1: var(--slk-color-ink);
+  --theme-palette-color-2: var(--slk-color-ink-soft);
+  --theme-palette-color-3: var(--slk-color-muted);
+  --theme-palette-color-4: var(--slk-color-faint);
+  --theme-palette-color-5: var(--slk-hairline);
+  --theme-palette-color-6: var(--slk-color-ground);
+  --theme-palette-color-7: var(--slk-color-ground);
+  --theme-palette-color-8: var(--slk-color-on-ink);
+  --theme-font-family: var(--slk-font-ui);
+  --theme-button-background-initial-color: var(--slk-color-ink);
+  --theme-button-text-initial-color: var(--slk-color-on-ink);
+  --theme-button-border-radius: var(--slk-radius-pill);
+
+  /* Three literals the component layer in §2 already ships (the opaque white
+     surface, the disabled grey, the error ink) are named here so nothing in
+     §3 ever writes a raw hex. Alpha tints of ink and white stay written as
+     rgba() exactly as §2 writes them — same idiom, same values. */
+  --slk-color-white:        #fff;
+  --slk-color-disabled-ink: #b5b1a9;
+  --slk-color-error-ink:    #7a1f19;
+  /* Print only: a packing slip is greyscale by definition, not by palette. */
+  --slk-print-ink:  #000;
+  --slk-print-rule: #ccc;
+}
+
+/* Fonts: Newsreader 200–400 and Archivo 300–600 are enqueued from PHP
+   (inc/enqueue). The stacks in §1 degrade to Georgia / system-ui if that
+   enqueue is missing, so nothing here depends on the webfont arriving. */
+html { -webkit-text-size-adjust: 100%; }
+
+body,
+.site,
+#main-container,
+.ct-drawer-canvas {
+  /* The porcelain ground is the page, not a section. Blocksy paints its own
+     background on #main-container; clearing it lets body show through so the
+     glass panels have something warm to sit on. */
+  background-color: transparent;
+}
+body { background-color: var(--slk-color-ground); }
+
+body,
+.entry-content,
+.ct-container p {
+  font-family: var(--slk-font-ui);
+}
+
+/* Long-form body copy is ink-soft, not ink — §3 of the guidelines. */
+.entry-content p,
+.woocommerce-product-details__short-description p,
+.slk-prose p { color: var(--slk-color-ink-soft); }
+
+h1, h2, h3, h4,
+.woocommerce-products-header__title,
+.woocommerce-loop-product__title,
+.product_title,
+.woocommerce-order-details__title,
+.woocommerce-column__title,
+#order_review_heading,
+.cart_totals > h2 {
+  font-family: var(--slk-font-display);
+  font-weight: 300;
+  line-height: var(--slk-leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--slk-color-ink);
+}
+
+/* Content column. Applied to Blocksy's container and to WooCommerce's own
+   wrappers so a page renders correctly with or without Blocksy's markup. */
+.slk-container,
+.ct-container,
+.woocommerce-page .site-main > .woocommerce,
+.woocommerce > .woocommerce-notices-wrapper {
+  width: 100%;
+  max-width: var(--slk-container);
+  margin-inline: auto;
+  padding-inline: var(--slk-gutter);
+  box-sizing: border-box;
+}
+
+/* Section rhythm: 48px on mobile, 64px on desktop. One knob, used by every
+   page section so vertical spacing never drifts per template. */
+.slk-section { padding-block: var(--slk-space-12); }
+.slk-section + .slk-section { padding-block-start: 0; }
+.slk-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--slk-space-4);
+  margin-bottom: var(--slk-space-4);
+}
+.slk-section__head > h2 { font-size: var(--slk-display-s); margin: 0; }
+
+/* Images never overflow and never shift: every img must carry width/height
+   in markup; this only guarantees the box. */
+img, svg, video { max-width: 100%; height: auto; }
+
+/* Utility: hidden from sight, kept for screen readers. Matches WooCommerce's
+   own .screen-reader-text so both behave identically. */
+.slk-sr-only,
+.screen-reader-text {
+  position: absolute !important; /* required: must beat any display context */
+  width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
+@media (min-width: 1000px) {
+  .slk-section { padding-block: var(--slk-space-16); }
+  .slk-container,
+  .ct-container,
+  .woocommerce-page .site-main > .woocommerce { padding-inline: 0; }
+  .slk-section__head > h2 { font-size: var(--slk-display-m); }
+}
+
+
+/* ── 3.2 Header: the floating glass pill ──────────────────────────────── */
+/*
+   The header partial (owned by another agent) renders:
+     <header class="slk-header">
+       <div class="slk-header__inner">        <- the pill
+         <a class="slk-wordmark">…</a>        <- text from the slk_wordmark filter
+         <nav class="slk-nav">…</nav>
+         <div class="slk-header__actions">…</div>
+       </div>
+     </header>
+   On the home/PDP screens the pill floats over the hero image, so it is glass
+   with a real backdrop blur; on interior screens the same pill sits on the
+   porcelain ground where blur has nothing to sample, so the fill is raised
+   (.slk-header--solid). Both are the same component.
+*/
+.slk-header {
+  position: relative;
+  z-index: 20;
+  padding: var(--slk-space-3) var(--slk-gutter) 0;
+}
+.slk-header--over {
+  /* Over the hero: the pill overlays the image instead of pushing it down. */
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+}
+.slk-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--slk-space-4);
+  max-width: var(--slk-container);
+  margin-inline: auto;
+  padding: 5px 6px 5px var(--slk-space-4);
+  background: var(--slk-glass);
+  backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 28px;
+  box-shadow: 0 8px 28px rgba(35,34,32,.14);
+}
+.slk-header--solid .slk-header__inner {
+  background: rgba(250,249,246,.70);
+  box-shadow: 0 8px 28px rgba(35,34,32,.10);
+}
+
+/* The wordmark is TEXT. Never an image of a name, never a hardcoded string:
+   the partial echoes apply_filters('slk_wordmark', 'SL DRESS'). All this file
+   does is set the face, the tracking, and the optical-centre indent that
+   compensates for the trailing letter-space (guidelines §6). */
+/* `.site-title` is included because Blocksy does NOT route the site identity
+   through core's get_custom_logo() when no logo image is set — it prints its
+   own `span.site-title > a`, so the PHP filter on get_custom_logo never fires
+   and the name arrived correctly but set in Blocksy's bold Archivo at 700.
+   The TEXT is already ours (inc/wordmark.php filters option_blogname); this
+   gives it the setting. Measured on the running site, not assumed. */
+.slk-wordmark,
+.site-title,
+.site-title a {
+  font-family: var(--slk-wordmark-font);
+  font-weight: 300;
+  font-size: 19px;
+  line-height: 1;
+  letter-spacing: var(--slk-wordmark-tracking);
+  text-indent: var(--slk-wordmark-tracking);
+  text-transform: uppercase;
+  color: var(--slk-color-ink);
+  text-decoration: none;
+  min-width: 96px;              /* guidelines §6 minimum */
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--slk-touch); /* the wordmark is also the home link */
+}
+
+.slk-nav { display: none; }     /* mobile: navigation lives in the drawer */
+.slk-nav ul {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin: 0; padding: 0; list-style: none;
+}
+.slk-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--slk-touch);
+  padding: 14px 0;
+  font: 500 13px/1 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+  text-decoration: none;
+}
+.slk-nav .current-menu-item > a,
+.slk-nav [aria-current="page"] { box-shadow: inset 0 -2px 0 0 var(--slk-color-ink); }
+.slk-nav a:hover { color: var(--slk-color-muted); }
+
+.slk-header__actions { display: flex; align-items: center; gap: var(--slk-space-1); }
+.slk-header__actions > * { flex: none; }
+
+/* Round 44px icon buttons — search, menu, bag. 8px apart is satisfied by the
+   4px gap plus the 2px inner padding of each circle's hit area. */
+.slk-icon-btn {
+  width: var(--slk-touch); height: var(--slk-touch);
+  display: grid; place-items: center;
+  border: 0; border-radius: 50%;
+  background: none;
+  color: var(--slk-color-ink);
+  font: 500 12px/1 var(--slk-font-ui);
+  cursor: pointer;
+  transition: background var(--slk-motion-base) var(--slk-ease),
+              transform var(--slk-motion-base) var(--slk-ease);
+}
+.slk-icon-btn:hover { background: rgba(255,255,255,.6); }
+.slk-icon-btn:active { transform: scale(.92); }
+.slk-bag {
+  background: rgba(35,34,32,.9);
+  color: var(--slk-color-on-ink);
+}
+.slk-bag:hover { background: var(--slk-color-ink); transform: scale(1.06); }
+
+/* Blocksy fallback. If the site runs Blocksy's own header rather than the
+   child partial, give its middle row the same pill. Every declaration here is
+   inert when the selector does not match, so this cannot break a custom
+   header. */
+#header [data-row="middle"] > .ct-container {
+  background: var(--slk-glass);
+  backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 28px;
+  box-shadow: 0 8px 28px rgba(35,34,32,.14);
+  padding-inline: var(--slk-space-4);
+}
+#header [data-row] { background: transparent; }
+
+@media (min-width: 1000px) {
+  .slk-header { padding-block-start: 18px; }
+  .slk-header__inner {
+    padding: 6px 8px 6px var(--slk-space-6);
+    border-radius: 32px;
+  }
+  .slk-wordmark { font-size: 21px; }
+  .slk-nav { display: block; }
+  .slk-nav--drawer-only { display: none; }
+}
+
+
+/* ── 3.3 Footer ───────────────────────────────────────────────────────── */
+.slk-footer {
+  margin-top: var(--slk-space-12);
+  border-top: 1px solid var(--slk-hairline);
+  background: rgba(255,255,255,.4);
+}
+.slk-footer__inner {
+  max-width: var(--slk-container);
+  margin-inline: auto;
+  padding: var(--slk-space-8) var(--slk-gutter);
+  display: grid;
+  gap: var(--slk-space-6);
+}
+.slk-footer a {
+  color: var(--slk-color-ink-soft);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--slk-touch);
+  padding-block: 6px;
+}
+.slk-footer a:hover { color: var(--slk-color-ink); }
+.slk-footer__col > .slk-eyebrow { color: var(--slk-color-faint); display: block; margin-bottom: 10px; }
+.slk-footer__blurb { font: 400 12.5px/1.7 var(--slk-font-ui); color: var(--slk-color-muted); max-width: 34ch; }
+
+@media (min-width: 1000px) {
+  .slk-footer__inner {
+    grid-template-columns: 2fr 1fr 1fr 1.4fr;
+    gap: var(--slk-space-8);
+    padding-inline: 0;
+    padding-block: 44px 40px;
+  }
+}
+
+
+/* ── 3.4 Buttons: WooCommerce + core block buttons onto .slk-btn ──────── */
+/*
+   WooCommerce and WordPress emit five button flavours. All of them get the
+   .slk-btn geometry; the ink fill is reserved for the one real action on a
+   screen (add to bag, checkout, place order) so the page never has two
+   competing primaries.
+*/
+.woocommerce a.button,
+.woocommerce button.button,
+.woocommerce input.button,
+.woocommerce a.button.alt,
+.woocommerce button.button.alt,
+.woocommerce input.button.alt,
+.woocommerce #respond input#submit,
+.wp-element-button,
+.wp-block-button__link,
+.slk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--slk-space-2);
+  min-height: var(--slk-touch);
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--slk-radius-pill);
+  font: 500 13px/1 var(--slk-font-ui);
+  text-transform: none;
+  letter-spacing: 0;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--slk-motion-base) var(--slk-ease),
+              box-shadow var(--slk-motion-base) var(--slk-ease),
+              background var(--slk-motion-base) var(--slk-ease);
+}
+
+/* Secondary is the default: "Continue shopping", "Update cart", "Show more". */
+.woocommerce a.button,
+.woocommerce button.button,
+.woocommerce input.button,
+.woocommerce #respond input#submit {
+  background: var(--slk-glass-solid);
+  border: 1px solid rgba(35,34,32,.16);
+  color: var(--slk-color-ink);
+}
+.woocommerce a.button:hover,
+.woocommerce button.button:hover,
+.woocommerce input.button:hover,
+.woocommerce #respond input#submit:hover {
+  background: var(--slk-color-white);
+  color: var(--slk-color-ink);
+}
+.woocommerce a.button:active,
+.woocommerce button.button:active,
+.woocommerce input.button:active { transform: scale(.97); }
+
+/* Primary: ink. `.alt` is WooCommerce's own "this is the action" marker, and
+   the four named buttons below are the four moments that matter. */
+.woocommerce a.button.alt,
+.woocommerce button.button.alt,
+.woocommerce input.button.alt,
+.woocommerce button.single_add_to_cart_button,
+.woocommerce a.checkout-button,
+.woocommerce .wc-proceed-to-checkout a.checkout-button,
+.woocommerce #place_order,
+.wp-element-button,
+.wp-block-button__link {
+  background: var(--slk-color-ink);
+  border: 0;
+  color: var(--slk-color-on-ink);
+}
+.woocommerce a.button.alt:hover,
+.woocommerce button.button.alt:hover,
+.woocommerce input.button.alt:hover,
+.woocommerce button.single_add_to_cart_button:hover,
+.woocommerce a.checkout-button:hover,
+.woocommerce #place_order:hover,
+.wp-element-button:hover,
+.wp-block-button__link:hover {
+  background: var(--slk-color-ink);
+  color: var(--slk-color-on-ink);
+  transform: translateY(-2px);
+  box-shadow: var(--slk-shadow-press);
+}
+.woocommerce button.single_add_to_cart_button:active,
+.woocommerce a.checkout-button:active,
+.woocommerce #place_order:active { transform: scale(.97); box-shadow: none; }
+
+/* Disabled and in-flight states keep the label — never a spinner-only button. */
+.woocommerce .button[disabled],
+.woocommerce .button:disabled,
+.woocommerce .button.disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.woocommerce .button.loading { cursor: wait; opacity: .8; }
+.woocommerce .button.loading::after { content: none; } /* kill Woo's ::after glyph */
+
+/* The "already added" tick link that follows a loop add-to-cart. */
+.woocommerce a.added_to_cart {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--slk-touch);
+  padding-inline: 10px;
+  font: 500 12px/1 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* The three big full-width actions on mobile. */
+.woocommerce button.single_add_to_cart_button,
+.woocommerce .wc-proceed-to-checkout a.checkout-button,
+.woocommerce #place_order {
+  width: 100%;
+  min-height: 52px;
+  font-size: 14px;
+}
+
+
+/* ── 3.5 Notices → .slk-toast ─────────────────────────────────────────── */
+/*
+   Real markup (verified against the notices/ reference templates):
+     success → <div class="woocommerce-message" role="alert">
+     info    → <div class="woocommerce-info"    role="status">
+     error   → <ul  class="woocommerce-error"   role="alert"><li>…</li></ul>
+   Woo also injects a "View cart" .button inside the message, so the toast is
+   laid out as text + trailing action rather than a plain block.
+*/
+.woocommerce-notices-wrapper:empty { display: none; }
+
+.woocommerce-message,
+.woocommerce-info,
+.woocommerce-error,
+.woocommerce-noreviews,
+.woocommerce-thankyou-order-received {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--slk-space-3);
+  margin: 0 0 var(--slk-space-4);
+  padding: 14px var(--slk-space-4);
+  list-style: none;
+  background: var(--slk-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--slk-glass-edge);
+  border-top: 1px solid var(--slk-glass-edge); /* Woo ships a 3px accent top border */
+  border-radius: 20px;
+  box-shadow: var(--slk-shadow-lift);
+  font: 400 12.5px/1.45 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+}
+.woocommerce-message::before,
+.woocommerce-info::before,
+.woocommerce-error::before { content: none; } /* Woo's icon font glyphs */
+
+.woocommerce-error {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--slk-space-2);
+  background: var(--slk-color-error-tint);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgba(154,40,32,.2);
+  color: var(--slk-color-error-ink);
+}
+.woocommerce-error li { margin: 0; padding: 0; }
+.woocommerce-error li strong { font-weight: 500; }
+
+/* The action that rides inside a notice stays a small secondary pill and is
+   pushed to the end of the row. */
+.woocommerce-message .button,
+.woocommerce-info .button {
+  margin-inline-start: auto;
+  min-height: var(--slk-touch);
+  padding-inline: 18px;
+  font-size: 12px;
+}
+
+
+/* ── 3.6 Fields: WooCommerce form rows onto .slk-field ────────────────── */
+/*
+   woocommerce_form_field() renders:
+     <p class="form-row form-row-wide validate-required" id="billing_city_field">
+       <label for="billing_city">City <abbr class="required">*</abbr></label>
+       <span class="woocommerce-input-wrapper">
+         <input class="input-text" …>
+       </span>
+     </p>
+   The label is always present and always visible — placeholder-as-label is
+   forbidden (Sinhala/Tamil run 15–30% longer and would be truncated).
+*/
+.woocommerce form .form-row,
+.woocommerce-page form .form-row,
+.slk-field {
+  display: block;
+  margin: 0 0 var(--slk-space-3);
+  padding: 0;
+}
+.woocommerce form .form-row label,
+.woocommerce-page form .form-row label {
+  display: block;
+  font: 500 12px/1.35 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+  margin-bottom: 7px;
+}
+.woocommerce form .form-row label .optional,
+.woocommerce form .form-row .description {
+  color: var(--slk-color-faint);
+  font-weight: 400;
+}
+.woocommerce form .form-row abbr.required {
+  color: var(--slk-color-error);
+  text-decoration: none;
+  border: 0;
+}
+.woocommerce .woocommerce-input-wrapper { display: block; width: 100%; }
+
+.woocommerce form .form-row input.input-text,
+.woocommerce form .form-row textarea,
+.woocommerce form .form-row select,
+.woocommerce-page form .form-row input.input-text,
+.woocommerce-page form .form-row select,
+.woocommerce table.cart td.actions .coupon .input-text,
+.woocommerce .quantity input.qty,
+.woocommerce-ordering select,
+input[type="text"], input[type="email"], input[type="tel"],
+input[type="number"], input[type="password"], input[type="search"],
+select, textarea {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1px solid var(--slk-field-border);
+  background: var(--slk-color-white);
+  border-radius: var(--slk-radius-field);
+  padding: 0 var(--slk-space-4);
+  font: 400 14px/1.4 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+  transition: border-color var(--slk-motion-base) var(--slk-ease);
+}
+textarea,
+.woocommerce form .form-row textarea {
+  padding: 14px var(--slk-space-4);
+  line-height: 1.5;
+  min-height: 110px;
+  resize: vertical;
+}
+select {
+  /* Keep the native control — a custom dropdown would cost the keyboard and
+     screen-reader behaviour the platform gives for free. */
+  padding-inline: var(--slk-space-3);
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--slk-color-muted) 50%),
+                    linear-gradient(135deg, var(--slk-color-muted) 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(50% + 2px), calc(100% - 14px) calc(50% + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-inline-end: 38px;
+}
+input:hover, select:hover, textarea:hover { border-color: rgba(35,34,32,.28); }
+input:disabled, select:disabled, textarea:disabled {
+  background: rgba(35,34,32,.03);
+  border-color: rgba(35,34,32,.08);
+  color: var(--slk-color-disabled-ink);
+}
+
+/* Validation. Woo toggles .woocommerce-invalid / .woocommerce-validated on
+   the .form-row, not on the input. */
+.woocommerce form .form-row.woocommerce-invalid label { color: var(--slk-color-error); }
+.woocommerce form .form-row.woocommerce-invalid input.input-text,
+.woocommerce form .form-row.woocommerce-invalid select,
+.woocommerce form .form-row.woocommerce-invalid textarea {
+  border: 1.5px solid var(--slk-color-error);
+}
+.woocommerce form .form-row.woocommerce-validated input.input-text {
+  border-color: rgba(31,92,51,.45);
+}
+
+/* Checkboxes and radios: 44px row, real 18px control, never hidden. */
+.woocommerce form .form-row .input-checkbox,
+.woocommerce form .form-row .input-radio {
+  width: 18px; height: 18px;
+  min-height: 0;
+  accent-color: var(--slk-color-ink);
+  margin-inline-end: var(--slk-space-2);
+}
+.woocommerce form .form-row label.checkbox,
+.woocommerce-form__label-for-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--slk-space-2);
+  min-height: var(--slk-touch);
+  cursor: pointer;
+  font-weight: 400;
+}
+
+/* Select2 powers the checkout country/district pickers. Match the field
+   geometry so the row does not jump when JS upgrades the control. */
+.select2-container--default .select2-selection--single {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--slk-field-border);
+  border-radius: var(--slk-radius-field);
+  background: var(--slk-color-white);
+  padding-inline: var(--slk-space-3);
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 1.4;
+  padding: 0;
+  color: var(--slk-color-ink);
+  font: 400 14px var(--slk-font-ui);
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow { height: 46px; }
+.select2-dropdown {
+  border-color: var(--slk-field-border);
+  border-radius: var(--slk-radius-field);
+  overflow: hidden;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background: var(--slk-color-ink);
+  color: var(--slk-color-on-ink);
+}
+
+/* Focus is never removed — this restates the component rule against any
+   parent-theme reset that might land later in the cascade. */
+.woocommerce a:focus-visible,
+.woocommerce button:focus-visible,
+.woocommerce input:focus-visible,
+.woocommerce select:focus-visible,
+.woocommerce textarea:focus-visible,
+a:focus-visible, button:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--slk-color-ink);
+  outline-offset: 2px;
+}
+
+
+/* ── 3.7 Shop archive: header, controls, the product grid ─────────────── */
+
+.woocommerce-products-header {
+  padding-block: var(--slk-space-6) var(--slk-space-2);
+}
+.woocommerce-products-header__title.page-title {
+  font-size: 27px;
+  margin: 0;
+}
+.woocommerce .woocommerce-result-count {
+  margin: 0;
+  font: 400 11.5px/1.6 var(--slk-font-ui);
+  color: var(--slk-color-faint);
+}
+.woocommerce .woocommerce-ordering { margin: 0 0 var(--slk-space-4); }
+.woocommerce .woocommerce-ordering select {
+  width: auto;
+  min-width: 160px;
+  min-height: var(--slk-touch);
+  border-radius: var(--slk-radius-pill);
+  background-color: var(--slk-glass-solid);
+  font-size: 12.5px;
+}
+.woocommerce-breadcrumb {
+  padding-block: var(--slk-space-3) var(--slk-space-2);
+  font: 400 12px/1.5 var(--slk-font-ui);
+  color: var(--slk-color-faint);
+}
+.woocommerce-breadcrumb a { color: var(--slk-color-faint); text-decoration: none; }
+.woocommerce-breadcrumb a:hover { color: var(--slk-color-ink); }
+
+/*
+   ul.products / li.product → .slk-card.
+   WooCommerce ships this list as floated 48%-wide items with a clearfix;
+   all of that has to be unwound before grid can take over. `columns-N` is
+   ignored on purpose — the column count is a layout decision (2 on mobile,
+   3 in a filtered archive, 4 on a full-width home rail), not a shop setting.
+*/
+.woocommerce ul.products,
+.woocommerce-page ul.products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--slk-space-6) var(--slk-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.woocommerce ul.products::before,
+.woocommerce ul.products::after { content: none; display: none; }
+
+.woocommerce ul.products li.product,
+.woocommerce-page ul.products li.product {
+  float: none;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  transition: transform 320ms var(--slk-ease);
+}
+.woocommerce ul.products li.product:hover { transform: translateY(-4px); }
+.woocommerce ul.products li.product a { text-decoration: none; color: inherit; }
+
+/*
+   The 3:4 portrait box. The photography spec shoots every garment at 3:4 with
+   the head and the hem inside the frame, so `cover` on a 3:4 box is an
+   identity crop — it only bites if a 4:3 or square file is uploaded by
+   mistake, and then it crops the sides rather than the head or the hem. The
+   ratio lives on the image itself because WooCommerce's loop emits a bare
+   <img>; the two container selectors cover Blocksy's wrapper when it is
+   present, and are inert when it is not.
+*/
+.woocommerce ul.products li.product a img,
+.woocommerce ul.products li.product img.attachment-woocommerce_thumbnail,
+.woocommerce ul.products li.product .ct-image-container img,
+.woocommerce ul.products li.product .ct-media-container img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: var(--slk-ratio-portrait);
+  object-fit: cover;
+  object-position: 50% 50%;
+  margin: 0 0 10px;
+  border-radius: var(--slk-radius-tile);
+  box-shadow: var(--slk-shadow-lift);
+  background: rgba(35,34,32,.06); /* the skeleton while it decodes */
+}
+.woocommerce ul.products li.product .ct-image-container,
+.woocommerce ul.products li.product .ct-media-container {
+  aspect-ratio: var(--slk-ratio-portrait);
+  border-radius: var(--slk-radius-tile);
+  overflow: hidden;
+  box-shadow: var(--slk-shadow-lift);
+}
+.woocommerce ul.products li.product .ct-image-container img,
+.woocommerce ul.products li.product .ct-media-container img {
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.woocommerce ul.products li.product .woocommerce-loop-product__title,
+.woocommerce ul.products li.product h2 {
+  /* Card names are Archivo, not the display face: at 13.5px Newsreader 300
+     goes thin and grey against the photograph above it. */
+  font: 500 13.5px/1.4 var(--slk-font-ui);
+  letter-spacing: 0;
+  padding: 0;
+  margin: 0;
+  color: var(--slk-color-ink);
+}
+.woocommerce ul.products li.product .price {
+  display: block;
+  margin: 0;
+  font: 400 13.5px/1.4 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+}
+.woocommerce ul.products li.product .woocommerce-loop-category__title { font: 500 13.5px/1.4 var(--slk-font-ui); }
+.woocommerce ul.products li.product .star-rating { display: none; } /* no ratings in this design */
+
+/* Loop add-to-cart stays available but recedes — the card's job is to get her
+   to the product page, where size and colour are actually chosen. */
+.woocommerce ul.products li.product a.button {
+  margin-top: var(--slk-space-2);
+  padding-inline: 16px;
+  font-size: 12px;
+}
+
+/* Colour bubbles under a card (hijabs). Markup comes from the swatch partial;
+   the round-card variant is already defined in §2 as .slk-card--colour. */
+.woocommerce ul.products li.product .slk-swatches { padding-top: 7px; }
+
+.woocommerce nav.woocommerce-pagination { padding-block: var(--slk-space-8); text-align: center; }
+.woocommerce nav.woocommerce-pagination ul {
+  display: inline-flex;
+  gap: var(--slk-space-2);
+  border: 0;
+  margin: 0;
+}
+.woocommerce nav.woocommerce-pagination ul li { border: 0; margin: 0; overflow: visible; }
+.woocommerce nav.woocommerce-pagination ul li a,
+.woocommerce nav.woocommerce-pagination ul li span {
+  display: grid;
+  place-items: center;
+  min-width: var(--slk-touch);
+  min-height: var(--slk-touch);
+  padding: 0 var(--slk-space-3);
+  border-radius: var(--slk-radius-pill);
+  font: 500 13px/1 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+  background: var(--slk-glass-solid);
+  border: 1px solid rgba(35,34,32,.1);
+}
+.woocommerce nav.woocommerce-pagination ul li span.current {
+  background: var(--slk-color-ink);
+  color: var(--slk-color-on-ink);
+  border-color: transparent;
+}
+
+/* Sidebar filter panels on the desktop archive. */
+.slk-filters { display: grid; gap: var(--slk-space-3); }
+.slk-filters__group {
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 22px;
+  padding: var(--slk-space-6);
+}
+.slk-filters__group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  font: 400 13px/1.4 var(--slk-font-ui);
+  cursor: pointer;
+}
+.slk-chips { display: flex; flex-wrap: wrap; gap: var(--slk-space-2); padding-bottom: var(--slk-space-4); }
+.slk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--slk-space-2);
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--slk-color-ink);
+  color: var(--slk-color-on-ink);
+  font: 400 12px/1 var(--slk-font-ui);
+  cursor: pointer;
+}
+
+@media (min-width: 1000px) {
+  .woocommerce-products-header { padding-block: var(--slk-space-8) var(--slk-space-2); }
+  .woocommerce-products-header__title.page-title { font-size: 34px; }
+
+  .woocommerce ul.products,
+  .woocommerce-page ul.products {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--slk-space-6) var(--slk-space-6);
+  }
+  /* A filtered archive runs 3-up beside the 240px sidebar. */
+  .slk-shop-layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 34px;
+    align-items: start;
+  }
+  .slk-shop-layout > .slk-filters { position: sticky; top: var(--slk-space-6); }
+  .slk-shop-layout ul.products { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .woocommerce ul.products li.product:hover { transform: translateY(-5px); }
+  .woocommerce ul.products li.product .woocommerce-loop-product__title,
+  .woocommerce ul.products li.product .price { font-size: 14px; }
+}
+
+
+/* ── 3.8 BRAND LAW 3 — no sale theatre, anywhere ──────────────────────── */
+/*
+   loop/sale-flash.php and single-product/sale-flash.php both emit
+   <span class="onsale">. WooCommerce core, Blocksy, and most add-ons each
+   style it from a different selector, and some position it absolutely inside
+   the media box. `!important` is genuinely required here: this rule must win
+   every specificity contest, including ones written by plugins installed
+   later. A visible discount badge is a brand violation, not a style bug.
+
+   The struck compare-at price is the same story: Woo wraps it as
+   <del><span class="woocommerce-Price-amount">…</span></del><ins>…</ins>.
+   The <del> is removed from the accessibility tree along with the pixels, so
+   nothing announces a price that this store does not honour.
+
+   The real belt-and-braces fix lives in PHP (remove_action on
+   woocommerce_sale_flash and a woocommerce_get_price_html filter) and is
+   owned by another agent's inc/ file. This is the CSS half.
+*/
+span.onsale,
+.woocommerce span.onsale,
+.woocommerce ul.products li.product .onsale,
+.woocommerce div.product .onsale,
+.wc-block-components-product-sale-badge {
+  display: none !important;
+}
+
+.woocommerce del,
+.woocommerce .price del,
+.woocommerce ul.products li.product .price del,
+.woocommerce div.product p.price del,
+.woocommerce div.product span.price del {
+  display: none !important;
+}
+.woocommerce ins,
+.woocommerce .price ins {
+  text-decoration: none;
+  background: none;
+  font-weight: inherit;
+}
+
+/* "Only 2 left in stock" is scarcity theatre. wc_get_stock_html() prints it
+   inside <p class="stock in-stock">, which also carries the harmless "In
+   stock" string — hiding the element removes both, and neither is missed
+   because availability is implicit for anything purchasable. Out-of-stock
+   stays visible and honest. The text itself should be filtered out in PHP
+   (woocommerce_get_stock_html); this stops it reaching the eye meanwhile. */
+.woocommerce div.product p.stock.in-stock,
+.woocommerce div.product p.stock.available-on-backorder { display: none; }
+.woocommerce div.product p.stock.out-of-stock {
+  margin: var(--slk-space-3) 0 0;
+  font: 400 12.5px/1.5 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+}
+
+
+/* ── 3.9 Single product ───────────────────────────────────────────────── */
+
+.woocommerce div.product { margin: 0; }
+.woocommerce div.product > * { min-width: 0; }
+
+/* Gallery. Woo floats it at 48%; on mobile it is simply the full-bleed hero. */
+.woocommerce div.product div.images,
+.woocommerce div.product .woocommerce-product-gallery {
+  float: none;
+  width: 100%;
+  margin: 0 0 var(--slk-space-6);
+  opacity: 1 !important; /* required: Woo's gallery script sets opacity:0 inline
+                            and only clears it once flexslider boots. If that
+                            script is dequeued for weight, the product image
+                            would otherwise never appear. */
+}
+.woocommerce div.product .woocommerce-product-gallery__wrapper img {
+  border-radius: var(--slk-radius-tile);
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.woocommerce div.product .flex-control-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--slk-space-2);
+  margin: var(--slk-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.woocommerce div.product .flex-control-thumbs li { width: auto; float: none; margin: 0; }
+.woocommerce div.product .flex-control-thumbs img {
+  border-radius: 14px;
+  opacity: .6;
+  transition: opacity var(--slk-motion-base) var(--slk-ease);
+}
+.woocommerce div.product .flex-control-thumbs img.flex-active,
+.woocommerce div.product .flex-control-thumbs img:hover { opacity: 1; }
+.woocommerce div.product .woocommerce-product-gallery__trigger { display: none; } /* zoom lens is noise here */
+
+/* The buy panel. On mobile it is a plain column on the ground; from 1000px it
+   becomes the sticky glass panel from the desktop screens. */
+.woocommerce div.product .summary.entry-summary {
+  float: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--slk-gutter);
+  box-sizing: border-box;
+}
+.woocommerce div.product .product_title.entry-title {
+  font-family: var(--slk-font-display);
+  font-weight: 400;   /* the PDP name is the one place the display face runs at 400 */
+  font-size: var(--slk-display-s);
+  line-height: 1.15;
+  margin: 0 0 6px;
+  padding: 0;
+}
+.woocommerce div.product p.price,
+.woocommerce div.product span.price {
+  margin: 0 0 var(--slk-space-2);
+  font: 500 16px/1 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+}
+.woocommerce div.product .woocommerce-product-details__short-description {
+  font: 400 12.5px/1.6 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+  padding-top: 6px;
+}
+.woocommerce div.product .woocommerce-product-rating,
+.woocommerce div.product .product_meta { display: none; } /* no ratings, no SKU/tag dump */
+
+/* Variations. The real template renders a <table class="variations"> with
+   th.label / td.value; tables are the wrong box model for a 390px column, so
+   every part is set to block and the label sits above its control. */
+.woocommerce div.product form.cart { margin: var(--slk-space-6) 0 0; }
+.woocommerce div.product form.cart .variations {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--slk-space-4);
+  border: 0;
+}
+.woocommerce div.product form.cart .variations tbody,
+.woocommerce div.product form.cart .variations tr,
+.woocommerce div.product form.cart .variations th,
+.woocommerce div.product form.cart .variations td {
+  display: block;
+  width: auto;
+  padding: 0;
+  border: 0;
+  text-align: left;
+}
+.woocommerce div.product form.cart .variations tr + tr { margin-top: var(--slk-space-4); }
+.woocommerce div.product form.cart .variations th.label label {
+  font: 500 12px/1 var(--slk-font-ui);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--slk-color-muted);
+  margin-bottom: 10px;
+  display: block;
+}
+.woocommerce div.product form.cart .variations td.value { position: relative; }
+.woocommerce div.product form.cart .reset_variations {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--slk-touch);
+  font: 400 12px/1 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.woocommerce div.product form.cart .single_variation .price { font: 500 var(--slk-text-xl)/1 var(--slk-font-ui); }
+.woocommerce div.product form.cart .woocommerce-variation-availability { font-size: var(--slk-text-sm); color: var(--slk-color-muted); }
+
+/* Size buttons rendered by the swatch partial reuse .slk-sizes / .slk-size
+   from §2; colour bubbles reuse .slk-swatch at 44px inside the buy panel. */
+.slk-swatches--lg { gap: 10px; padding-top: 0; }
+.slk-swatches--lg .slk-swatch {
+  width: var(--slk-touch); height: var(--slk-touch);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform var(--slk-motion-base) var(--slk-ease);
+}
+.slk-swatches--lg .slk-swatch:hover { transform: scale(1.08); }
+.slk-swatches--lg .slk-swatch[aria-pressed="true"] { border-color: var(--slk-color-ink); }
+
+/* Quantity. The −/＋ stepper in the design needs two buttons that WooCommerce
+   does not print; this styles the native number field so the page is correct
+   with or without that partial. */
+.woocommerce div.product form.cart .quantity {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 var(--slk-space-2) 0 0;
+}
+.woocommerce .quantity input.qty {
+  width: 84px;
+  text-align: center;
+  padding-inline: var(--slk-space-2);
+  border-radius: var(--slk-radius-pill);
+}
+.slk-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(35,34,32,.05);
+  border-radius: 22px;
+}
+.slk-stepper button {
+  width: 40px; height: 40px;
+  border: 0; border-radius: 50%;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background var(--slk-motion-base) var(--slk-ease);
+}
+.slk-stepper button:hover { background: rgba(255,255,255,.8); }
+.slk-stepper output,
+.slk-stepper .slk-stepper__value { min-width: 16px; text-align: center; font: 500 13px var(--slk-font-ui); }
+
+.woocommerce div.product form.cart::before,
+.woocommerce div.product form.cart::after { content: none; }
+.woocommerce div.product form.cart .button { float: none; }
+
+/* Reassurance rows under the button ("cash on delivery", "exchange in 7 days"). */
+.slk-assurances { display: grid; gap: 10px; margin-top: var(--slk-space-6); }
+.slk-assurance {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--slk-space-3);
+  padding: 14px var(--slk-space-4);
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 18px;
+  font: 400 12.5px/1.55 var(--slk-font-ui);
+}
+
+/* Accordions (fabric & care, measurements, delivery) — a hairline stack, not
+   boxes. Works with <details> or with a button+panel partial. */
+.slk-accordion { border-top: 1px solid var(--slk-hairline); }
+.slk-accordion:last-of-type { border-bottom: 1px solid var(--slk-hairline); }
+.slk-accordion > summary,
+.slk-accordion__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  background: none;
+  font: 500 13.5px/1 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+  cursor: pointer;
+  list-style: none;
+}
+.slk-accordion > summary::-webkit-details-marker { display: none; }
+.slk-accordion__panel { padding-bottom: var(--slk-space-4); font: 400 12.5px/1.65 var(--slk-font-ui); color: var(--slk-color-ink-soft); }
+
+/* Woo's own tab strip, if tabs are used instead of the accordion partial. */
+.woocommerce div.product .woocommerce-tabs ul.tabs {
+  display: flex;
+  gap: var(--slk-space-2);
+  padding: 0;
+  margin: 0 0 var(--slk-space-4);
+  border: 0;
+}
+.woocommerce div.product .woocommerce-tabs ul.tabs::before { border: 0; }
+.woocommerce div.product .woocommerce-tabs ul.tabs li {
+  border: 1px solid rgba(35,34,32,.14);
+  border-radius: var(--slk-radius-pill);
+  background: var(--slk-glass-solid);
+  padding: 0;
+  margin: 0;
+}
+.woocommerce div.product .woocommerce-tabs ul.tabs li::before,
+.woocommerce div.product .woocommerce-tabs ul.tabs li::after { content: none; }
+.woocommerce div.product .woocommerce-tabs ul.tabs li a {
+  display: flex;
+  align-items: center;
+  min-height: var(--slk-touch);
+  padding-inline: 18px;
+  font: 500 12.5px/1 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+}
+.woocommerce div.product .woocommerce-tabs ul.tabs li.active {
+  background: var(--slk-color-ink);
+  border-color: transparent;
+}
+.woocommerce div.product .woocommerce-tabs ul.tabs li.active a { color: var(--slk-color-on-ink); }
+
+/* Related products keep the grid but a quieter heading. */
+.woocommerce div.product .related.products,
+.woocommerce div.product .up-sells.products { margin-top: var(--slk-space-12); }
+.woocommerce div.product .related.products > h2 { font-size: var(--slk-display-s); margin: 0 0 var(--slk-space-4); }
+
+/* The mobile buy dock. Rendered by the PDP partial as a sibling of the form
+   so the whole variation form is never made sticky. */
+.slk-buy-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
+  padding: 14px;
+  background: linear-gradient(to top, rgba(242,240,236,.97) 65%, rgba(242,240,236,0));
+}
+.slk-buy-dock__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--slk-space-2);
+  padding: 6px;
+  background: rgba(250,249,246,.72);
+  backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--slk-blur)) saturate(1.4);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 30px;
+  box-shadow: 0 14px 34px rgba(35,34,32,.18);
+}
+
+@media (min-width: 1000px) {
+  /*
+     Two columns with a sticky buy panel. Grid is used rather than Woo's
+     floats: every direct child of div.product spans both columns by default,
+     then the gallery and the summary are pulled into row 1. Tabs, related and
+     up-sells therefore keep flowing full width underneath without any extra
+     wrapper markup.
+  */
+  .woocommerce div.product {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    column-gap: 36px;
+    align-items: start;
+  }
+  .woocommerce div.product > * { grid-column: 1 / -1; }
+  .woocommerce div.product > div.images,
+  .woocommerce div.product > .woocommerce-product-gallery { grid-column: 1; grid-row: 1; margin-bottom: 0; }
+  .woocommerce div.product > .summary.entry-summary {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    position: sticky;
+    top: var(--slk-space-6);
+    padding: 30px;
+    background: var(--slk-glass-solid);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--slk-glass-edge);
+    border-radius: 28px;
+    box-shadow: 0 14px 40px rgba(35,34,32,.10);
+  }
+  .woocommerce div.product .product_title.entry-title { font-size: 28px; }
+  .woocommerce div.product p.price,
+  .woocommerce div.product span.price { font-size: 18px; }
+  .woocommerce div.product .woocommerce-product-gallery__wrapper img { border-radius: var(--slk-radius-card); }
+  .slk-buy-dock { position: static; padding: 0; background: none; }
+  .slk-buy-dock__inner { padding: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; }
+}
+
+
+/* ── 3.10 Cart ────────────────────────────────────────────────────────── */
+/*
+   The design shows cart lines as glass cards on BOTH mobile and desktop, not
+   as a table — so the shop_table is taken out of table layout entirely rather
+   than only below Woo's 768px responsive breakpoint. Each row becomes a small
+   grid: thumbnail | name+meta | line total, with the quantity control and
+   Remove on the second line.
+*/
+.woocommerce table.shop_table.cart,
+.woocommerce table.shop_table.cart thead,
+.woocommerce table.shop_table.cart tbody,
+.woocommerce table.shop_table.cart tr,
+.woocommerce table.shop_table.cart td,
+.woocommerce table.shop_table.cart th {
+  display: block;
+  width: auto;
+  border: 0;
+  padding: 0;
+  text-align: left;
+}
+.woocommerce table.shop_table.cart { border-collapse: separate; margin: 0; }
+.woocommerce table.shop_table.cart thead { display: none; } /* column headers are meaningless once rows are cards */
+.woocommerce table.shop_table.cart tbody { display: grid; gap: var(--slk-space-3); }
+
+.woocommerce table.shop_table.cart tr.woocommerce-cart-form__cart-item {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "thumb name  total"
+    "thumb qty   remove";
+  align-items: start;
+  gap: var(--slk-space-2) var(--slk-space-3);
+  padding: var(--slk-space-3);
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 22px;
+}
+.woocommerce table.shop_table.cart td.product-thumbnail { grid-area: thumb; }
+.woocommerce table.shop_table.cart td.product-thumbnail img {
+  width: 86px;
+  height: auto;
+  aspect-ratio: var(--slk-ratio-portrait);
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+.woocommerce table.shop_table.cart td.product-name {
+  grid-area: name;
+  font: 500 13.5px/1.35 var(--slk-font-ui);
+}
+.woocommerce table.shop_table.cart td.product-name a { color: var(--slk-color-ink); text-decoration: none; }
+.woocommerce table.shop_table.cart td.product-name dl.variation,
+.woocommerce table.shop_table.cart td.product-name .variation {
+  margin: 3px 0 0;
+  font: 400 12px/1.5 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+}
+.woocommerce table.shop_table.cart td.product-name dl.variation dt,
+.woocommerce table.shop_table.cart td.product-name dl.variation dd {
+  display: inline;
+  margin: 0;
+  float: none;
+}
+.woocommerce table.shop_table.cart td.product-name dl.variation dd + dt::before { content: " · "; }
+.woocommerce table.shop_table.cart td.product-name dl.variation p { display: inline; margin: 0; }
+
+/* Unit price is hidden and the LINE TOTAL is shown in its place. For a
+   quantity of one they are the same number (which is what the mockup shows);
+   for more than one, the total is the honest figure and the only one that
+   reconciles with the summary panel below. */
+.woocommerce table.shop_table.cart td.product-price { display: none; }
+.woocommerce table.shop_table.cart td.product-subtotal {
+  grid-area: total;
+  justify-self: end;
+  font: 500 13.5px/1.35 var(--slk-font-ui);
+  white-space: nowrap;
+}
+.woocommerce table.shop_table.cart td.product-quantity { grid-area: qty; align-self: end; }
+.woocommerce table.shop_table.cart td.product-remove {
+  grid-area: remove;
+  align-self: end;
+  justify-self: end;
+}
+/* Woo's remove control is a 1em "×" link — far under the 44px floor. */
+.woocommerce table.shop_table.cart td.product-remove a.remove {
+  display: grid;
+  place-items: center;
+  width: var(--slk-touch);
+  height: var(--slk-touch);
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--slk-color-faint);
+  background: none;
+  text-decoration: none;
+}
+.woocommerce table.shop_table.cart td.product-remove a.remove:hover {
+  background: rgba(35,34,32,.06);
+  color: var(--slk-color-error);
+}
+
+/* The actions row (coupon + update cart). Coupons are not sale theatre in
+   themselves, but if the shop decides to drop them the switch is
+   `woocommerce_coupons_enabled`, not display:none here. */
+.woocommerce table.shop_table.cart td.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--slk-space-2);
+  align-items: center;
+  padding-top: var(--slk-space-4);
+}
+.woocommerce table.shop_table.cart td.actions .coupon {
+  display: flex;
+  gap: var(--slk-space-2);
+  flex: 1 1 260px;
+}
+.woocommerce table.shop_table.cart td.actions .coupon .input-text { flex: 1; min-width: 0; }
+.woocommerce table.shop_table.cart td.actions .button { flex: none; }
+
+.woocommerce .cart-collaterals { width: 100%; float: none; margin-top: var(--slk-space-6); }
+.woocommerce .cart-collaterals .cart_totals { width: 100%; float: none; }
+.woocommerce .cart_totals > h2 { font-size: var(--slk-text-lg); margin: 0 0 var(--slk-space-3); }
+.woocommerce .cart_totals table.shop_table,
+.woocommerce .cart_totals table.shop_table tbody,
+.woocommerce .cart_totals table.shop_table tr,
+.woocommerce .cart_totals table.shop_table th,
+.woocommerce .cart_totals table.shop_table td {
+  display: block;
+  width: auto;
+  border: 0;
+  padding: 0;
+  text-align: left;
+}
+.woocommerce .cart_totals table.shop_table { margin: 0; border-collapse: separate; }
+.woocommerce .cart_totals table.shop_table tr {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--slk-space-4);
+  font: 400 13px/2 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+}
+.woocommerce .cart_totals table.shop_table tr th { font-weight: 400; }
+.woocommerce .cart_totals table.shop_table tr td { color: var(--slk-color-ink); text-align: right; }
+.woocommerce .cart_totals table.shop_table tr.order-total {
+  margin-top: var(--slk-space-2);
+  padding-top: var(--slk-space-2);
+  border-top: 1px solid var(--slk-hairline);
+  font: 500 15px/2.4 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+}
+.woocommerce .cart_totals .woocommerce-shipping-destination,
+.woocommerce .cart_totals .shipping-calculator-button { font-size: var(--slk-text-sm); color: var(--slk-color-faint); }
+.woocommerce .wc-proceed-to-checkout { padding: var(--slk-space-4) 0 0; }
+
+/* The summary itself is one glass panel wrapping totals + checkout button. */
+.woocommerce .cart_totals,
+.woocommerce-cart .cart-collaterals .cart_totals {
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: 22px;
+  padding: 18px;
+  box-sizing: border-box;
+}
+.woocommerce .cart-collaterals .cross-sells { display: none; } /* no upsell rail in this design */
+
+.woocommerce .return-to-shop { padding-top: var(--slk-space-4); }
+.woocommerce .cart-empty {
+  font-family: var(--slk-font-display);
+  font-weight: 300;
+  font-size: var(--slk-display-s);
+  padding-block: var(--slk-space-8) var(--slk-space-4);
+}
+
+@media (min-width: 1000px) {
+  /* Lines left, sticky summary right — matching the desktop cart screen. */
+  .woocommerce-cart .site-main .woocommerce,
+  .woocommerce-cart .entry-content > .woocommerce {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    column-gap: var(--slk-space-8);
+    align-items: start;
+  }
+  .woocommerce-cart .woocommerce > * { grid-column: 1 / -1; }
+  .woocommerce-cart .woocommerce > form.woocommerce-cart-form { grid-column: 1; grid-row: 2; }
+  .woocommerce-cart .woocommerce > .cart-collaterals {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 0;
+    position: sticky;
+    top: var(--slk-space-6);
+  }
+  .woocommerce table.shop_table.cart tr.woocommerce-cart-form__cart-item {
+    grid-template-columns: 110px minmax(0, 1fr) auto;
+    gap: var(--slk-space-3) var(--slk-space-6);
+    padding: var(--slk-space-4);
+    border-radius: var(--slk-radius-card);
+  }
+  .woocommerce table.shop_table.cart td.product-thumbnail img { width: 110px; border-radius: var(--slk-radius-field); }
+  .woocommerce table.shop_table.cart td.product-name,
+  .woocommerce table.shop_table.cart td.product-subtotal { font-size: 15px; }
+  .woocommerce .cart_totals { padding: 26px; border-radius: 26px; box-shadow: 0 14px 40px rgba(35,34,32,.10); }
+  .woocommerce .cart_totals table.shop_table tr.order-total { font-size: 16px; }
+}
+
+
+/* ── 3.11 Checkout ────────────────────────────────────────────────────── */
+/*
+   form-checkout.php children, in DOM order:
+     .woocommerce-NoticeGroup-checkout (injected by checkout.js)
+     #customer_details.col2-set  →  .col-1 (billing) + .col-2 (shipping)
+     #order_review_heading
+     #order_review.woocommerce-checkout-review-order
+   Each fieldset group becomes a numbered glass panel; the review order is the
+   sticky summary on the right at desktop.
+*/
+.woocommerce-checkout .checkout.woocommerce-checkout { margin: 0; }
+
+.woocommerce-checkout #customer_details.col2-set,
+.woocommerce-checkout #customer_details {
+  display: grid;
+  gap: var(--slk-space-3);
+  width: 100%;
+  float: none;
+}
+.woocommerce-checkout #customer_details .col-1,
+.woocommerce-checkout #customer_details .col-2 {
+  width: 100%;
+  float: none;
+  margin: 0;
+}
+.woocommerce-checkout #customer_details::before,
+.woocommerce-checkout #customer_details::after { content: none; }
+
+.woocommerce-checkout .woocommerce-billing-fields,
+.woocommerce-checkout .woocommerce-shipping-fields,
+.woocommerce-checkout .woocommerce-additional-fields,
+.woocommerce-checkout #order_review,
+.woocommerce-checkout #payment {
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: var(--slk-radius-card);
+  padding: var(--slk-space-6) 18px;
+  box-sizing: border-box;
+}
+.woocommerce-checkout .woocommerce-shipping-fields,
+.woocommerce-checkout .woocommerce-additional-fields { margin-top: var(--slk-space-3); }
+
+/* Group headings become the "1 · You / 2 · Where / 3 · Paying" eyebrows.
+   The number itself is content and is supplied by the template's heading
+   text, not generated here. */
+.woocommerce-checkout .woocommerce-billing-fields > h3,
+.woocommerce-checkout .woocommerce-shipping-fields > h3,
+.woocommerce-checkout .woocommerce-additional-fields > h3,
+.woocommerce-checkout #order_review_heading {
+  font: 500 11px/1 var(--slk-font-ui);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--slk-color-muted);
+  margin: 0 0 var(--slk-space-4);
+}
+.woocommerce-checkout #order_review_heading { padding-top: var(--slk-space-3); }
+
+/* Two-up rows where the design pairs them (city / district). form-row-first
+   and -last are Woo's own halving classes. */
+.woocommerce form .form-row-first,
+.woocommerce form .form-row-last {
+  width: 100%;
+  float: none;
+  margin-right: 0;
+}
+.woocommerce form .form-row-wide { width: 100%; }
+
+/* Payment methods: radio cards, cash on delivery first and selected. */
+.woocommerce-checkout #payment { background: none; border: 0; padding: 0; }
+.woocommerce-checkout #payment ul.payment_methods {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 10px;
+}
+.woocommerce-checkout #payment ul.payment_methods li {
+  margin: 0;
+  padding: var(--slk-space-4);
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-field-border);
+  border-radius: 18px;
+  transition: background var(--slk-motion-base) var(--slk-ease),
+              border-color var(--slk-motion-base) var(--slk-ease);
+}
+.woocommerce-checkout #payment ul.payment_methods li:hover { background: var(--slk-color-white); }
+.woocommerce-checkout #payment ul.payment_methods li:has(input:checked) {
+  border: 2px solid var(--slk-color-ink);
+  background: var(--slk-color-white);
+  padding: 15px; /* 1px less to absorb the extra border and hold the box size */
+}
+.woocommerce-checkout #payment ul.payment_methods li label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--slk-touch);
+  font: 500 13.5px/1.3 var(--slk-font-ui);
+  cursor: pointer;
+  margin: 0;
+}
+.woocommerce-checkout #payment ul.payment_methods li img { max-height: 22px; margin-inline-start: auto; }
+.woocommerce-checkout #payment div.payment_box {
+  margin: var(--slk-space-2) 0 0 30px;
+  padding: 0;
+  background: none;
+  font: 400 12px/1.6 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+}
+.woocommerce-checkout #payment div.payment_box::before { content: none; } /* Woo's arrow tail */
+.woocommerce-checkout #payment .woocommerce-privacy-policy-text,
+.woocommerce-checkout #payment .woocommerce-terms-and-conditions-wrapper {
+  font: 400 11.5px/1.6 var(--slk-font-ui);
+  color: var(--slk-color-faint);
+  padding-top: var(--slk-space-3);
+}
+.woocommerce-checkout #payment .form-row.place-order { padding: var(--slk-space-4) 0 0; margin: 0; }
+
+/* Review-order table → summary panel rows. */
+.woocommerce-checkout table.woocommerce-checkout-review-order-table,
+.woocommerce-checkout table.woocommerce-checkout-review-order-table thead,
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tbody,
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tfoot,
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tr,
+.woocommerce-checkout table.woocommerce-checkout-review-order-table th,
+.woocommerce-checkout table.woocommerce-checkout-review-order-table td {
+  display: block;
+  width: auto;
+  border: 0;
+  padding: 0;
+  text-align: left;
+}
+.woocommerce-checkout table.woocommerce-checkout-review-order-table { margin: 0; border-collapse: separate; }
+.woocommerce-checkout table.woocommerce-checkout-review-order-table thead { display: none; }
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tr {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--slk-space-3);
+  font: 400 12.5px/1.9 var(--slk-font-ui);
+  color: var(--slk-color-muted);
+}
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tbody tr {
+  padding-bottom: var(--slk-space-2);
+  color: var(--slk-color-ink);
+}
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tbody tr:last-child {
+  border-bottom: 1px solid var(--slk-hairline);
+  padding-bottom: var(--slk-space-4);
+  margin-bottom: var(--slk-space-2);
+}
+.woocommerce-checkout table.woocommerce-checkout-review-order-table td.product-name { flex: 1; font-weight: 400; }
+.woocommerce-checkout table.woocommerce-checkout-review-order-table .product-quantity { color: var(--slk-color-faint); }
+.woocommerce-checkout table.woocommerce-checkout-review-order-table td.product-total,
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tfoot td { text-align: right; white-space: nowrap; color: var(--slk-color-ink); }
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tfoot tr.order-total {
+  margin-top: var(--slk-space-2);
+  padding-top: var(--slk-space-2);
+  border-top: 1px solid var(--slk-hairline);
+  font: 500 15px/2.4 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+}
+
+/* Coupon toggle + login prompt sit above the form (they are printed on
+   woocommerce_before_checkout_form, outside form.checkout). */
+.woocommerce-checkout .woocommerce-form-coupon-toggle,
+.woocommerce-checkout form.checkout_coupon,
+.woocommerce-checkout form.woocommerce-form-login {
+  margin-bottom: var(--slk-space-3);
+}
+.woocommerce-checkout form.checkout_coupon,
+.woocommerce-checkout form.woocommerce-form-login {
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: var(--slk-radius-card);
+  padding: var(--slk-space-4);
+}
+
+@media (min-width: 1000px) {
+  /*
+     Explicit three-row track so the sticky summary has somewhere to travel:
+     row 1 is reserved for the injected notice group (zero height when absent
+     because row-gap is 0 and spacing is carried by margins), #customer_details
+     spans rows 2–3 in column 1, and #order_review sits in the 1fr row 3 of
+     column 2. Because that row absorbs the height of the spanning details
+     column, the panel has a taller containing block than itself and `sticky`
+     actually has room to work.
+  */
+  .woocommerce-checkout form.checkout.woocommerce-checkout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    grid-template-rows: max-content max-content 1fr;
+    column-gap: var(--slk-space-8);
+    row-gap: 0;
+    align-items: start;
+  }
+  .woocommerce-checkout form.checkout > .woocommerce-NoticeGroup { grid-column: 1 / -1; grid-row: 1; }
+  .woocommerce-checkout form.checkout > #customer_details { grid-column: 1; grid-row: 2 / span 2; }
+  .woocommerce-checkout form.checkout > #order_review_heading { grid-column: 2; grid-row: 2; margin-top: 0; }
+  .woocommerce-checkout form.checkout > #order_review {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: start;
+    position: sticky;
+    top: var(--slk-space-6);
+    padding: 26px;
+    border-radius: 26px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 14px 40px rgba(35,34,32,.10);
+  }
+  .woocommerce-checkout .woocommerce-billing-fields,
+  .woocommerce-checkout .woocommerce-shipping-fields,
+  .woocommerce-checkout .woocommerce-additional-fields { padding: 28px; border-radius: 26px; }
+  /* Paired half-width rows only make sense once there is room for them. */
+  .woocommerce form .form-row-first,
+  .woocommerce form .form-row-last { width: calc(50% - (var(--slk-space-3) / 2)); float: left; }
+  .woocommerce form .form-row-first { margin-right: var(--slk-space-3); }
+  .woocommerce form .form-row-wide { clear: both; }
+  .woocommerce-checkout #payment ul.payment_methods li { padding: 18px; border-radius: 20px; }
+  .woocommerce-checkout #payment ul.payment_methods li:has(input:checked) { padding: 17px; }
+  .woocommerce-checkout table.woocommerce-checkout-review-order-table tfoot tr.order-total { font-size: 16px; }
+}
+
+
+/* ── 3.12 Order received & account ────────────────────────────────────── */
+.woocommerce-order { padding-block: var(--slk-space-6); }
+.woocommerce-order .woocommerce-thankyou-order-received {
+  font-family: var(--slk-font-display);
+  font-weight: 300;
+  font-size: 28px;
+  line-height: 1.15;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  display: block;
+  text-align: center;
+}
+.woocommerce ul.woocommerce-order-overview.order_details {
+  display: grid;
+  gap: var(--slk-space-4);
+  margin: var(--slk-space-6) 0;
+  padding: 22px 20px;
+  list-style: none;
+  background: var(--slk-glass-solid);
+  border: 1px solid var(--slk-glass-edge);
+  border-radius: var(--slk-radius-card);
+}
+.woocommerce ul.woocommerce-order-overview.order_details li {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  float: none;
+  font: 500 11px/1 var(--slk-font-ui);
+  letter-spacing: var(--slk-track-label);
+  text-transform: uppercase;
+  color: var(--slk-color-muted);
+}
+.woocommerce ul.woocommerce-order-overview.order_details li strong {
+  display: block;
+  margin-top: 6px;
+  font: 500 13px/1.4 var(--slk-font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--slk-color-ink);
+}
+.woocommerce table.woocommerce-table--order-details,
+.woocommerce table.woocommerce-table--order-details th,
+.woocommerce table.woocommerce-table--order-details td {
+  border: 0;
+  padding: 10px 0;
+  font: 400 12.5px/1.5 var(--slk-font-ui);
+}
+.woocommerce table.woocommerce-table--order-details { width: 100%; border-collapse: collapse; }
+.woocommerce table.woocommerce-table--order-details tfoot tr:last-child td,
+.woocommerce table.woocommerce-table--order-details tfoot tr:last-child th {
+  border-top: 1px solid var(--slk-hairline);
+  font-weight: 500;
+  font-size: 15px;
+}
+.woocommerce .woocommerce-customer-details address {
+  border: 1px solid var(--slk-glass-edge);
+  background: var(--slk-glass-solid);
+  border-radius: var(--slk-radius-card);
+  padding: var(--slk-space-4);
+  font-style: normal;
+  font: 400 13px/1.7 var(--slk-font-ui);
+}
+
+/* My-account nav as a pill rail. */
+.woocommerce-account .woocommerce-MyAccount-navigation ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--slk-space-2);
+  list-style: none;
+  margin: 0 0 var(--slk-space-6);
+  padding: 0;
+}
+.woocommerce-account .woocommerce-MyAccount-navigation li a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--slk-touch);
+  padding-inline: 18px;
+  border-radius: var(--slk-radius-pill);
+  background: var(--slk-glass-solid);
+  border: 1px solid rgba(35,34,32,.1);
+  font: 500 12.5px/1 var(--slk-font-ui);
+  color: var(--slk-color-ink);
+  text-decoration: none;
+}
+.woocommerce-account .woocommerce-MyAccount-navigation li.is-active a {
+  background: var(--slk-color-ink);
+  color: var(--slk-color-on-ink);
+  border-color: transparent;
+}
+
+@media (min-width: 1000px) {
+  .woocommerce ul.woocommerce-order-overview.order_details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .woocommerce-account .woocommerce-MyAccount-navigation { float: none; width: auto; }
+  .woocommerce-account .woocommerce-MyAccount-content { float: none; width: auto; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. PRINT & REDUCED MOTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  /* §2 already flattens every duration. Position:sticky is not motion, but a
+     panel that re-anchors while the page scrolls reads as motion to a
+     vestibular-sensitive reader, so the sticky panels are released too. */
+  .woocommerce div.product > .summary.entry-summary,
+  .woocommerce-checkout form.checkout > #order_review,
+  .woocommerce-cart .woocommerce > .cart-collaterals,
+  .slk-shop-layout > .slk-filters,
+  .slk-buy-dock { position: static; }
+  .woocommerce ul.products li.product:hover,
+  .slk-card:hover { transform: none; }
+}
+
+@media print {
+  /* Order confirmations and packing slips are the only things printed here.
+     Glass, blur and shadow cost ink and print as grey mud. */
+  body { background: var(--slk-color-white); color: var(--slk-print-ink); }
+  .slk-header, .slk-footer, .slk-buy-dock, .slk-sheet, .slk-scrim,
+  .woocommerce-breadcrumb, .woocommerce nav.woocommerce-pagination,
+  .woocommerce .related.products, .woocommerce .up-sells,
+  .woocommerce-MyAccount-navigation { display: none; }
+
+  .slk-glass, .slk-panel, .slk-toast,
+  .woocommerce .cart_totals,
+  .woocommerce-checkout #order_review,
+  .woocommerce-checkout .woocommerce-billing-fields,
+  .woocommerce-checkout .woocommerce-shipping-fields,
+  .woocommerce ul.woocommerce-order-overview.order_details,
+  .woocommerce .woocommerce-customer-details address,
+  .woocommerce table.shop_table.cart tr.woocommerce-cart-form__cart-item {
+    background: none !important;   /* required: print must not spend ink on a
+                                      translucent fill that carries no meaning */
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid var(--slk-print-rule);
+  }
+  a[href]::after { content: ""; }  /* no URL noise in a packing slip */
+  .woocommerce div.product { display: block; }
+}
