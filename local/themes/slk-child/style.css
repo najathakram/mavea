@@ -1099,6 +1099,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .woocommerce.archive .site-main > .ct-container {
   padding-top: var(--slk-space-3);
 }
+
+/* Cart and checkout templates carry their own headings ("Your bag",
+   "Checkout"), so Blocksy's hero band gave those pages a second h1 —
+   measured: /cart/ had h1 ×2. One page, one title. */
+.woocommerce-cart .hero-section,
+.woocommerce-checkout .hero-section,
+.woocommerce-account .hero-section {
+  display: none;
+}
+.woocommerce-cart .site-main > .ct-container,
+.woocommerce-checkout .site-main > .ct-container,
+.woocommerce-account .site-main > .ct-container {
+  padding-top: var(--slk-space-8);
+}
 .woocommerce-products-header__title.page-title {
   font-size: 27px;
   margin: 0;

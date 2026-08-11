@@ -162,6 +162,12 @@ function slk_chrome_primary_links() {
 			'label' => __( 'Hijabs', 'slk' ),
 			'url'   => slk_chrome_product_cat_url( 'hijabs' ),
 		),
+		// The design's desktop nav carries "Our story" as its final, quieter
+		// item — and the crawl proved the page was otherwise orphaned.
+		array(
+			'label' => __( 'Our story', 'slk' ),
+			'url'   => slk_chrome_page_url( 'story' ),
+		),
 	);
 
 	/**
@@ -204,6 +210,17 @@ function slk_chrome_help_links() {
 		array(
 			'label' => __( 'Track order', 'slk' ),
 			'url'   => slk_chrome_page_url( 'track-order' ) ?: $account,
+		),
+		// FAQ and the account area existed but were reachable from nowhere —
+		// found by the crawler, not by intuition. Contact lives in the
+		// "Talk to us" column, not here.
+		array(
+			'label' => __( 'FAQ', 'slk' ),
+			'url'   => slk_chrome_page_url( 'faq' ),
+		),
+		array(
+			'label' => __( 'Sign in / My account', 'slk' ),
+			'url'   => $account,
 		),
 	);
 
@@ -551,6 +568,12 @@ function slk_chrome_render_footer() {
 					</a>
 				<?php else : ?>
 					<p class="slk-footer__blurb"><?php esc_html_e( 'A WhatsApp line opens with the relaunch.', 'slk' ); ?></p>
+				<?php endif; ?>
+				<?php $slk_contact = slk_chrome_page_url( 'contact' ); ?>
+				<?php if ( $slk_contact ) : ?>
+					<ul class="slk-footer__list">
+						<li><a href="<?php echo esc_url( $slk_contact ); ?>"><?php esc_html_e( 'Contact us', 'slk' ); ?></a></li>
+					</ul>
 				<?php endif; ?>
 			</div>
 		</div>
