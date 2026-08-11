@@ -1,0 +1,13 @@
+# Local dev secrets and state
+local/.admin-password
+local/**/wp-config.php
+
+# WordPress core / third-party plugins live in Docker volumes, never in this repo
+wp-core/
+wp-content/uploads/
+
+# Tooling noise
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

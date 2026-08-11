@@ -1,0 +1,89 @@
+# Local WordPress + WooCommerce dev stack for the SL sister store.
+# Host-independent: everything built here (plugins, theme, catalog) exports to
+# WordPress.com or Hostinger later. No cost, no brand name needed.
+#
+#   docker compose up -d      → http://localhost:8088
+#   docker compose down       → stop (data survives in named volumes)
+#   docker compose down -v    → destroy everything and start clean
+
+services:
+  db:
+    image: mariadb:11
+    container_name: slk-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: slk
+      MARIADB_USER: slk
+      MARIADB_PASSWORD: slk_dev_pw
+      MARIADB_ROOT_PASSWORD: slk_root_dev_pw
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  wordpress:
+    image: wordpress:php8.3-apache
+    container_name: slk-wp
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8088:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: slk
+      WORDPRESS_DB_USER: slk
+      WORDPRESS_DB_PASSWORD: slk_dev_pw
+      # Dev-only: show errors, raise limits for imports/media
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_MEMORY_LIMIT', '512M');
+        define('DISALLOW_FILE_EDIT', false);
+        define('AUTOMATIC_UPDATER_DISABLED', true);
+    volumes:
+      - wp_data:/var/www/html
+      # Our own code is bind-mounted from the repo so edits are instant and
+      # version-controlled. These are the plan's §9 custom components.
+      - ./plugins/slk-checkout:/var/www/html/wp-content/plugins/slk-checkout
+      - ./plugins/slk-order-flow:/var/www/html/wp-content/plugins/slk-order-flow
+      - ./themes/slk-child:/var/www/html/wp-content/themes/slk-child
+      - ./php.ini:/usr/local/etc/php/conf.d/zz-slk.ini:ro
+
+  # WP-CLI runs one-off commands against the same files/db:
+  #   docker compose run --rm wpcli wp plugin install woocommerce --activate
+  wpcli:
+    image: wordpress:cli-php8.3
+    container_name: slk-wpcli
+    depends_on:
+      - wordpress
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: slk
+      WORDPRESS_DB_USER: slk
+      WORDPRESS_DB_PASSWORD: slk_dev_pw
+    volumes:
+      - wp_data:/var/www/html
+      - ./plugins/slk-checkout:/var/www/html/wp-content/plugins/slk-checkout
+      - ./plugins/slk-order-flow:/var/www/html/wp-content/plugins/slk-order-flow
+      - ./themes/slk-child:/var/www/html/wp-content/themes/slk-child
+    entrypoint: ["wp"]
+    command: ["--info"]
+
+  # Optional DB inspection at http://localhost:8089
+  adminer:
+    image: adminer:latest
+    container_name: slk-adminer
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8089:8080"
+
+volumes:
+  db_data:
+  wp_data:
