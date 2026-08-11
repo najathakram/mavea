@@ -377,7 +377,21 @@ h1, h2, h3 {
    · MOBILE FIRST. Everything outside a media query is the 390px design.
      Desktop is a single breakpoint at 1000px, written literally in every
      query because media conditions cannot read a custom property — that is a
-     CSS limitation, not a slip. 1000px is the only breakpoint in the file.
+     CSS limitation, not a slip. 1000px is the only breakpoint in the file,
+     and that claim is verifiable: every `@media` width query below reads
+     1000px, and nothing here — including the comments — names another.
+
+     IT IS NOW TRUE OF THE THEME AS A WHOLE, and it was not before. The inline
+     CSS in inc/ used to ship four rival breakpoints — shop.php at 768,
+     cart.php at 900, checkout-view.php at 960, pdp.php at 992 — so between
+     768px and 1000px the page changed shape four separate times, and 992–999px
+     ran a second product grid on top of §3.9's. Verified at the time of this
+     pass: shop.php no longer declares a width query at all, and cart.php,
+     checkout-view.php, pdp.php and chrome.php all read 1000px.
+
+     KEEP IT THAT WAY. `grep -n "@media" inc/*.php style.css` should return
+     nothing but 1000px, prefers-reduced-motion and print. A new number in
+     that list is a regression even when the rule it guards is correct.
    · SPECIFICITY, NOT !important. WooCommerce ships its rules at roughly
      `.woocommerce ul.products li.product` weight. This file matches that
      weight and wins on source order, because a child theme stylesheet is
@@ -1129,13 +1143,25 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .woocommerce ul.products li.product a { text-decoration: none; color: inherit; }
 
 /*
-   The 3:4 portrait box. The photography spec shoots every garment at 3:4 with
-   the head and the hem inside the frame, so `cover` on a 3:4 box is an
-   identity crop — it only bites if a 4:3 or square file is uploaded by
-   mistake, and then it crops the sides rather than the head or the hem. The
-   ratio lives on the image itself because WooCommerce's loop emits a bare
-   <img>; the two container selectors cover Blocksy's wrapper when it is
-   present, and are inert when it is not.
+   THE BOX BELONGS TO THE WRAPPER, NEVER TO THE <img>.
+
+   This rule used to put `aspect-ratio: 3/4`, a 20px radius, a second
+   --slk-shadow-lift and `margin: 0 0 10px` on the image itself, from a time
+   when WooCommerce's loop emitted a bare <img>. It does not any more:
+   slk_template_loop_product_thumbnail() (inc/shop.php) always wraps the image
+   in .slk-card__media, which already carries the ratio, the radius, the lift
+   and `overflow:hidden`. Every one of those declarations was therefore a
+   duplicate — and on the colour-led hijab card it was a defect: .slk-card--colour
+   forces the MEDIA to `aspect-ratio:1; border-radius:50%`, and a 3:4 image
+   inside a 1:1 circle renders top-anchored with the hem cropped, the second
+   shadow clipped by the parent, and 10px of dead margin. Specificity meant the
+   img won: (0,3,4) here against (0,1,1) for .slk-card__media img.
+
+   The image now only fills whatever box it is given, so the circle card and
+   the portrait card are the same code path. Scoping this with
+   `:not(.slk-card--colour)` would have worked too, but it would have left the
+   double-boxing on every other card — the ratio simply does not belong here.
+   The skeleton stays: it is a paint, not a geometry.
 */
 .woocommerce ul.products li.product a img,
 .woocommerce ul.products li.product img.attachment-woocommerce_thumbnail,
@@ -1143,28 +1169,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .woocommerce ul.products li.product .ct-media-container img {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: var(--slk-ratio-portrait);
+  height: 100%;
   object-fit: cover;
   object-position: 50% 50%;
-  margin: 0 0 10px;
-  border-radius: var(--slk-radius-tile);
-  box-shadow: var(--slk-shadow-lift);
+  margin: 0;
   background: rgba(35,34,32,.06); /* the skeleton while it decodes */
 }
+/* Blocksy's own media wrapper, if a code path ever reaches the loop without
+   .slk-card__media. Inert while content-product.php renders the card itself. */
 .woocommerce ul.products li.product .ct-image-container,
 .woocommerce ul.products li.product .ct-media-container {
   aspect-ratio: var(--slk-ratio-portrait);
   border-radius: var(--slk-radius-tile);
   overflow: hidden;
   box-shadow: var(--slk-shadow-lift);
-}
-.woocommerce ul.products li.product .ct-image-container img,
-.woocommerce ul.products li.product .ct-media-container img {
-  height: 100%;
-  margin: 0;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 .woocommerce ul.products li.product .woocommerce-loop-product__title,
@@ -1260,6 +1278,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .woocommerce-products-header { padding-block: var(--slk-space-8) var(--slk-space-2); }
   .woocommerce-products-header__title.page-title { font-size: 34px; }
 
+  /*
+     4-up on the full-width desktop rail; 3-up ONLY beside the 240px filter
+     sidebar (07-desktop.html:40 and :176). The distinction is the design, not
+     a detail — a 3-up rail reads as a filtered archive that lost its filters.
+
+     THIS FILE IS THE SOLE OWNER of the `.woocommerce ul.products` column
+     count. inc/shop.php used to re-declare the identical selector at a 768px
+     min-width with repeat(3,1fr); being printed after this sheet at equal
+     specificity, it won at every width ≥768px and flattened both cases into
+     one. That block has since been removed from inc/shop.php — verified live:
+     the only grid-template-columns rules matching ul.products now come from
+     style.css. Do not reintroduce a column count in inline CSS.
+  */
   .woocommerce ul.products,
   .woocommerce-page ul.products {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1307,15 +1338,30 @@ span.onsale,
   display: none !important;
 }
 
+/*
+   UNSCOPED, exactly like span.onsale above it. The struck price used to
+   require a `.woocommerce` ancestor, which is a hole rather than a nicety:
+   WooCommerce BLOCK markup (Product Collection / Product Price) carries
+   .wc-block-* classes and no .woocommerce wrapper, and the block cart page
+   here proves it — <body> gets `woocommerce-cart woocommerce-page` but never
+   plain `woocommerce`. A Product Price block dropped on the home page or any
+   non-Woo page therefore rendered a live strikethrough, with only the PHP
+   filter standing between the brand and a compare-at price. `del` is not a
+   tag this store has any other use for, so suppressing it globally costs
+   nothing and closes the hole. */
+del,
+.price del,
 .woocommerce del,
 .woocommerce .price del,
-.woocommerce ul.products li.product .price del,
-.woocommerce div.product p.price del,
-.woocommerce div.product span.price del {
+.wc-block-components-product-price del,
+.wp-block-woocommerce-product-price del {
   display: none !important;
 }
+ins,
+.price ins,
 .woocommerce ins,
-.woocommerce .price ins {
+.woocommerce .price ins,
+.wc-block-components-product-price ins {
   text-decoration: none;
   background: none;
   font-weight: inherit;
@@ -1634,179 +1680,51 @@ span.onsale,
 
 /* ── 3.10 Cart ────────────────────────────────────────────────────────── */
 /*
-   The design shows cart lines as glass cards on BOTH mobile and desktop, not
-   as a table — so the shop_table is taken out of table layout entirely rather
-   than only below Woo's 768px responsive breakpoint. Each row becomes a small
-   grid: thumbnail | name+meta | line total, with the quantity control and
-   Remove on the second line.
+   LINE ITEMS ARE NOT STYLED HERE. An earlier draft of this section de-tabled
+   `table.shop_table.cart` into card rows (thumb | name | total grid, 44px
+   remove circle, `td.product-price{display:none}`). That markup no longer
+   exists: woocommerce/cart/cart.php overrides the core template and emits
+   `<ul class="slk-cart-list">` of `<li class="slk-cart-item">` instead, so
+   every one of those ~110 lines matched nothing. Deleted rather than kept
+   "just in case" — dead CSS is how two layout systems start competing.
+   The card presentation now lives with the markup, in inc/cart.php.
+
+   The TOTALS PANEL is not styled here either, for a subtler reason. Core's
+   cart/cart-totals.php is not overridden, so its .cart_totals markup does
+   still exist — but inc/cart.php now restyles all of it (glass panel, table
+   rows, order-total rule, checkout button, empty state, .return-to-shop) on
+   the cart page. The copy that used to sit here was not a harmless twin: at
+   `.woocommerce .cart_totals table.shop_table th` it carried (0,3,1) against
+   inc/cart.php's (0,2,1), so THIS FILE was silently winning and forcing
+   `padding:0; text-align:left` over the owner's `padding:7px 0; text-align:
+   right`. A duplicate that outranks its owner is worse than no duplicate.
+   Deleted.
+
+   What is genuinely left is the one job neither the template nor the inline
+   CSS does: unwinding WooCommerce core's own floats. woocommerce.css floats
+   .cart-collaterals and .cart_totals to 48% right, and nothing else in the
+   theme cancels it.
 */
-.woocommerce table.shop_table.cart,
-.woocommerce table.shop_table.cart thead,
-.woocommerce table.shop_table.cart tbody,
-.woocommerce table.shop_table.cart tr,
-.woocommerce table.shop_table.cart td,
-.woocommerce table.shop_table.cart th {
-  display: block;
-  width: auto;
-  border: 0;
-  padding: 0;
-  text-align: left;
-}
-.woocommerce table.shop_table.cart { border-collapse: separate; margin: 0; }
-.woocommerce table.shop_table.cart thead { display: none; } /* column headers are meaningless once rows are cards */
-.woocommerce table.shop_table.cart tbody { display: grid; gap: var(--slk-space-3); }
-
-.woocommerce table.shop_table.cart tr.woocommerce-cart-form__cart-item {
-  display: grid;
-  grid-template-columns: 86px minmax(0, 1fr) auto;
-  grid-template-areas:
-    "thumb name  total"
-    "thumb qty   remove";
-  align-items: start;
-  gap: var(--slk-space-2) var(--slk-space-3);
-  padding: var(--slk-space-3);
-  background: var(--slk-glass-solid);
-  border: 1px solid var(--slk-glass-edge);
-  border-radius: 22px;
-}
-.woocommerce table.shop_table.cart td.product-thumbnail { grid-area: thumb; }
-.woocommerce table.shop_table.cart td.product-thumbnail img {
-  width: 86px;
-  height: auto;
-  aspect-ratio: var(--slk-ratio-portrait);
-  object-fit: cover;
-  border-radius: 14px;
-  display: block;
-}
-.woocommerce table.shop_table.cart td.product-name {
-  grid-area: name;
-  font: 500 13.5px/1.35 var(--slk-font-ui);
-}
-.woocommerce table.shop_table.cart td.product-name a { color: var(--slk-color-ink); text-decoration: none; }
-.woocommerce table.shop_table.cart td.product-name dl.variation,
-.woocommerce table.shop_table.cart td.product-name .variation {
-  margin: 3px 0 0;
-  font: 400 12px/1.5 var(--slk-font-ui);
-  color: var(--slk-color-muted);
-}
-.woocommerce table.shop_table.cart td.product-name dl.variation dt,
-.woocommerce table.shop_table.cart td.product-name dl.variation dd {
-  display: inline;
-  margin: 0;
-  float: none;
-}
-.woocommerce table.shop_table.cart td.product-name dl.variation dd + dt::before { content: " · "; }
-.woocommerce table.shop_table.cart td.product-name dl.variation p { display: inline; margin: 0; }
-
-/* Unit price is hidden and the LINE TOTAL is shown in its place. For a
-   quantity of one they are the same number (which is what the mockup shows);
-   for more than one, the total is the honest figure and the only one that
-   reconciles with the summary panel below. */
-.woocommerce table.shop_table.cart td.product-price { display: none; }
-.woocommerce table.shop_table.cart td.product-subtotal {
-  grid-area: total;
-  justify-self: end;
-  font: 500 13.5px/1.35 var(--slk-font-ui);
-  white-space: nowrap;
-}
-.woocommerce table.shop_table.cart td.product-quantity { grid-area: qty; align-self: end; }
-.woocommerce table.shop_table.cart td.product-remove {
-  grid-area: remove;
-  align-self: end;
-  justify-self: end;
-}
-/* Woo's remove control is a 1em "×" link — far under the 44px floor. */
-.woocommerce table.shop_table.cart td.product-remove a.remove {
-  display: grid;
-  place-items: center;
-  width: var(--slk-touch);
-  height: var(--slk-touch);
-  border-radius: 50%;
-  font-size: 18px;
-  line-height: 1;
-  color: var(--slk-color-faint);
-  background: none;
-  text-decoration: none;
-}
-.woocommerce table.shop_table.cart td.product-remove a.remove:hover {
-  background: rgba(35,34,32,.06);
-  color: var(--slk-color-error);
-}
-
-/* The actions row (coupon + update cart). Coupons are not sale theatre in
-   themselves, but if the shop decides to drop them the switch is
-   `woocommerce_coupons_enabled`, not display:none here. */
-.woocommerce table.shop_table.cart td.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--slk-space-2);
-  align-items: center;
-  padding-top: var(--slk-space-4);
-}
-.woocommerce table.shop_table.cart td.actions .coupon {
-  display: flex;
-  gap: var(--slk-space-2);
-  flex: 1 1 260px;
-}
-.woocommerce table.shop_table.cart td.actions .coupon .input-text { flex: 1; min-width: 0; }
-.woocommerce table.shop_table.cart td.actions .button { flex: none; }
-
-.woocommerce .cart-collaterals { width: 100%; float: none; margin-top: var(--slk-space-6); }
+.woocommerce .cart-collaterals { width: 100%; float: none; }
 .woocommerce .cart-collaterals .cart_totals { width: 100%; float: none; }
-.woocommerce .cart_totals > h2 { font-size: var(--slk-text-lg); margin: 0 0 var(--slk-space-3); }
-.woocommerce .cart_totals table.shop_table,
-.woocommerce .cart_totals table.shop_table tbody,
-.woocommerce .cart_totals table.shop_table tr,
-.woocommerce .cart_totals table.shop_table th,
-.woocommerce .cart_totals table.shop_table td {
-  display: block;
-  width: auto;
-  border: 0;
-  padding: 0;
-  text-align: left;
-}
-.woocommerce .cart_totals table.shop_table { margin: 0; border-collapse: separate; }
-.woocommerce .cart_totals table.shop_table tr {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--slk-space-4);
-  font: 400 13px/2 var(--slk-font-ui);
-  color: var(--slk-color-muted);
-}
-.woocommerce .cart_totals table.shop_table tr th { font-weight: 400; }
-.woocommerce .cart_totals table.shop_table tr td { color: var(--slk-color-ink); text-align: right; }
-.woocommerce .cart_totals table.shop_table tr.order-total {
-  margin-top: var(--slk-space-2);
-  padding-top: var(--slk-space-2);
-  border-top: 1px solid var(--slk-hairline);
-  font: 500 15px/2.4 var(--slk-font-ui);
-  color: var(--slk-color-ink);
-}
-.woocommerce .cart_totals .woocommerce-shipping-destination,
-.woocommerce .cart_totals .shipping-calculator-button { font-size: var(--slk-text-sm); color: var(--slk-color-faint); }
-.woocommerce .wc-proceed-to-checkout { padding: var(--slk-space-4) 0 0; }
-
-/* The summary itself is one glass panel wrapping totals + checkout button. */
-.woocommerce .cart_totals,
-.woocommerce-cart .cart-collaterals .cart_totals {
-  background: var(--slk-glass-solid);
-  border: 1px solid var(--slk-glass-edge);
-  border-radius: 22px;
-  padding: 18px;
-  box-sizing: border-box;
-}
 .woocommerce .cart-collaterals .cross-sells { display: none; } /* no upsell rail in this design */
 
-.woocommerce .return-to-shop { padding-top: var(--slk-space-4); }
-.woocommerce .cart-empty {
-  font-family: var(--slk-font-display);
-  font-weight: 300;
-  font-size: var(--slk-display-s);
-  padding-block: var(--slk-space-8) var(--slk-space-4);
-}
-
 @media (min-width: 1000px) {
-  /* Lines left, sticky summary right — matching the desktop cart screen. */
+  /*
+     Lines left, summary right — ONE wrapper rule, no per-child placement.
+     The wrapper is the WooCommerce container holding form.woocommerce-cart-form
+     and div.cart-collaterals as siblings; two children, two tracks, so
+     auto-placement IS the layout. The `> *` / `> form` / `> .cart-collaterals`
+     row-and-column pins that used to sit here only made sense while the
+     shop_table existed.
+
+     inc/cart.php declares the same grid at the same 1000px breakpoint and
+     adds the sticky/width resets for its own .slk-cart* wrappers. This copy
+     is deliberately the smaller of the two: it is the base that survives if
+     the cart-page inline CSS is ever dequeued, and it declares nothing the
+     other file has to fight. Keep it that way — if you widen one, widen both
+     or delete this one outright, but do not let them disagree.
+  */
   .woocommerce-cart .site-main .woocommerce,
   .woocommerce-cart .entry-content > .woocommerce {
     display: grid;
@@ -1814,45 +1732,35 @@ span.onsale,
     column-gap: var(--slk-space-8);
     align-items: start;
   }
-  .woocommerce-cart .woocommerce > * { grid-column: 1 / -1; }
-  .woocommerce-cart .woocommerce > form.woocommerce-cart-form { grid-column: 1; grid-row: 2; }
-  .woocommerce-cart .woocommerce > .cart-collaterals {
-    grid-column: 2;
-    grid-row: 2;
-    margin-top: 0;
-    position: sticky;
-    top: var(--slk-space-6);
-  }
-  .woocommerce table.shop_table.cart tr.woocommerce-cart-form__cart-item {
-    grid-template-columns: 110px minmax(0, 1fr) auto;
-    gap: var(--slk-space-3) var(--slk-space-6);
-    padding: var(--slk-space-4);
-    border-radius: var(--slk-radius-card);
-  }
-  .woocommerce table.shop_table.cart td.product-thumbnail img { width: 110px; border-radius: var(--slk-radius-field); }
-  .woocommerce table.shop_table.cart td.product-name,
-  .woocommerce table.shop_table.cart td.product-subtotal { font-size: 15px; }
-  .woocommerce .cart_totals { padding: 26px; border-radius: 26px; box-shadow: 0 14px 40px rgba(35,34,32,.10); }
-  .woocommerce .cart_totals table.shop_table tr.order-total { font-size: 16px; }
 }
 
 
 /* ── 3.11 Checkout ────────────────────────────────────────────────────── */
 /*
-   form-checkout.php children, in DOM order:
-     .woocommerce-NoticeGroup-checkout (injected by checkout.js)
-     #customer_details.col2-set  →  .col-1 (billing) + .col-2 (shipping)
-     #order_review_heading
-     #order_review.woocommerce-checkout-review-order
-   Each fieldset group becomes a numbered glass panel; the review order is the
-   sticky summary on the right at desktop.
+   LAYOUT IS NOT OWNED HERE. woocommerce/checkout/form-checkout.php builds its
+   own structure — .slk-checkout__grid#customer_details > .slk-checkout__fields
+   (three .slk-panel steps) + .slk-checkout__aside (#order_review) — and
+   inc/checkout-view.php places it. form.checkout has exactly ONE element
+   child, so the 1.5fr/1fr grid this section used to declare on the form
+   packed the whole checkout into track 1 and left track 2 empty, while its
+   `> #order_review` / `> #order_review_heading` companions matched nothing
+   (both are now nested inside the aside). Deleted.
+
+   What is left here is the part the template does NOT supply: unwinding
+   WooCommerce's own float/width defaults, the field-group headings, and the
+   payment-method cards.
 */
 .woocommerce-checkout .checkout.woocommerce-checkout { margin: 0; }
 
-.woocommerce-checkout #customer_details.col2-set,
-.woocommerce-checkout #customer_details {
-  display: grid;
-  gap: var(--slk-space-3);
+/* Woo core floats .col2-set > .col-1/.col-2 at 48%. The template still carries
+   those class names (so core JS and third-party hooks keep working), so the
+   floats still have to be unwound — but the grid and gap belong to
+   .slk-checkout__grid in inc/checkout-view.php. Declaring `gap` here as well
+   was a live bug, not just duplication: `.woocommerce-checkout #customer_details`
+   is (1,1,0) and beat `.slk-checkout__grid` (0,1,0), so the desktop gutter
+   rendered at 12px instead of the design's 32px. */
+.woocommerce-checkout #customer_details,
+.woocommerce-checkout #customer_details.col2-set {
   width: 100%;
   float: none;
 }
@@ -1862,22 +1770,25 @@ span.onsale,
   float: none;
   margin: 0;
 }
-.woocommerce-checkout #customer_details::before,
-.woocommerce-checkout #customer_details::after { content: none; }
+/* Woo's clearfix rides on .col2-set itself, which is now .slk-checkout__fields
+   rather than #customer_details — target the class, not the id. */
+.woocommerce-checkout .col2-set::before,
+.woocommerce-checkout .col2-set::after { content: none; }
 
+/* NO GLASS ON THE FIELD GROUPS. form-checkout.php already wraps each step in
+   .slk-panel.slk-panel--lifted; core then emits .woocommerce-billing-fields /
+   -shipping-fields / -additional-fields INSIDE that panel. Painting those as
+   glass too stacked two translucent fills, two 1px near-white edges and ~48px
+   of inset padding where the design has exactly one panel per step. The same
+   applies to #order_review, which the template gives .slk-panel directly.
+   #payment keeps only its reset (below) — Woo core ships it #ebe9eb. */
 .woocommerce-checkout .woocommerce-billing-fields,
 .woocommerce-checkout .woocommerce-shipping-fields,
-.woocommerce-checkout .woocommerce-additional-fields,
-.woocommerce-checkout #order_review,
-.woocommerce-checkout #payment {
-  background: var(--slk-glass-solid);
-  border: 1px solid var(--slk-glass-edge);
-  border-radius: var(--slk-radius-card);
-  padding: var(--slk-space-6) 18px;
-  box-sizing: border-box;
+.woocommerce-checkout .woocommerce-additional-fields {
+  background: none;
+  border: 0;
+  padding: 0;
 }
-.woocommerce-checkout .woocommerce-shipping-fields,
-.woocommerce-checkout .woocommerce-additional-fields { margin-top: var(--slk-space-3); }
 
 /* Group headings become the "1 · You / 2 · Where / 3 · Paying" eyebrows.
    The number itself is content and is supplied by the template's heading
@@ -2016,40 +1927,22 @@ span.onsale,
 
 @media (min-width: 1000px) {
   /*
-     Explicit three-row track so the sticky summary has somewhere to travel:
-     row 1 is reserved for the injected notice group (zero height when absent
-     because row-gap is 0 and spacing is carried by margins), #customer_details
-     spans rows 2–3 in column 1, and #order_review sits in the 1fr row 3 of
-     column 2. Because that row absorbs the height of the spanning details
-     column, the panel has a taller containing block than itself and `sticky`
-     actually has room to work.
+     The desktop checkout grid that used to live here is GONE — it is
+     inc/checkout-view.php's .slk-checkout__grid, and having a second copy on
+     form.checkout was the bug: the form has one element child, so 1.5fr/1fr
+     put the entire checkout in track 1 and rendered track 2 blank. The three
+     companion rules (`> .woocommerce-NoticeGroup`, `> #order_review_heading`,
+     `> #order_review`) all addressed direct children that the template no
+     longer produces. Sticky behaviour is .slk-checkout__aside's, in that same
+     file.
+
+     inc/checkout-view.php now declares that grid on
+     `#customer_details.slk-checkout__grid` at 1000px, matching this file's one
+     breakpoint (it was 960px, which put 40px of the viewport on a checkout
+     layout nothing else agreed with). Verified live.
+
+     What stays below is only what the template does not own.
   */
-  .woocommerce-checkout form.checkout.woocommerce-checkout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    grid-template-rows: max-content max-content 1fr;
-    column-gap: var(--slk-space-8);
-    row-gap: 0;
-    align-items: start;
-  }
-  .woocommerce-checkout form.checkout > .woocommerce-NoticeGroup { grid-column: 1 / -1; grid-row: 1; }
-  .woocommerce-checkout form.checkout > #customer_details { grid-column: 1; grid-row: 2 / span 2; }
-  .woocommerce-checkout form.checkout > #order_review_heading { grid-column: 2; grid-row: 2; margin-top: 0; }
-  .woocommerce-checkout form.checkout > #order_review {
-    grid-column: 2;
-    grid-row: 3;
-    align-self: start;
-    position: sticky;
-    top: var(--slk-space-6);
-    padding: 26px;
-    border-radius: 26px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 14px 40px rgba(35,34,32,.10);
-  }
-  .woocommerce-checkout .woocommerce-billing-fields,
-  .woocommerce-checkout .woocommerce-shipping-fields,
-  .woocommerce-checkout .woocommerce-additional-fields { padding: 28px; border-radius: 26px; }
   /* Paired half-width rows only make sense once there is room for them. */
   .woocommerce form .form-row-first,
   .woocommerce form .form-row-last { width: calc(50% - (var(--slk-space-3) / 2)); float: left; }
@@ -2170,8 +2063,15 @@ span.onsale,
   /* §2 already flattens every duration. Position:sticky is not motion, but a
      panel that re-anchors while the page scrolls reads as motion to a
      vestibular-sensitive reader, so the sticky panels are released too. */
+  /* Written one class heavier than the rules that set `sticky`
+     (.slk-checkout__aside / .slk-cart-collaterals live in inc/ inline CSS,
+     which is printed after this sheet — equal specificity would lose on
+     source order). The old list named `form.checkout > #order_review` and
+     `.woocommerce > .cart-collaterals`; neither is the sticky element any
+     more, so reduced-motion was silently releasing nothing on those pages. */
   .woocommerce div.product > .summary.entry-summary,
-  .woocommerce-checkout form.checkout > #order_review,
+  .woocommerce-checkout .slk-checkout__aside,
+  .woocommerce-cart .slk-cart-collaterals,
   .woocommerce-cart .woocommerce > .cart-collaterals,
   .slk-shop-layout > .slk-filters,
   .slk-buy-dock { position: static; }
@@ -2188,14 +2088,15 @@ span.onsale,
   .woocommerce .related.products, .woocommerce .up-sells,
   .woocommerce-MyAccount-navigation { display: none; }
 
+  /* .slk-panel covers the checkout steps and the order summary — the template
+     puts the class on them directly. The WooCommerce field-group wrappers are
+     no longer listed: they carry no fill now (see §3.11), so giving them a
+     print border would draw a box around nothing. */
   .slk-glass, .slk-panel, .slk-toast,
   .woocommerce .cart_totals,
-  .woocommerce-checkout #order_review,
-  .woocommerce-checkout .woocommerce-billing-fields,
-  .woocommerce-checkout .woocommerce-shipping-fields,
   .woocommerce ul.woocommerce-order-overview.order_details,
   .woocommerce .woocommerce-customer-details address,
-  .woocommerce table.shop_table.cart tr.woocommerce-cart-form__cart-item {
+  .slk-cart-item {
     background: none !important;   /* required: print must not spend ink on a
                                       translucent fill that carries no meaning */
     box-shadow: none !important;

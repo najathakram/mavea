@@ -283,47 +283,14 @@ add_filter(
 );
 
 /* -------------------------------------------------------------------------
- * 6. Grid shape
+ * 6. Grid shape — owned by style.css §3.7, NOT by this file.
  *
- * loop_shop_columns / loop_shop_per_page are already set in functions.php §6
- * (3 columns, 12 per page). This turns the resulting <ul class="products">
- * into the actual CSS grid the mockups use: 2 columns under 768px, 3 at and
- * above — tokens only, no raw px outside the breakpoint itself.
+ * style.css sets `.woocommerce ul.products` to a 2-up grid with the li resets,
+ * then 4-up at the single 1000px breakpoint (3-up only inside .slk-shop-layout,
+ * beside the filter rail). This file used to re-declare the identical selector
+ * at min-width:768px with repeat(3,1fr) via wp_add_inline_style — printed after
+ * style.css on the same handle at equal specificity, so it won the cascade and
+ * forced 3-up at every width >= 768px, destroying both the 4-up desktop rail
+ * and the 3-up-beside-sidebar distinction, and adding a fifth breakpoint to a
+ * design that has one. Deleted deliberately: do not re-add a grid rule here.
  * ---------------------------------------------------------------------- */
-
-add_action(
-	'wp_enqueue_scripts',
-	static function () {
-		if ( ! class_exists( 'WooCommerce' ) ) {
-			return;
-		}
-
-		$css = '
-.woocommerce ul.products,
-.woocommerce-page ul.products{
-	display:grid;
-	grid-template-columns:repeat(2,1fr);
-	gap:var(--slk-space-6) var(--slk-space-3);
-	list-style:none;
-	margin:0;
-	padding:0;
-}
-.woocommerce ul.products li.product,
-.woocommerce-page ul.products li.product{
-	margin:0;
-	width:auto;
-	float:none;
-}
-@media (min-width:768px){
-	.woocommerce ul.products,
-	.woocommerce-page ul.products{
-		grid-template-columns:repeat(3,1fr);
-		gap:var(--slk-space-6) var(--slk-space-6);
-	}
-}
-';
-
-		wp_add_inline_style( 'slk-child', $css );
-	},
-	31 // After inc/wordmark.php's inline style (priority 30) on the same handle.
-);

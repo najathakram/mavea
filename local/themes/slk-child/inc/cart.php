@@ -201,6 +201,18 @@ add_action(
  *
  * Only enqueued on the cart page. Tokens only (design-tokens.css, already
  * loaded on the 'slk-child' handle by functions.php); no raw hex.
+ *
+ * Desktop layout: ONE grid at the single 1000px breakpoint. This block used to
+ * lay the cart out with display:inline-block + width:63%/37% at min-width:900px,
+ * nested inside the grid style.css §3.10 establishes on the same wrapper at
+ * 1000px. Grid blockified the two children but the percentage widths survived,
+ * so at >=1000px each column rendered at 63%/37% OF ITS OWN TRACK, leaving two
+ * dead gutters — and the page changed shape 100px early. The wrapper is the
+ * WooCommerce container holding form.woocommerce-cart-form.slk-cart and
+ * div.cart-collaterals.slk-cart-collaterals as siblings (see
+ * woocommerce/cart/cart.php); widths now come from the tracks and the children
+ * just fill them. Measured in the browser at 1280px: 681.84 + 32 + 426.16 =
+ * 1140, exactly the wrapper width, ratio 1.6:1 — no gutter left over.
  * ---------------------------------------------------------------------- */
 
 add_action(
@@ -252,9 +264,23 @@ add_action(
 
 /* -- collaterals / totals panel (default cart-totals.php markup) ------- */
 .slk-cart-collaterals{max-width:1140px;margin:0 auto;padding:0 var(--slk-space-4) var(--slk-space-12)}
-@media (min-width:900px){
-  .slk-cart{display:inline-block;width:63%;vertical-align:top;padding-right:var(--slk-space-4)}
-  .slk-cart-collaterals{display:inline-block;width:37%;vertical-align:top;position:sticky;top:var(--slk-space-6)}
+/* Desktop cart: one grid, at the one breakpoint the design has. */
+@media (min-width:1000px){
+  .woocommerce-cart .site-main .woocommerce,
+  .woocommerce-cart .entry-content > .woocommerce{
+    display:grid;
+    grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);
+    column-gap:var(--slk-space-8);
+    align-items:start;
+  }
+  .woocommerce-cart .woocommerce > *{grid-column:1 / -1}
+  .woocommerce-cart .woocommerce > form.woocommerce-cart-form{grid-column:1;grid-row:2}
+  .woocommerce-cart .woocommerce > .cart-collaterals{grid-column:2;grid-row:2}
+  .slk-cart{width:auto;max-width:none;margin:0;padding-right:0}
+  .slk-cart-collaterals{
+    width:auto;max-width:none;margin:0;padding-left:0;padding-right:0;
+    position:sticky;top:var(--slk-space-6);
+  }
 }
 .cart_totals{background:var(--slk-glass-solid);border:1px solid var(--slk-glass-edge);border-radius:var(--slk-radius-card);padding:var(--slk-space-6);box-shadow:var(--slk-shadow-lift)}
 .cart_totals h2{font-size:var(--slk-text-lg);margin:0 0 var(--slk-space-3)}

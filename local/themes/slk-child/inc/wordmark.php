@@ -14,6 +14,17 @@
  *
  *     add_filter( 'slk_wordmark', fn() => 'NILARA' );
  *
+ * That one line is genuinely everything, because the filter is bound to the
+ * `blogname` OPTION (not just to get_bloginfo()), which is what every other
+ * reader of the site name goes through: the document <title>, feeds, Blocksy's
+ * header, and — the part that used to leak — WooCommerce's transactional mail.
+ * WC_Email::get_from_name(), the {site_title} placeholder in every order email
+ * subject and heading, the email footer, invoices and packing slips all call
+ * wp_specialchars_decode( get_option( 'blogname' ) ) directly, and many of them
+ * run inside wp-admin (an order marked Complete from the orders screen) or in
+ * cron, so the filter must NOT be front-end-only. See slk_wordmark_is_editing_
+ * blogname() below for the one narrow context that still sees the raw value.
+ *
  * Nothing else needs to move: the brief's §6 system (Newsreader 300, all caps,
  * 0.26em tracking, trailing indent) holds for any name of 4-8 letters.
  * ==========================================================================
@@ -40,6 +51,45 @@ function slk_wordmark_text() {
 	 * @param string $text The wordmark, set in caps.
 	 */
 	return (string) apply_filters( 'slk_wordmark', 'SL DRESS' );
+}
+
+/**
+ * Is this request a screen where the STORED blogname must stay visible?
+ *
+ * The approach, stated plainly: the wordmark filter is applied to the blogname
+ * option everywhere — front end, admin, cron, REST, WP-CLI — with exactly one
+ * carve-out, the handful of places where a human edits that option. If the
+ * carve-out were the whole of wp-admin (the old `is_admin()` guard), then every
+ * WooCommerce email fired from wp-admin — order status changes, resent invoices,
+ * refund notices — would go out under the stale stored name, and the "rename is
+ * one line" promise would be false. Scoping the carve-out to the editing screens
+ * instead keeps Settings > General showing the real value so it stays editable,
+ * while mail, cron and every other reader see the wordmark.
+ *
+ * - options-general.php : the Site Title field itself.
+ * - options.php         : that form's save target (so update_option() compares
+ *                         against the true old value, not the filtered one).
+ * - customize.php       : the Customizer's own blogname control.
+ * - REST /wp/v2/settings: the block editor / Site Editor reading the same field.
+ *
+ * @return bool True when the raw stored value should be returned unfiltered.
+ */
+function slk_wordmark_is_editing_blogname() {
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		$route = isset( $GLOBALS['wp']->query_vars['rest_route'] ) ? (string) $GLOBALS['wp']->query_vars['rest_route'] : '';
+
+		if ( false !== strpos( $route, '/wp/v2/settings' ) ) {
+			return true;
+		}
+	}
+
+	if ( ! is_admin() ) {
+		return false;
+	}
+
+	$pagenow = isset( $GLOBALS['pagenow'] ) ? (string) $GLOBALS['pagenow'] : '';
+
+	return in_array( $pagenow, array( 'options-general.php', 'options.php', 'customize.php' ), true );
 }
 
 /**
@@ -168,6 +218,7 @@ add_shortcode(
 add_filter(
 	'get_custom_logo',
 	static function ( $html ) {
+		// Markup, not text: only the front end wants a wordmark element here.
 		if ( is_admin() ) {
 			return $html;
 		}
@@ -185,12 +236,13 @@ add_filter(
 
 /**
  * Site title text falls back to the wordmark, so the header, the document
- * title and feeds all read the same name. Plain text — never markup here.
+ * title, feeds and email templates all read the same name. Plain text — never
+ * markup here.
  */
 add_filter(
 	'bloginfo',
 	static function ( $output, $show ) {
-		if ( is_admin() ) {
+		if ( slk_wordmark_is_editing_blogname() ) {
 			return $output;
 		}
 
@@ -201,21 +253,26 @@ add_filter(
 );
 
 /**
- * ...and the option itself.
+ * ...and the option itself. This is the filter that makes the rename one line.
  *
  * Measured, not assumed: with only the `bloginfo` filter above, the document
  * <title> read "SL DRESS" while Blocksy's header still painted the raw stored
  * blogname. Blocksy reaches the site name by a path that does not run through
  * get_bloginfo(), so the display filter never saw it. Filtering the option
- * covers every reader — core, parent theme and plugins alike.
+ * covers every reader — core, parent theme, WooCommerce mail and plugins alike,
+ * including the direct get_option( 'blogname' ) calls behind {site_title},
+ * WC_Email::get_from_name(), the email footer, invoices and packing slips.
  *
- * Front end only: the admin must keep showing the real stored value, or the
- * Settings screen would display a name nobody can edit.
+ * NOT front-end-only, on purpose: order emails are routinely dispatched from
+ * wp-admin and from cron, and an is_admin() guard would have sent every one of
+ * them under the old stored name. The single carve-out is the set of screens
+ * where the option is edited — see slk_wordmark_is_editing_blogname() — so
+ * Settings > General keeps showing (and saving) the true stored value.
  */
 add_filter(
 	'option_blogname',
 	static function ( $value ) {
-		return is_admin() ? $value : slk_wordmark_text();
+		return slk_wordmark_is_editing_blogname() ? $value : slk_wordmark_text();
 	},
 	20
 );

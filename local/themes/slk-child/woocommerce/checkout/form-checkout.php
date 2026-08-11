@@ -4,16 +4,17 @@
  *
  * Based on the real WooCommerce 9.4.0 template (see
  * design/_reference/woocommerce-templates/checkout/form-checkout.php). Every
- * hook from that file is preserved and fires in the same order; this override
- * only adds the numbered-panel wrapper markup and CSS/JS hooks (see
- * inc/checkout-view.php) that turn the same field output into the "1 · You /
- * 2 · Where / 3 · Paying" glass panels plus a sticky order-summary aside.
+ * hook from that file is preserved and fires exactly once; this override only
+ * adds wrapper markup and CSS/JS hooks (see inc/checkout-view.php) that turn
+ * the same field output into the "1 · You / 2 · Where / 3 · Paying" glass
+ * panels plus a sticky order-summary aside.
  *
- * Field logic (which keys live under 'billing' vs 'shipping', validation,
- * COD fee, phone format) belongs to the slk-checkout plugin — this file only
- * arranges and styles whatever that plugin renders through the standard
- * woocommerce_checkout_billing / woocommerce_checkout_shipping /
- * woocommerce_checkout_order_review hooks.
+ * Panels 1 and 2 are emitted by woocommerce/checkout/form-billing.php, which
+ * also fires woocommerce_checkout_shipping; this file emits panel 3 and the
+ * aside. Field logic (which keys exist, validation, COD fee, phone format)
+ * belongs to the slk-checkout plugin — this file only arranges and styles
+ * whatever that plugin renders through the standard woocommerce_checkout_billing
+ * / woocommerce_checkout_shipping / woocommerce_checkout_order_review hooks.
  *
  * This template can be overridden by copying it to
  * yourtheme/woocommerce/checkout/form-checkout.php.
@@ -47,15 +48,21 @@ if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_requir
 
 			<div class="slk-checkout__fields col2-set">
 
-				<div class="slk-panel slk-panel--lifted slk-checkout__panel col-1" id="slk-panel-you">
-					<div class="slk-eyebrow slk-checkout__panel-label"><?php esc_html_e( '1 · You', 'slk' ); ?></div>
-					<?php do_action( 'woocommerce_checkout_billing' ); ?>
-				</div>
-
-				<div class="slk-panel slk-panel--lifted slk-checkout__panel col-2" id="slk-panel-where">
-					<div class="slk-eyebrow slk-checkout__panel-label"><?php esc_html_e( '2 · Where', 'slk' ); ?></div>
-					<?php do_action( 'woocommerce_checkout_shipping' ); ?>
-				</div>
+				<?php
+				/**
+				 * Panels "1 · You" and "2 · Where".
+				 *
+				 * Both are emitted by woocommerce/checkout/form-billing.php,
+				 * which splits the single `billing` field group across them by
+				 * priority — every one of the design's identity AND address
+				 * fields is defined in that one group, so splitting on
+				 * billing/shipping here would leave "2 · Where" empty. That
+				 * template also fires woocommerce_checkout_shipping at the end
+				 * of panel 2 (the notes field), which is why it is not fired
+				 * again here. See the header of form-billing.php.
+				 */
+				do_action( 'woocommerce_checkout_billing' );
+				?>
 
 				<div class="slk-panel slk-panel--lifted slk-checkout__panel" id="slk-payment-panel">
 					<div class="slk-eyebrow slk-checkout__panel-label"><?php esc_html_e( '3 · Paying', 'slk' ); ?></div>

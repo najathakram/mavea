@@ -70,6 +70,76 @@ function slk_whatsapp_track_url( $order = null ) {
 	return 'https://wa.me/' . $number . '?text=' . rawurlencode( $message );
 }
 
+/**
+ * Split the single `billing` checkout group into the design's two numbered
+ * panels: "1 · You" (identity) and "2 · Where" (address).
+ *
+ * WooCommerce has no field group for that distinction — the slk-checkout
+ * plugin defines phone/name/email AND country/address/landmark/city/district/
+ * postcode inside `billing`, ordered by priority. The cut is therefore made on
+ * priority, at the value billing_country carries (40); everything below it is
+ * identity, everything from it up is address. Fields are returned in the order
+ * WooCommerce already sorted them into (WC_Checkout::get_checkout_fields()
+ * uasorts each group by priority), so no reordering happens here.
+ *
+ * Presentation only: nothing is added, removed or renamed — the two returned
+ * arrays always partition the input exactly.
+ *
+ * @param array $fields Billing fields as returned by get_checkout_fields( 'billing' ).
+ * @return array{you: array, where: array}
+ */
+function slk_checkout_billing_split( $fields ) {
+	$split = array(
+		'you'   => array(),
+		'where' => array(),
+	);
+
+	if ( ! is_array( $fields ) ) {
+		return $split;
+	}
+
+	/**
+	 * The priority at which "1 · You" ends and "2 · Where" begins.
+	 *
+	 * @param int $priority Default 40 — billing_country.
+	 */
+	$boundary = (int) apply_filters( 'slk_checkout_where_min_priority', 40 );
+
+	foreach ( $fields as $key => $field ) {
+		$priority = isset( $field['priority'] ) ? (int) $field['priority'] : 10;
+		$group    = $priority >= $boundary ? 'where' : 'you';
+
+		$split[ $group ][ $key ] = $field;
+	}
+
+	return $split;
+}
+
+/* -------------------------------------------------------------------------
+ * 1b. One address form, never two.
+ *
+ * The design has a single "2 · Where" panel. Without this, WooCommerce offers
+ * a "Ship to a different address?" checkbox and a second, duplicate address
+ * form in the shipping group — which is also the only thing the old panel 2
+ * contained. Forcing billing-only shipping makes
+ * WC_Cart::needs_shipping_address() false, so form-shipping.php renders the
+ * Delivery-notes field and nothing else.
+ *
+ * pre_option_ short-circuits both the stored option and the registered
+ * default, so this holds whether or not the option row exists. Front end only:
+ * wp-admin keeps showing the merchant the real stored setting.
+ * ---------------------------------------------------------------------- */
+
+add_filter(
+	'pre_option_woocommerce_ship_to_destination',
+	static function ( $value ) {
+		return is_admin() ? $value : 'billing_only';
+	},
+	20
+);
+
+add_filter( 'woocommerce_ship_to_different_address_checked', '__return_false', 20 );
+
 /* -------------------------------------------------------------------------
  * 2. Decorate native field markup with the design-system classes.
  *
@@ -125,12 +195,21 @@ add_action(
 			return;
 		}
 
-		// slk-child is already enqueued by functions.php; hang inline CSS/JS
-		// off that handle so load order and cache-busting stay correct.
+		// slk-child is a STYLE handle (functions.php enqueues no script under
+		// that name), so inline CSS hangs off it correctly...
 		wp_add_inline_style( 'slk-child', slk_checkout_view_css() );
 
 		if ( ! is_order_received_page() ) {
-			wp_add_inline_script( 'slk-child', slk_checkout_view_js() );
+			// ...but inline JS cannot: wp_add_inline_script() resolves handles
+			// against WP_Scripts, where 'slk-child' does not exist, and
+			// WP_Scripts::add_data() then returns false and drops the script
+			// silently. Register a real (dependency-only, src-less) handle for
+			// it, the same way inc/cart.php and inc/pdp.php do. jQuery is a
+			// declared dependency because the payload binds WooCommerce's own
+			// `updated_checkout` event.
+			wp_register_script( 'slk-checkout-view', false, array( 'jquery' ), null, true );
+			wp_enqueue_script( 'slk-checkout-view' );
+			wp_add_inline_script( 'slk-checkout-view', slk_checkout_view_js() );
 		}
 	},
 	40
@@ -146,19 +225,53 @@ function slk_checkout_view_css() {
 	return '
 .slk-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-/* ── Layout ───────────────────────────────────────────────────────────── */
+/* ── Layout ───────────────────────────────────────────────────────────────
+   THIS FILE OWNS THE CHECKOUT LAYOUT. One grid, on #customer_details
+   (.slk-checkout__grid), at the single site-wide 1000px breakpoint. The form
+   itself is a plain block: it has exactly one child, #customer_details, so any
+   grid declared on form.checkout would pack the whole checkout into that
+   grid\'s first track and leave the second empty. The `display:block` below is
+   the guard for that — style.css §3.11 must drop its own desktop grid block
+   (its `form.checkout` grid + the `> #customer_details / > #order_review /
+   > #order_review_heading` placements, which no longer match anything since
+   #order_review moved inside .slk-checkout__aside).
+   ------------------------------------------------------------------------ */
 .slk-checkout{max-width:1140px;margin:0 auto;padding:0 var(--slk-space-4) var(--slk-space-12)}
-.slk-checkout__grid{display:grid;gap:var(--slk-space-4)}
+.woocommerce-checkout #customer_details.slk-checkout__grid{display:grid;gap:var(--slk-space-4);width:100%;float:none}
 .slk-checkout__fields{display:grid;gap:var(--slk-space-4)}
 .slk-checkout__panel{padding:var(--slk-space-6)}
 .slk-checkout__panel-label{margin-bottom:var(--slk-space-4)}
 .slk-checkout__aside{display:grid;gap:var(--slk-space-3);align-content:start}
 .slk-checkout__next{font:400 11.5px/1.6 var(--slk-font-ui);text-align:center;padding-top:2px}
 .slk-order-summary{padding:var(--slk-space-6)}
-@media (min-width:960px){
-  .slk-checkout__grid{grid-template-columns:1.5fr 1fr;align-items:start;gap:var(--slk-space-8)}
+@media (min-width:1000px){
+  .woocommerce-checkout form.checkout.slk-checkout{display:block}
+  .woocommerce-checkout #customer_details.slk-checkout__grid{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:start;gap:var(--slk-space-8)}
   .slk-checkout__fields{grid-template-columns:1fr}
   .slk-checkout__aside{position:sticky;top:var(--slk-space-6)}
+}
+
+/* ── One panel per step ───────────────────────────────────────────────────
+   The template supplies the glass (.slk-panel on #slk-panel-you /
+   #slk-panel-where / #slk-payment-panel). WooCommerce\'s own group wrappers
+   sit INSIDE those panels and must therefore be transparent pass-throughs —
+   otherwise every step renders as two stacked translucent fills, two 1px
+   near-white borders and ~48px of inset padding, and the (empty, because
+   shipping is billing-only) .woocommerce-shipping-fields renders as a bare
+   glass box of its own. style.css §3.11 must drop
+   .woocommerce-billing-fields / -shipping-fields / -additional-fields from its
+   glass rule; these declarations are the template\'s side of that contract and
+   are inert once it does.
+   ------------------------------------------------------------------------ */
+.slk-checkout .woocommerce-billing-fields,
+.slk-checkout .woocommerce-shipping-fields,
+.slk-checkout .woocommerce-additional-fields{
+  background:none;border:0;border-radius:0;padding:0;margin:0;box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+.slk-checkout .woocommerce-additional-fields > h3{
+  font:500 11px/1 var(--slk-font-ui);letter-spacing:.18em;text-transform:uppercase;
+  color:var(--slk-color-muted);margin:var(--slk-space-4) 0 var(--slk-space-4);
 }
 
 /* ── Fields (native WooCommerce markup, decorated via woocommerce_form_field_args) ── */
@@ -169,7 +282,17 @@ function slk_checkout_view_css() {
 .slk-checkout .form-row.woocommerce-invalid label{color:var(--slk-color-error)}
 .slk-checkout .form-row.woocommerce-invalid .slk-input,
 .slk-checkout .form-row.woocommerce-invalid .slk-select{border:1.5px solid var(--slk-color-error)}
-.slk-checkout .form-row .woocommerce-input-wrapper .description,
+/* `.description` is WooCommerce\'s HINT text, not its error text — it carries
+   "This is the number we call to confirm" and "Optional, needed only for card
+   payment". Styling it as an error painted every hint on the page in error red,
+   so a correctly-filled form read as three failures. Hints are faint; only the
+   real validation message (.woocommerce-invalid-message, and .description
+   inside a field WooCommerce has marked invalid) is error red. */
+.slk-checkout .form-row .woocommerce-input-wrapper .description{
+  display:block;padding-top:6px;
+  font:400 11.5px/1.55 var(--slk-font-ui);color:var(--slk-color-faint)
+}
+.slk-checkout .form-row.woocommerce-invalid .woocommerce-input-wrapper .description,
 .slk-checkout .form-row .woocommerce-invalid-message{display:flex;gap:var(--slk-space-2);padding-top:var(--slk-space-2);font:400 12px/1.5 var(--slk-font-ui);color:var(--slk-color-error)}
 .slk-checkout select.slk-select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--slk-color-muted) 50%),linear-gradient(135deg,var(--slk-color-muted) 50%,transparent 50%);background-position:calc(100% - 20px) center,calc(100% - 15px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
 
@@ -278,7 +401,17 @@ function slk_checkout_view_js() {
 		var payment = document.getElementById('payment');
 		if (!slot || !payment) { return; }
 		var methods = payment.querySelector('ul.payment_methods');
-		if (methods && methods.parentElement !== slot) {
+		if (!methods) { return; }
+		// WC_AJAX::update_order_review returns the whole
+		// .woocommerce-checkout-payment fragment, so every AJAX refresh
+		// rebuilds #payment with a fresh ul.payment_methods while the one we
+		// moved earlier is still sitting in the slot. Drop the stale copy
+		// before adopting the new one — two lists would mean duplicate
+		// element ids and two radio groups sharing name=\"payment_method\".
+		Array.prototype.forEach.call(slot.querySelectorAll('ul.payment_methods'), function (stale) {
+			if (stale !== methods) { stale.parentNode.removeChild(stale); }
+		});
+		if (methods.parentElement !== slot) {
 			slot.appendChild(methods);
 		}
 	}

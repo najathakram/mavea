@@ -50,7 +50,20 @@ final class SLK_Payments {
 		if ( ! function_exists( 'WC' ) || ! WC()->session ) {
 			return;
 		}
-		if ( ! $cart->needs_payment() ) {
+		/*
+		 * Deliberately NOT $cart->needs_payment().
+		 *
+		 * needs_payment() is get_total() > 0, and inside
+		 * woocommerce_cart_calculate_fees the total has not been computed yet —
+		 * fees are an INPUT to it. Measured in the running store: the guard read
+		 * needs_payment = 0 on every pass while the same call outside the hook
+		 * read 1, so the fee was silently skipped every single time and the
+		 * Rs. 150 handling charge never reached a customer-visible total.
+		 *
+		 * The contents total IS known at this point, so use that: it answers the
+		 * question actually being asked — is there anything here to pay for.
+		 */
+		if ( (float) $cart->get_cart_contents_total() <= 0 ) {
 			return;
 		}
 
