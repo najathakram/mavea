@@ -67,7 +67,10 @@ add_action(
 }
 .slk-story__pair-img{aspect-ratio:3/4;border-radius:var(--slk-radius-tile);overflow:hidden}
 .slk-story__pair-img img{width:100%;height:100%;object-fit:cover;display:block}
-.slk-story__pair-img--b{margin-top:var(--slk-space-6)}
+/* The mockup staggered the second frame by 34px. With two same-size images
+   it reads as a misalignment bug rather than editorial offset (Najath,
+   2026-08-12) — tops align. */
+.slk-story__pair{align-items:start}
 .slk-story__closing{padding-top:var(--slk-space-6);max-width:70ch}
 .slk-story__closing p{font:400 var(--slk-text-base)/var(--slk-leading-body) var(--slk-font-ui);color:var(--slk-color-ink-soft)}
 .slk-story__find-h{font-size:var(--slk-display-s);margin:var(--slk-space-6) 0 var(--slk-space-2)}

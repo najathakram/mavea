@@ -59,7 +59,7 @@ get_header();
 		<div class="slk-story__pair">
 			<div class="slk-story__pair-img slk-story__pair-img--a">
 				<?php
-				$pair_a = slk_editorial_image( 'studio_pair', 'large', array( 'alt' => __( 'The cutting table at the atelier.', 'slk' ) ) );
+				$pair_a = slk_editorial_image( 'studio_pair', 'large', array( 'alt' => __( 'A watercolour-print dress, worn seated in a daylit room.', 'slk' ), 'loading' => 'eager' ) );
 
 				if ( $pair_a ) {
 					echo $pair_a; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside slk_editorial_image().
@@ -68,7 +68,7 @@ get_header();
 			</div>
 			<div class="slk-story__pair-img slk-story__pair-img--b">
 				<?php
-				$pair_b = slk_editorial_image( 'portrait_warm', 'large', array( 'alt' => __( 'Hands, cloth and a needle, mid-stitch.', 'slk' ) ) );
+				$pair_b = slk_editorial_image( 'portrait_warm', 'large', array( 'alt' => __( 'Two of the pieces worn together, brushstroke print and cotton eyelet.', 'slk' ), 'loading' => 'eager' ) );
 
 				if ( $pair_b ) {
 					echo $pair_b; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside slk_editorial_image().

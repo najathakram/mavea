@@ -288,7 +288,42 @@ function slk_chrome_link_list( $links, $class = '' ) {
  * ---------------------------------------------------------------------- */
 
 /**
+ * Inline SVG icons for the header controls.
+ *
+ * These were text glyphs (⌕ ☰ ✕). A glyph is at the mercy of whatever font
+ * resolves it: the search character rendered as a small lopsided ring at 16px
+ * in Archivo, which is why the control read as a smudge rather than a button.
+ * Drawn paths give the same thin-stroke language as the wordmark, stay crisp
+ * at any size, and inherit currentColor.
+ *
+ * @param string $name search|bag|menu|close.
+ * @return string SVG markup, or '' for an unknown name.
+ */
+function slk_chrome_icon( $name ) {
+	$open = '<svg class="slk-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">';
+
+	$paths = array(
+		'search' => '<circle cx="11" cy="11" r="6.25"/><path d="M15.6 15.6 20 20"/>',
+		// A tote: two handles over a soft-shouldered body — closer to a garment
+		// bag than a supermarket basket.
+		'bag'    => '<path d="M5.4 8.2h13.2l-1 11.1a1.6 1.6 0 0 1-1.6 1.45H8a1.6 1.6 0 0 1-1.6-1.45Z"/><path d="M9 10.4V7.3a3 3 0 0 1 6 0v3.1"/>',
+		'menu'   => '<path d="M4 8h16M4 16h16"/>',
+		'close'  => '<path d="M6 6l12 12M18 6 6 18"/>',
+	);
+
+	if ( ! isset( $paths[ $name ] ) ) {
+		return '';
+	}
+
+	return $open . $paths[ $name ] . '</svg>';
+}
+
+/**
  * The bag icon button, with the live cart count.
+ *
+ * Empty bag shows the tote outline, not a "0" — a zero in a filled dark
+ * circle is a counter announcing nothing, and it was the first thing the eye
+ * landed on. The filled circle and count appear only once she has something.
  *
  * @return string
  */
@@ -301,17 +336,24 @@ function slk_chrome_bag_html() {
 		$url   = (string) wc_get_cart_url();
 	}
 
+	$label = $count
+		? sprintf(
+			/* translators: %s: number of items in the bag. */
+			_n( 'Bag, %s item', 'Bag, %s items', $count, 'slk' ),
+			number_format_i18n( $count )
+		)
+		: __( 'Bag, empty', 'slk' );
+
+	$inner = $count
+		? '<span class="slk-bag__count">' . esc_html( number_format_i18n( $count ) ) . '</span>'
+		: slk_chrome_icon( 'bag' );
+
 	return sprintf(
-		'<a class="slk-icon-btn slk-bag" href="%1$s" aria-label="%2$s"><span class="slk-bag__count" aria-hidden="true">%3$s</span></a>',
+		'<a class="slk-icon-btn slk-bag%1$s" href="%2$s" aria-label="%3$s">%4$s</a>',
+		$count ? ' slk-bag--filled' : '',
 		esc_url( $url ),
-		esc_attr(
-			sprintf(
-				/* translators: %s: number of items in the bag. */
-				_n( 'Bag, %s item', 'Bag, %s items', $count, 'slk' ),
-				number_format_i18n( $count )
-			)
-		),
-		esc_html( number_format_i18n( $count ) )
+		esc_attr( $label ),
+		$inner
 	);
 }
 
@@ -397,14 +439,14 @@ function slk_chrome_render_header() {
 					data-slk-toggle="slk-drawer"
 					aria-controls="slk-drawer"
 					aria-expanded="false"
-					aria-label="<?php esc_attr_e( 'Menu', 'slk' ); ?>"><span aria-hidden="true">☰</span></button>
+					aria-label="<?php esc_attr_e( 'Menu', 'slk' ); ?>"><?php echo slk_chrome_icon( 'menu' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup. ?></button>
 
 				<button type="button"
 					class="slk-icon-btn"
 					data-slk-toggle="slk-header-search"
 					aria-controls="slk-header-search"
 					aria-expanded="false"
-					aria-label="<?php esc_attr_e( 'Search', 'slk' ); ?>"><span aria-hidden="true">⌕</span></button>
+					aria-label="<?php esc_attr_e( 'Search', 'slk' ); ?>"><?php echo slk_chrome_icon( 'search' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup. ?></button>
 
 				<?php echo slk_chrome_bag_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 			</div>
@@ -437,7 +479,7 @@ function slk_chrome_render_header() {
 				<button type="button"
 					class="slk-icon-btn slk-drawer__close"
 					data-slk-close="slk-drawer"
-					aria-label="<?php esc_attr_e( 'Close menu', 'slk' ); ?>"><span aria-hidden="true">✕</span></button>
+					aria-label="<?php esc_attr_e( 'Close menu', 'slk' ); ?>"><?php echo slk_chrome_icon( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup. ?></button>
 			</div>
 
 			<nav class="slk-drawer__nav" aria-label="<?php esc_attr_e( 'Mobile', 'slk' ); ?>">

@@ -39,21 +39,25 @@ EDITORIAL = {
     "hero-group":   "DSC_3760",  # HIS PICK — white-studio trio, subjects LEFT, wide
                                  # negative space right; the glass panel moves bottom-RIGHT
     "hero-alt":     "DSC_3699",
-    "portrait-warm": "DSC_2615",  # close warm portrait — story body
+    # STORY BODY PAIR — Najath's picks, pasted 2026-08-12. Both true portraits,
+    # so the 3:4 frames crop barely at all and nothing important leaves frame.
+    "portrait-warm": "DSC_2577",  # HIS PICK — the pair in the dark lounge,
+                                  # brushstroke standing, cream eyelet seated
     "pair-close":   "DSC_2573",
     "single-floral": "DSC_3657",
     "room-wide":    "DSC_3842",  # HIS PICK — single figure at the cream telephone,
                                  # panelled room: the story hero AND the home paying
                                  # panel ("a person calls to confirm" made literal)
-    "studio-pair":  "DSC_2503",  # HIS PICK — dark-lounge trio; 3:4 crop centres the
-                                 # seated conversation for the story body pair
+    "studio-pair":  "DSC_3657",  # HIS PICK — seated figure, white panelled room
+                                 # with bamboo; the left half of the story pair
 }
 
 # per-key cover() focus overrides: (focus_x, focus_y)
 FOCUS = {
     "hero-group": (0.0, 0.5),    # keep the trio hard left, space to the right
     "room-wide":  (0.45, 0.30),  # keep her face + the phone, trim floor not head
-    "studio-pair": (0.42, 0.5),  # centre the seated pair inside the trio
+    "studio-pair": (0.45, 0.5),  # seated figure sits left of the bamboo
+    "portrait-warm": (0.5, 0.5), # both women centred; 4:5 -> 3:4 barely crops
 }
 
 PRODUCT_W, PRODUCT_H = 1200, 1600   # 3:4

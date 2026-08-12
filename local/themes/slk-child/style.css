@@ -650,9 +650,29 @@ img, svg, video { max-width: 100%; height: auto; }
   color: var(--slk-color-ink);
   text-decoration: none;
 }
-.slk-nav .current-menu-item > a,
-.slk-nav [aria-current="page"] { box-shadow: inset 0 -2px 0 0 var(--slk-color-ink); }
-.slk-nav a:hover { color: var(--slk-color-muted); }
+/* Nav interaction: a hairline that grows from the centre on hover and sits
+   full-width on the current page. The old states were a colour FADE on hover
+   (the link got quieter when pointed at — backwards) and an inset box-shadow
+   for current, which hugged the 14px padding box and read as a stray rule
+   floating below the word. This underline is drawn on the text itself. */
+.slk-nav a { position: relative; }
+.slk-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 10px;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: 50% 50%;
+  transition: transform var(--slk-motion-base) var(--slk-ease);
+}
+.slk-nav a:hover { color: var(--slk-color-ink); }
+.slk-nav a:hover::after { transform: scaleX(1); }
+.slk-nav .current-menu-item > a::after,
+.slk-nav [aria-current="page"]::after { transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) {
+  .slk-nav a::after { transition: none; }
+}
 
 .slk-header__actions { display: flex; align-items: center; gap: var(--slk-space-1); }
 .slk-header__actions > * { flex: none; }
@@ -672,11 +692,19 @@ img, svg, video { max-width: 100%; height: auto; }
 }
 .slk-icon-btn:hover { background: rgba(255,255,255,.6); }
 .slk-icon-btn:active { transform: scale(.92); }
-.slk-bag {
+/* Drawn icons, not glyphs (inc/chrome.php slk_chrome_icon). Thin strokes to
+   match the wordmark's weight; they inherit colour from the button. */
+.slk-icon-btn .slk-icon { display: block; }
+
+/* The bag has two states. Empty: the tote outline, quiet, like its siblings —
+   a filled dark circle containing "0" was the loudest thing in the header and
+   it was announcing nothing. Filled: the design's ink disc with the count. */
+.slk-bag { color: var(--slk-color-ink); }
+.slk-bag--filled {
   background: rgba(35,34,32,.9);
   color: var(--slk-color-on-ink);
 }
-.slk-bag:hover { background: var(--slk-color-ink); transform: scale(1.06); }
+.slk-bag--filled:hover { background: var(--slk-color-ink); transform: scale(1.06); }
 
 /* Blocksy fallback. If the site runs Blocksy's own header rather than the
    child partial, give its middle row the same pill. Every declaration here is
