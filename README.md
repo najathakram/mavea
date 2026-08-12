@@ -45,9 +45,15 @@ third-party plugins live in a Docker volume and are **not** committed.
   email, COD fee and gating)
 - `slk-order-flow` — COD confirmation lifecycle (custom statuses, stock reservation, SMS hooks,
   WhatsApp confirm actions, ops role)
-- `slk-child` — Blocksy child theme; brand styling lands after the naming and design gates
+- `slk-child` — Blocksy child theme: the Porcelain Glass design system, the WooCommerce and
+  Blocksy mapping, the page templates, and the house dropdown (`inc/select.php` +
+  `assets/js/select.js`, which replaces both native selects and select2)
 
-Both plugins are currently scaffolds. Implementations go through the `dev-pipeline` skill.
+`slk-checkout` and `slk-child` are implemented; `slk-order-flow` is still a scaffold. Further
+implementation goes through the `dev-pipeline` skill.
+
+The brand name is still at gate G1. Nothing hardcodes it: the wordmark is text supplied by the
+`slk_wordmark` filter, the code prefix is `slk-`, and the placeholder reads "SL DRESS".
 
 ## Conventions carried over from Aeshal
 
