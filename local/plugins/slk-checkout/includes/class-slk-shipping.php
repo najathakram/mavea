@@ -80,11 +80,11 @@ final class SLK_Shipping {
 	public static function tier_label( $district ): string {
 		switch ( SLK_Districts::tier( $district ) ) {
 			case SLK_Districts::TIER_METRO:
-				return __( '1–2 working days', 'slk' );
+				return __( '1 to 2 working days', 'slk' );
 			case SLK_Districts::TIER_REGIONAL:
-				return __( '2–3 working days', 'slk' );
+				return __( '2 to 3 working days', 'slk' );
 			default:
-				return __( '3–5 working days', 'slk' );
+				return __( '3 to 5 working days', 'slk' );
 		}
 	}
 

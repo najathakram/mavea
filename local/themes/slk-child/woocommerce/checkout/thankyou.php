@@ -71,14 +71,14 @@ defined( 'ABSPATH' ) || exit;
 					<p class="slk-order-received__sub">
 						<?php
 						/* translators: %s: formatted order total, e.g. Rs. 15,900. */
-						printf( wp_kses_post( __( 'Nothing to pay yet — keep %s ready for the courier.', 'slk' ) ), wp_kses_post( $slk_total ) );
+						printf( wp_kses_post( __( 'There is nothing to pay yet. Keep %s ready for the courier.', 'slk' ) ), wp_kses_post( $slk_total ) );
 						?>
 					</p>
 				<?php else : ?>
 					<p class="slk-order-received__sub">
 						<?php
 						/* translators: %s: formatted order total, e.g. Rs. 15,900. */
-						printf( wp_kses_post( __( 'Payment received — %s. We start packing today.', 'slk' ) ), wp_kses_post( $slk_total ) );
+						printf( wp_kses_post( __( 'We have received your payment of %s. We start packing today.', 'slk' ) ), wp_kses_post( $slk_total ) );
 						?>
 					</p>
 				<?php endif; ?>
@@ -102,9 +102,9 @@ defined( 'ABSPATH' ) || exit;
 							<?php
 							if ( $slk_phone ) {
 								/* translators: %s: masked phone number. */
-								printf( esc_html__( 'Today or tomorrow morning, on %s. A real person, not a robot.', 'slk' ), esc_html( $slk_phone ) );
+								printf( esc_html__( 'Today or tomorrow morning, on %s. A real person will call you, not a robot.', 'slk' ), esc_html( $slk_phone ) );
 							} else {
-								esc_html_e( 'Today or tomorrow morning. A real person, not a robot.', 'slk' );
+								esc_html_e( 'Today or tomorrow morning. A real person will call you, not a robot.', 'slk' );
 							}
 							?>
 						</div>
@@ -117,7 +117,7 @@ defined( 'ABSPATH' ) || exit;
 					</div>
 					<div>
 						<div class="slk-step__label"><?php esc_html_e( 'Your pieces are packed in Galle', 'slk' ); ?></div>
-						<div class="slk-step__desc slk-muted"><?php esc_html_e( 'Pressed, wrapped, and handed to the courier.', 'slk' ); ?></div>
+						<div class="slk-step__desc slk-muted"><?php esc_html_e( 'We press it, wrap it, and hand it to the courier.', 'slk' ); ?></div>
 					</div>
 				</div>
 				<div class="slk-step slk-step--todo">
@@ -128,9 +128,9 @@ defined( 'ABSPATH' ) || exit;
 						<div class="slk-step__label"><?php esc_html_e( 'At your door', 'slk' ); ?></div>
 						<div class="slk-step__desc slk-muted">
 							<?php if ( $slk_shipping_label ) : ?>
-								<?php echo esc_html( $slk_shipping_label ); ?><?php if ( $slk_is_cod ) : ?><?php echo esc_html( ' — ' ); ?><?php
+								<?php echo esc_html( $slk_shipping_label ); ?><?php if ( $slk_is_cod ) : ?><?php echo esc_html( '. ' ); ?><?php
 									/* translators: %s: formatted order total. */
-									printf( wp_kses_post( __( 'pay the courier %s in cash.', 'slk' ) ), wp_kses_post( $slk_total ) );
+									printf( wp_kses_post( __( 'Pay the courier %s in cash.', 'slk' ) ), wp_kses_post( $slk_total ) );
 								?><?php endif; ?>
 							<?php elseif ( $slk_is_cod ) : ?>
 								<?php
@@ -138,7 +138,7 @@ defined( 'ABSPATH' ) || exit;
 								printf( wp_kses_post( __( 'Pay the courier %s in cash.', 'slk' ) ), wp_kses_post( $slk_total ) );
 								?>
 							<?php else : ?>
-								<?php esc_html_e( '1–2 working days in Colombo, 3–5 island-wide.', 'slk' ); ?>
+								<?php esc_html_e( 'Delivery takes 1 to 2 working days in Colombo and 3 to 5 island-wide.', 'slk' ); ?>
 							<?php endif; ?>
 						</div>
 					</div>

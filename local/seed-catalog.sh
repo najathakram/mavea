@@ -50,21 +50,21 @@ for old in nayana-linen-abaya mihiri-crepe-abaya tharu-everyday-abaya \
   [ -n "$id" ] && { wp post delete "$id" --force >/dev/null; echo "    removed $old"; } || true
 done
 
-# slug|Name|price|category|short description
+# slug|Name|price|category|short description|long description
 PRODUCTS='
-amara|Amara|13500|abayas|Block-printed cotton · side pockets · falls to the ankle
-noor|Noor|14800|abayas|Feather-print crepe · shirred waist · sleeves to the wrist
-liana|Liana|12900|abayas|Printed viscose · wrap tie · falls to the ankle
-inaya|Inaya|15600|abayas|Tiered cotton lace · deep hem · sleeves to the wrist
-mira|Mira|13900|dresses|Watercolour chiffon · tiered skirt · falls to the ankle
-dahlia|Dahlia|12400|dresses|Printed chiffon · lined · sleeves to the wrist
-mizna|Mizna|11800|dresses|Ditsy floral chiffon · gathered yoke · falls to the ankle
-layla|Layla|12200|dresses|Colour-blocked tiers · gathered waist · sleeves to the wrist
-rania|Rania|14200|dresses|Brushstroke print · unlined · falls to the ankle
+amara|Amara|13500|abayas|Block-printed cotton · side pockets · falls to the ankle|Block-printed cotton with side pockets, cut full length to the ankle. The sleeves reach the wrist.
+noor|Noor|14800|abayas|Feather-print crepe · shirred waist · sleeves to the wrist|The waist is shirred and the print is a feather pattern on crepe. It is full length, with sleeves that reach the wrist.
+liana|Liana|12900|abayas|Printed viscose · wrap tie · falls to the ankle|Printed viscose with a wrap tie at the waist. It hangs to the ankle and the sleeves cover the arm to the wrist.
+inaya|Inaya|15600|abayas|Tiered cotton lace · deep hem · sleeves to the wrist|Cotton lace in tiers, finished with a deep hem at the ankle. The sleeves are long, ending at the wrist.
+mira|Mira|13900|dresses|Watercolour chiffon · tiered skirt · falls to the ankle|Watercolour chiffon, with the skirt cut in tiers that fall to the ankle. The sleeves end at the wrist.
+dahlia|Dahlia|12400|dresses|Printed chiffon · lined · sleeves to the wrist|Printed chiffon, and unlike most of what we make, this one is fully lined. It falls to the ankle with sleeves to the wrist.
+mizna|Mizna|11800|dresses|Ditsy floral chiffon · gathered yoke · falls to the ankle|A ditsy floral on chiffon, gathered at the yoke. The skirt runs to the ankle and the sleeves run to the wrist.
+layla|Layla|12200|dresses|Colour-blocked tiers · gathered waist · sleeves to the wrist|Colour-blocked tiers gathered at the waist. It is ankle length and the sleeves reach the wrist.
+rania|Rania|14200|dresses|Brushstroke print · unlined · falls to the ankle|A brushstroke print left unlined, which is how we cut most things for the heat. It falls to the ankle and the sleeves reach the wrist.
 '
 
 echo "==> products + imagery"
-echo "$PRODUCTS" | while IFS='|' read -r slug name price cat desc; do
+echo "$PRODUCTS" | while IFS='|' read -r slug name price cat desc long; do
   [ -z "${slug:-}" ] && continue
 
   id=$(wp post list --post_type=product --name="$slug" --field=ID --posts_per_page=1 2>/dev/null | tr -d '\r')
@@ -83,7 +83,7 @@ echo "$PRODUCTS" | while IFS='|' read -r slug name price cat desc; do
   wp post meta update "$id" _visibility visible >/dev/null
   # Brand law: this store never carries a sale price.
   wp post meta delete "$id" _sale_price >/dev/null 2>&1 || true
-  wp post update "$id" --post_excerpt="$desc" >/dev/null
+  wp post update "$id" --post_excerpt="$desc" --post_content="$long" >/dev/null
   wp post term set "$id" product_cat "$cat" >/dev/null
   wp post term set "$id" product_type simple >/dev/null
 
@@ -91,7 +91,7 @@ echo "$PRODUCTS" | while IFS='|' read -r slug name price cat desc; do
   gallery=""
   for role in front back detail; do
     file="/var/www/html/temp/${slug}-${role}.jpg"
-    title="$name — $role"
+    title="$name $role"
     att=$(wp post list --post_type=attachment --name="${slug}-${role}" --field=ID --posts_per_page=1 2>/dev/null | tr -d '\r')
     if [ -z "$att" ]; then
       att=$(wp media import "$file" --title="$title" --porcelain 2>/dev/null | tr -d '\r')
@@ -99,7 +99,7 @@ echo "$PRODUCTS" | while IFS='|' read -r slug name price cat desc; do
     [ -z "$att" ] && { echo "      ! could not import ${slug}-${role}"; continue; }
     # Alt text describes the garment, never the model — accessibility, and the
     # modesty rules mean the garment is the subject anyway.
-    wp post meta update "$att" _wp_attachment_image_alt "$name — $desc" >/dev/null
+    wp post meta update "$att" _wp_attachment_image_alt "$name: $desc" >/dev/null
     if [ "$role" = "front" ]; then
       wp post meta update "$id" _thumbnail_id "$att" >/dev/null
     else

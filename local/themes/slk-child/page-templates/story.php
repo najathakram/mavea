@@ -37,7 +37,7 @@ get_header();
 			<span class="slk-eyebrow"><?php esc_html_e( 'Our story', 'slk' ); ?></span>
 			<h1><?php esc_html_e( 'A small atelier in Galle, sewing clothes we actually wear.', 'slk' ); ?></h1>
 			<p class="slk-story__lede">
-				<?php esc_html_e( 'We started with a simple irritation: dressing modestly here meant choosing between imported abayas cut for another climate, or fast fashion that treats modesty as an afterthought. So we cut our own — for heat, for monsoon humidity, for buses and weddings and work.', 'slk' ); ?>
+				<?php esc_html_e( 'We started with a simple irritation. Dressing modestly here meant choosing between imported abayas cut for another climate and fast fashion that treats modesty as an afterthought. So we cut our own, for heat, for monsoon humidity, for buses and weddings and work.', 'slk' ); ?>
 			</p>
 		</div>
 
@@ -79,11 +79,11 @@ get_header();
 
 		<div class="slk-story__closing">
 			<p>
-				<?php esc_html_e( 'Every piece is cut and finished by hand, in small numbers, and never restocked in bulk. When a run sells, we make the next thing. The fabric offcuts become our hijab undercaps — nothing useful leaves the room.', 'slk' ); ?>
+				<?php esc_html_e( 'Every piece is cut and finished by hand, in small numbers, and never restocked in bulk. When a run sells, we make the next thing. The fabric offcuts become our hijab undercaps, so nothing useful leaves the room.', 'slk' ); ?>
 			</p>
 			<h2 class="slk-story__find-h"><?php esc_html_e( 'Where to find us', 'slk' ); ?></h2>
 			<p class="slk-story__find-p">
-				<?php esc_html_e( 'The atelier is in Galle — the address and business numbers will sit here. Come by appointment; we would rather you see the work than take our word for it.', 'slk' ); ?>
+				<?php esc_html_e( 'The atelier is in Galle, and the address and business numbers will sit here. Come by appointment, because we would rather you saw the work than took our word for it.', 'slk' ); ?>
 			</p>
 		</div>
 

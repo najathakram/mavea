@@ -102,7 +102,7 @@ final class SLK_Checkout_Fields {
 				$billing['billing_email'],
 				array(
 					'label'        => __( 'Email', 'slk' ),
-					'description'  => __( 'Optional — needed only for card payment.', 'slk' ),
+					'description'  => __( 'Optional, and needed only for card payment.', 'slk' ),
 					'required'     => false,
 					'autocomplete' => 'email',
 					'priority'     => 30,

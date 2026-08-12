@@ -45,7 +45,7 @@ $sent = isset( $_GET['slk_contact'] ) ? sanitize_text_field( wp_unslash( $_GET['
 			<a class="slk-contact-row" href="<?php echo esc_url( $phone_url ); ?>">
 				<span class="slk-contact-row__text">
 					<?php esc_html_e( 'Call us', 'slk' ); ?>
-					<small><?php esc_html_e( 'Business number · 9am–6pm, Mon to Sat', 'slk' ); ?></small>
+					<small><?php esc_html_e( 'Business number · 9am to 6pm, Mon to Sat', 'slk' ); ?></small>
 				</span>
 			</a>
 		<?php endif; ?>
@@ -73,7 +73,7 @@ $sent = isset( $_GET['slk_contact'] ) ? sanitize_text_field( wp_unslash( $_GET['
 		<div class="slk-atelier">
 			<span class="slk-eyebrow"><?php esc_html_e( 'The atelier', 'slk' ); ?></span>
 			<div class="slk-atelier__media"><?php echo $atelier_image; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside slk_editorial_image(). ?></div>
-			<p class="slk-atelier__copy"><?php esc_html_e( 'Galle. Visits by appointment — message us first and we will keep the kettle on.', 'slk' ); ?></p>
+			<p class="slk-atelier__copy"><?php esc_html_e( 'We are in Galle and visits are by appointment. Message us first and we will keep the kettle on.', 'slk' ); ?></p>
 		</div>
 	<?php endif; ?>
 
@@ -81,7 +81,7 @@ $sent = isset( $_GET['slk_contact'] ) ? sanitize_text_field( wp_unslash( $_GET['
 		<h2><?php esc_html_e( 'Or leave a message', 'slk' ); ?></h2>
 
 		<?php if ( 'sent' === $sent ) : ?>
-			<div class="slk-toast"><?php esc_html_e( 'Thank you — we have your message and will reply soon.', 'slk' ); ?></div>
+			<div class="slk-toast"><?php esc_html_e( 'Thank you. We have your message and will reply soon.', 'slk' ); ?></div>
 		<?php elseif ( 'error' === $sent ) : ?>
 			<div class="slk-toast slk-toast--error"><?php esc_html_e( "That didn't go through. Please fill in both fields and try again.", 'slk' ); ?></div>
 		<?php endif; ?>

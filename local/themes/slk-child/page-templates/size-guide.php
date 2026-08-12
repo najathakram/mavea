@@ -23,7 +23,7 @@ $slk_sizeguide_tabs = array(
 );
 
 $slk_sizeguide_rows = array(
-	array( 'label' => __( 'Bust', 'slk' ), 'values' => array( '90–96', '96–102', '102–110', '110–118' ) ),
+	array( 'label' => __( 'Bust', 'slk' ), 'values' => array( '90-96', '96-102', '102-110', '110-118' ) ),
 	array( 'label' => __( 'Length', 'slk' ), 'values' => array( '134', '138', '140', '142' ) ),
 	array( 'label' => __( 'Sleeve', 'slk' ), 'values' => array( '58', '59', '60', '61' ) ),
 	array( 'label' => __( 'Hip room', 'slk' ), 'values' => array( '116', '122', '130', '138' ) ),
@@ -33,17 +33,17 @@ $slk_sizeguide_howto = array(
 	array(
 		'n' => '01',
 		'l' => __( 'Bust', 'slk' ),
-		't' => __( 'around the fullest part, tape parallel to the floor, over the clothes you would wear underneath.', 'slk' ),
+		't' => __( 'Measure around the fullest part, keeping the tape parallel to the floor, over the clothes you would wear underneath.', 'slk' ),
 	),
 	array(
 		'n' => '02',
 		'l' => __( 'Length', 'slk' ),
-		't' => __( 'from the highest point of your shoulder straight down to your ankle bone.', 'slk' ),
+		't' => __( 'Measure from the highest point of your shoulder straight down to your ankle bone.', 'slk' ),
 	),
 	array(
 		'n' => '03',
 		'l' => __( 'Sleeve', 'slk' ),
-		't' => __( 'shoulder point to wrist bone, arm relaxed at your side.', 'slk' ),
+		't' => __( 'Measure from the shoulder point to the wrist bone, with your arm relaxed at your side.', 'slk' ),
 	),
 );
 
@@ -58,7 +58,7 @@ $slk_sizeguide_wa = function_exists( 'slk_whatsapp_url' )
 		<div class="slk-sizeguide__intro">
 			<h1><?php esc_html_e( 'Find your size', 'slk' ); ?></h1>
 			<p>
-				<?php esc_html_e( 'All measurements in centimetres, taken flat on the garment. Our cuts sit loose on purpose — when between sizes, take the smaller one.', 'slk' ); ?>
+				<?php esc_html_e( 'All measurements are in centimetres, taken flat on the garment. Our cuts sit loose on purpose, so if you are between sizes, take the smaller one.', 'slk' ); ?>
 			</p>
 		</div>
 
@@ -125,7 +125,7 @@ $slk_sizeguide_wa = function_exists( 'slk_whatsapp_url' )
 						<div class="slk-panel slk-sizeguide__howto-card">
 							<span class="slk-sizeguide__howto-n"><?php echo esc_html( $slk_step['n'] ); ?></span>
 							<span class="slk-sizeguide__howto-t">
-								<b><?php echo esc_html( $slk_step['l'] ); ?></b> — <?php echo esc_html( $slk_step['t'] ); ?>
+								<b><?php echo esc_html( $slk_step['l'] ); ?></b>: <?php echo esc_html( $slk_step['t'] ); ?>
 							</span>
 						</div>
 					<?php endforeach; ?>
@@ -134,7 +134,7 @@ $slk_sizeguide_wa = function_exists( 'slk_whatsapp_url' )
 				<div class="slk-sizeguide__wa-card">
 					<div class="slk-sizeguide__wa-h"><?php esc_html_e( 'Between two sizes?', 'slk' ); ?></div>
 					<p class="slk-sizeguide__wa-p">
-						<?php esc_html_e( 'Send us your bust and height on WhatsApp — we measure the actual piece before it ships. And if it is still wrong, exchange within 7 days.', 'slk' ); ?>
+						<?php esc_html_e( 'Send us your bust and height on WhatsApp and we will measure the actual piece before it ships. If it is still wrong, you can exchange it within 7 days.', 'slk' ); ?>
 					</p>
 					<?php if ( $slk_sizeguide_wa ) : ?>
 						<a class="slk-btn slk-btn--secondary slk-sizeguide__wa-btn" href="<?php echo esc_url( $slk_sizeguide_wa ); ?>">

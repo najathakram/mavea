@@ -42,17 +42,17 @@ function slk_delivery_zones() {
 	return array(
 		array(
 			'label' => __( 'Colombo & Gampaha', 'slk' ),
-			'days'  => __( '1–2 working days', 'slk' ),
+			'days'  => __( '1 to 2 working days', 'slk' ),
 			'fee'   => 350,
 		),
 		array(
 			'label' => __( 'Kandy · Galle · Kalutara · Kurunegala', 'slk' ),
-			'days'  => __( '2–3 working days', 'slk' ),
+			'days'  => __( '2 to 3 working days', 'slk' ),
 			'fee'   => 400,
 		),
 		array(
 			'label' => __( 'All other districts', 'slk' ),
-			'days'  => __( '3–5 working days', 'slk' ),
+			'days'  => __( '3 to 5 working days', 'slk' ),
 			'fee'   => 450,
 		),
 	);
@@ -101,21 +101,21 @@ function slk_faq_groups() {
 					'q' => __( 'Do I pay anything before it arrives?', 'slk' ),
 					/* translators: %s: COD handling fee, e.g. "Rs. 150". */
 					'a' => sprintf(
-						__( 'No. With cash on delivery nothing is charged when you order. You pay the courier at your door, in cash. %s handling is added and shown before you place the order.', 'slk' ),
+						__( 'Nothing is charged when you order. With cash on delivery you pay the courier at your door, in cash. The %s handling fee is added to your total and shown before you place the order.', 'slk' ),
 						$cod_fee
 					),
 				),
 				array(
 					'q' => __( 'Why do you call before shipping?', 'slk' ),
-					'a' => __( 'So the piece, the size and the address are right before anything leaves Galle. A real person calls or WhatsApps you — whichever suits you — and nothing ships until you say yes.', 'slk' ),
+					'a' => __( 'We want the piece, the size and the address to be right before anything leaves Galle. A real person calls you, or sends a WhatsApp message if that suits you better, and nothing ships until you say yes.', 'slk' ),
 				),
 				array(
 					'q' => __( 'Can I pay by card or eZ Cash?', 'slk' ),
-					'a' => __( 'Yes. Card, eZ Cash, helaPay and LankaQR all run through one secure PayHere screen at checkout, with no COD handling fee added.', 'slk' ),
+					'a' => __( 'Card, eZ Cash, helaPay and LankaQR all run through one secure PayHere screen at checkout. Paying this way means there is no handling fee to add.', 'slk' ),
 				),
 				array(
 					'q' => __( 'Can I pay in instalments?', 'slk' ),
-					'a' => __( 'Yes, with Koko — pay in 3. It appears as a payment option at checkout once your cart passes Rs. 10,000.', 'slk' ),
+					'a' => __( 'Koko lets you pay in three instalments. It appears as a payment option at checkout once your cart passes Rs. 10,000.', 'slk' ),
 				),
 				array(
 					'q' => __( 'What if I am not home when it arrives?', 'slk' ),
@@ -128,19 +128,19 @@ function slk_faq_groups() {
 			'items' => array(
 				array(
 					'q' => __( 'How much does delivery cost?', 'slk' ),
-					'a' => __( 'Rs. 350 to Colombo and Gampaha, Rs. 400 to Kandy, Galle, Kalutara and Kurunegala, Rs. 450 everywhere else — free over Rs. 15,000.', 'slk' ),
+					'a' => __( 'Delivery costs Rs. 350 to Colombo and Gampaha, Rs. 400 to Kandy, Galle, Kalutara and Kurunegala, and Rs. 450 everywhere else. Orders over Rs. 15,000 ship free.', 'slk' ),
 				),
 				array(
 					'q' => __( 'Which areas do you deliver to?', 'slk' ),
-					'a' => __( 'All 25 districts, through one courier partner. There is nowhere in Sri Lanka we cannot reach.', 'slk' ),
+					'a' => __( 'We deliver to all 25 districts through one courier partner. There is nowhere in Sri Lanka we cannot reach.', 'slk' ),
 				),
 				array(
 					'q' => __( 'How long will my order take?', 'slk' ),
-					'a' => __( '1–2 working days to Colombo and Gampaha, 2–3 to Kandy, Galle, Kalutara and Kurunegala, 3–5 to every other district — counted from the confirmation call, not from checkout.', 'slk' ),
+					'a' => __( 'Colombo and Gampaha take 1 to 2 working days. Kandy, Galle, Kalutara and Kurunegala take 2 to 3, and every other district takes 3 to 5. We count from the confirmation call rather than from checkout.', 'slk' ),
 				),
 				array(
 					'q' => __( 'Can I change my delivery address after ordering?', 'slk' ),
-					'a' => __( 'Yes. Nothing ships until the confirmation call, so message us on WhatsApp any time before then and we will update it.', 'slk' ),
+					'a' => __( 'Nothing ships until the confirmation call, so message us on WhatsApp any time before then and we will update it.', 'slk' ),
 				),
 			),
 		),
@@ -155,7 +155,7 @@ function slk_faq_groups() {
 					'q' => __( 'What if it doesn\'t fit?', 'slk' ),
 					/* translators: %s: URL of the exchanges page. */
 					'a' => sprintf(
-						__( 'Exchange it within 7 days — the courier collects from your door. The full policy is on our <a href="%s">exchanges page</a>.', 'slk' ),
+						__( 'You can exchange it within 7 days, and the courier collects from your door. The full policy is on our <a href="%s">exchanges page</a>.', 'slk' ),
 						esc_url( $exchanges_url )
 					),
 				),
@@ -163,7 +163,7 @@ function slk_faq_groups() {
 					'q' => __( 'Do you have a size guide?', 'slk' ),
 					'a' => $size_guide_url
 						/* translators: %s: URL of the size guide page. */
-						? sprintf( __( 'Yes — see our <a href="%s">size guide</a>. Send your bust and height on WhatsApp first if you would rather we check for you.', 'slk' ), esc_url( $size_guide_url ) )
+						? sprintf( __( 'Our <a href="%s">size guide</a> lists the measurements for every cut. Send your bust and height on WhatsApp first if you would rather we checked for you.', 'slk' ), esc_url( $size_guide_url ) )
 						: __( 'Send us your bust and height on WhatsApp and we will check your size against the actual piece before you order.', 'slk' ),
 				),
 			),
@@ -173,15 +173,15 @@ function slk_faq_groups() {
 			'items' => array(
 				array(
 					'q' => __( 'What are the dresses made from?', 'slk' ),
-					'a' => __( 'Mostly linen and cotton blends — loose, opaque and unlined for the Colombo heat. Each product page lists its exact fabric.', 'slk' ),
+					'a' => __( 'Most of them are linen and cotton blends. We cut them loose, keep them opaque, and leave them unlined for the Colombo heat. Each product page lists its exact fabric.', 'slk' ),
 				),
 				array(
 					'q' => __( 'How many of each piece do you make?', 'slk' ),
-					'a' => __( 'Never more than twenty of a cut. Once a size sells out in a print, it does not come back.', 'slk' ),
+					'a' => __( 'We never make more than twenty of a cut. Once a size sells out in a print, it does not come back.', 'slk' ),
 				),
 				array(
 					'q' => __( 'Are the abayas lined?', 'slk' ),
-					'a' => __( 'Most are unlined by design, for the climate. Where a piece is lined, its product page says so.', 'slk' ),
+					'a' => __( 'Most are unlined by design, because of the climate. Where a piece is lined, its product page says so.', 'slk' ),
 				),
 			),
 		),

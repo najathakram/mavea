@@ -62,8 +62,8 @@ add_action(
 		register_nav_menus(
 			array(
 				'slk_primary'     => __( 'Primary (header pill + mobile drawer)', 'slk' ),
-				'slk_footer_shop' => __( 'Footer — Shop column', 'slk' ),
-				'slk_footer_help' => __( 'Footer — Help column', 'slk' ),
+				'slk_footer_shop' => __( 'Footer: Shop column', 'slk' ),
+				'slk_footer_help' => __( 'Footer: Help column', 'slk' ),
 			)
 		);
 	},

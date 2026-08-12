@@ -64,7 +64,7 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 
 		<div class="slk-help-section">
 			<h2><?php esc_html_e( 'Cash on delivery, done properly.', 'slk' ); ?></h2>
-			<p><?php esc_html_e( 'Most of our orders are COD. It is not a fallback — it is how we would want to buy from a store we had never met.', 'slk' ); ?></p>
+			<p><?php esc_html_e( 'Most of our orders are cash on delivery. It is not a fallback. It is how we would want to buy from a store we had never met.', 'slk' ); ?></p>
 
 			<ol class="slk-help-steps">
 				<li class="slk-panel slk-help-step">
@@ -81,7 +81,7 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 						<?php
 						/* translators: %s: COD handling fee, e.g. "Rs. 150". */
 						printf(
-							esc_html__( 'The courier arrives. You pay in cash, at your door. COD adds %s handling — always shown before you order, never after.', 'slk' ),
+							esc_html__( 'The courier arrives and you pay in cash at your door. Cash on delivery adds %s handling, and we show it before you order rather than after.', 'slk' ),
 							wp_kses_post( wc_price( $cod_fee ) )
 						);
 						?>

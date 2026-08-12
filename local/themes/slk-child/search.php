@@ -80,7 +80,7 @@ $count     = (int) $GLOBALS['wp_query']->found_posts;
 				}
 				?>
 			</h1>
-			<p><?php esc_html_e( "Try a shorter word, or browse instead — everything we're making now is one tap away.", 'slk' ); ?></p>
+			<p><?php esc_html_e( 'Try a shorter word, or browse instead. Everything we are making now is one tap away.', 'slk' ); ?></p>
 
 			<div class="slk-search__suggestions">
 				<a href="<?php echo esc_url( slk_chrome_shop_url() ); ?>"><?php esc_html_e( 'Shop everything', 'slk' ); ?></a>

@@ -86,7 +86,7 @@ final class SLK_Phone {
 		if ( 0 === $count ) {
 			return array(
 				'ok'         => false,
-				'message'    => __( 'We need a mobile number — it is how we confirm your order.', 'slk' ),
+				'message'    => __( 'We need a mobile number, because it is how we confirm your order.', 'slk' ),
 				'normalised' => '',
 			);
 		}

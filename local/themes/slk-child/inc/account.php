@@ -351,7 +351,7 @@ function slk_account_render_tracking( $order_id ) {
 	} elseif ( 'rto' === $slug ) {
 		?>
 		<div class="slk-panel slk-toast slk-toast--error">
-			<?php esc_html_e( 'This order was returned to us — the courier could not complete delivery. Message us on WhatsApp and we will sort it out.', 'slk' ); ?>
+			<?php esc_html_e( 'This order came back to us because the courier could not complete the delivery. Message us on WhatsApp and we will sort it out.', 'slk' ); ?>
 		</div>
 		<?php
 	}
@@ -391,7 +391,7 @@ function slk_account_render_tracking( $order_id ) {
 
 	if ( slk_account_status_awaiting_cod( $slug ) && 'cod' === $order->get_payment_method() ) {
 		?>
-		<p class="slk-tracking__note"><?php esc_html_e( 'Changed your mind? You can decline at the door — just tell the courier.', 'slk' ); ?></p>
+		<p class="slk-tracking__note"><?php esc_html_e( 'Changed your mind? You can decline at the door by telling the courier.', 'slk' ); ?></p>
 		<?php
 	}
 }

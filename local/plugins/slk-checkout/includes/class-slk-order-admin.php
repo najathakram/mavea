@@ -42,7 +42,7 @@ final class SLK_Order_Admin {
 
 		if ( SLK_Email_Policy::is_placeholder( $order ) ) {
 			echo '<p><strong>' . esc_html__( 'Email', 'slk' ) . ':</strong> ' .
-				esc_html__( 'None given — placeholder address, customer emails suppressed. Confirm by phone.', 'slk' ) . '</p>';
+				esc_html__( 'None given. This is a placeholder address and customer emails are suppressed, so confirm by phone.', 'slk' ) . '</p>';
 		}
 
 		echo '</div>';

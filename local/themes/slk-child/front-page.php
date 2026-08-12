@@ -165,11 +165,11 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 				if ( $slk_cod_fee ) {
 					printf(
 						/* translators: %s: cash-on-delivery handling fee, e.g. "Rs. 150". */
-						esc_html__( 'Cash on delivery to all 25 districts. A person calls to confirm before we ship — %s handling, said up front. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' ),
+						esc_html__( 'Cash on delivery reaches all 25 districts. A person calls to confirm before we ship, and the %s handling fee is said up front. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' ),
 						esc_html( $slk_cod_fee )
 					);
 				} else {
-					esc_html_e( 'Cash on delivery to all 25 districts. A person calls to confirm before we ship, and the handling fee is said up front. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' );
+					esc_html_e( 'Cash on delivery reaches all 25 districts. A person calls to confirm before we ship, and the handling fee is said up front. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' );
 				}
 				?>
 			</p>
@@ -208,7 +208,7 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 		<ul class="slk-assurances slk-home__assurances">
 			<li class="slk-assurance">
 				<span aria-hidden="true">✓</span>
-				<span><?php esc_html_e( 'Cash on delivery — we call to confirm first', 'slk' ); ?></span>
+				<span><?php esc_html_e( 'Cash on delivery, with a call to confirm first', 'slk' ); ?></span>
 			</li>
 			<li class="slk-assurance">
 				<span aria-hidden="true">⇄</span>
@@ -216,7 +216,7 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 			</li>
 			<li class="slk-assurance">
 				<span aria-hidden="true">◷</span>
-				<span><?php esc_html_e( 'Colombo 1–2 days · island-wide 3–5', 'slk' ); ?></span>
+				<span><?php esc_html_e( 'Colombo in 1 to 2 days · island-wide in 3 to 5', 'slk' ); ?></span>
 			</li>
 		</ul>
 	</section>

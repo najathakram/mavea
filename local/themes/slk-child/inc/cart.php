@@ -147,7 +147,7 @@ add_filter(
 		}
 
 		/* translators: %s: district name. */
-		return sprintf( __( 'Delivery — %s', 'slk' ), $district );
+		return sprintf( __( 'Delivery to %s', 'slk' ), $district );
 	},
 	10,
 	1
@@ -267,7 +267,7 @@ function slk_cart_empty_content() {
 		<a class="slk-panel slk-cart-empty__whatsapp" href="<?php echo esc_url( $whatsapp_url ); ?>" target="_blank" rel="noopener noreferrer">
 			<span class="slk-cart-empty__whatsapp-text">
 				<?php esc_html_e( 'Looking for something specific?', 'slk' ); ?>
-				<span class="slk-cart-empty__whatsapp-sub"><?php esc_html_e( "Ask on WhatsApp — we'll send options", 'slk' ); ?></span>
+				<span class="slk-cart-empty__whatsapp-sub"><?php esc_html_e( 'Ask on WhatsApp and we will send options', 'slk' ); ?></span>
 			</span>
 			<span class="slk-cart-empty__whatsapp-badge" aria-hidden="true">W</span>
 		</a>

@@ -352,7 +352,7 @@ function slk_pdp_buy_dock() {
 
 	$label = sprintf(
 		/* translators: %s: formatted price. */
-		__( 'Add to bag — %s', 'slk' ),
+		__( 'Add to bag · %s', 'slk' ),
 		$price_html
 	);
 
@@ -400,9 +400,9 @@ function slk_pdp_trust_rows() {
 	}
 
 	$rows = array(
-		array( '✓', __( 'Cash on delivery — we call to confirm before dispatch', 'slk' ) ),
+		array( '✓', __( 'Cash on delivery, with a call to confirm before dispatch', 'slk' ) ),
 		array( '⇄', __( 'Exchange within 7 days, courier collects', 'slk' ) ),
-		array( '◷', __( 'Colombo in 1–2 days · island-wide 3–5', 'slk' ) ),
+		array( '◷', __( 'Colombo in 1 to 2 days · island-wide in 3 to 5', 'slk' ) ),
 	);
 
 	echo '<div class="slk-pdp__trust">';

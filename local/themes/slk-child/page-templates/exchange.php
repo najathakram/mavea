@@ -17,7 +17,7 @@ $wa_url   = slk_whatsapp_url( __( 'Hi! Before I order, could you check my size a
 $rules = array(
 	array(
 		'title' => __( 'You have 7 days', 'slk' ),
-		'body'  => __( 'Counted from the day it reaches you. Message us on WhatsApp and we start it there — no forms.', 'slk' ),
+		'body'  => __( 'We count from the day it reaches you. Message us on WhatsApp and we start it there, with no forms to fill in.', 'slk' ),
 	),
 	array(
 		'title' => __( 'The courier collects', 'slk' ),
@@ -33,11 +33,11 @@ $rules = array(
 	),
 	array(
 		'title' => __( 'Hijabs and undercaps', 'slk' ),
-		'body'  => __( 'Only if the seal is unopened — hygiene, not fine print.', 'slk' ),
+		'body'  => __( 'Only if the seal is unopened. That is a hygiene rule rather than fine print.', 'slk' ),
 	),
 	array(
 		'title' => __( 'If we got it wrong', 'slk' ),
-		'body'  => __( 'Wrong piece, a fault, or damage in transit — we collect it and send the right one, and you pay nothing at all.', 'slk' ),
+		'body'  => __( 'If we sent the wrong piece, or it has a fault, or it was damaged on the way, we collect it and send the right one and you pay nothing at all.', 'slk' ),
 	),
 );
 

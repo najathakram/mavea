@@ -124,7 +124,7 @@ $guest_checkout     = 'yes' === get_option( 'woocommerce_enable_guest_checkout' 
 <?php endif; ?>
 
 <?php if ( $guest_checkout ) : ?>
-	<p class="slk-auth-guest"><?php esc_html_e( 'Checking out as a guest still works — an account just keeps your addresses and sizes.', 'slk' ); ?></p>
+	<p class="slk-auth-guest"><?php esc_html_e( 'Checking out as a guest still works. An account just keeps your addresses and sizes.', 'slk' ); ?></p>
 <?php endif; ?>
 
 <?php do_action( 'woocommerce_after_customer_login_form' ); ?>

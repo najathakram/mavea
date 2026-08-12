@@ -152,7 +152,7 @@ class SLK_Shipping_Method extends WC_Shipping_Method {
 		if ( SLK_Districts::is_district( $district ) ) {
 			return sprintf(
 				/* translators: 1: method name, 2: district, 3: expected days */
-				__( '%1$s — %2$s · %3$s', 'slk' ),
+				__( '%1$s to %2$s · %3$s', 'slk' ),
 				$base,
 				$district,
 				SLK_Shipping::tier_label( $district )

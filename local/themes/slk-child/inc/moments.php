@@ -139,7 +139,7 @@ function slk_moments_price_buckets() {
 			'min'   => $under,
 			'max'   => $over,
 			/* translators: 1: lower price, 2: upper price. */
-			'label' => sprintf( __( '%1$s–%2$s', 'slk' ), wp_strip_all_tags( wc_price( $under ) ), wp_strip_all_tags( wc_price( $over ) ) ),
+			'label' => sprintf( __( '%1$s to %2$s', 'slk' ), wp_strip_all_tags( wc_price( $under ) ), wp_strip_all_tags( wc_price( $over ) ) ),
 		),
 		'over'  => array(
 			'min'   => $over,
@@ -845,7 +845,7 @@ add_filter(
 	'woocommerce_gallery_image_html_attachment_image_params',
 	static function ( $params ) {
 		if ( empty( $params['data-caption'] ) ) {
-			$params['data-caption'] = esc_attr__( 'Pinch or double-tap to see the weave. She cannot touch it — this is the substitute.', 'slk' );
+			$params['data-caption'] = esc_attr__( 'Pinch or double-tap to see the weave up close. You cannot feel a fabric through a screen, so this is the next best thing.', 'slk' );
 		}
 
 		return $params;
@@ -1125,7 +1125,7 @@ CSS;
 					 * gallery) is not present in this DOM. Same sentence, same
 					 * source, carried the one other way it can be.
 					 */
-					'zoomNote' => __( 'Pinch or double-tap to see the weave. She cannot touch it — this is the substitute.', 'slk' ),
+					'zoomNote' => __( 'Pinch or double-tap to see the weave up close. You cannot feel a fabric through a screen, so this is the next best thing.', 'slk' ),
 				)
 			) . ';',
 			'before'
