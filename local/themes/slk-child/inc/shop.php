@@ -294,3 +294,81 @@ add_filter(
  * and the 3-up-beside-sidebar distinction, and adding a fifth breakpoint to a
  * design that has one. Deleted deliberately: do not re-add a grid rule here.
  * ---------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------
+ * 7. The archive head row — the design's one-baseline title.
+ *
+ * 07-desktop.html "Desktop shop" puts EVERYTHING in a single row above the
+ * grid: "Ready to wear  24 pieces" (Newsreader 300 at 34px, count inline in
+ * Archivo 15 faint) with the sort pill right-aligned on the same baseline.
+ * No "SHOWING ALL 9 RESULTS" line, no separate controls band, no second
+ * title. So:
+ *   - Blocksy's archive hero band is gated OFF at the source (its customizer
+ *     mod, not CSS) — this file renders the page's single real <h1>.
+ *   - WooCommerce's result-count paragraph is unhooked; the count becomes
+ *     part of the title.
+ *   - The ordering <form> stays where WooCommerce puts it; the head row and
+ *     the (now count-less) listing-top are placed on one grid row by the CSS
+ *     below.
+ * ---------------------------------------------------------------------- */
+
+add_filter(
+	'theme_mod_woo_categories_hero_enabled',
+	static function ( $value ) {
+		return ( is_shop() || is_product_taxonomy() ) ? 'no' : $value;
+	}
+);
+
+remove_action( 'woocommerce_before_shop_loop', 'woocommerce_result_count', 20 );
+
+add_action(
+	'woocommerce_before_shop_loop',
+	static function () {
+		if ( ! is_shop() && ! is_product_taxonomy() ) {
+			return;
+		}
+
+		$count = (int) wc_get_loop_prop( 'total' );
+
+		printf(
+			'<header class="slk-shop-head"><h1 class="slk-shop-head__title">%1$s <span class="slk-shop-head__count">%2$s</span></h1></header>',
+			esc_html( woocommerce_page_title( false ) ),
+			esc_html(
+				sprintf(
+					/* translators: %d: number of products in the listing. */
+					_n( '%d piece', '%d pieces', $count, 'slk' ),
+					$count
+				)
+			)
+		);
+	},
+	5
+);
+
+add_action(
+	'wp_enqueue_scripts',
+	static function () {
+		if ( ! is_shop() && ! is_product_taxonomy() ) {
+			return;
+		}
+
+		wp_add_inline_style(
+			'slk-child',
+			'
+/* One-baseline archive head (design: Desktop shop). Head left, sort right;
+   ul.products spans below. NOT a grid re-declaration — §6 still applies. */
+.slk-shop-head__title{font-family:var(--slk-font-display);font-weight:300;font-size:var(--slk-display-s);margin:0}
+.slk-shop-head__count{font-family:var(--slk-font-ui);font-size:15px;color:var(--slk-color-faint);font-weight:400;margin-inline-start:6px}
+.slk-shop-results{display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:var(--slk-space-3)}
+.slk-shop-results > .slk-shop-head{grid-column:1}
+.slk-shop-results > .woo-listing-top{grid-column:2;margin:0}
+.slk-shop-results > ul.products,
+.slk-shop-results > nav.woocommerce-pagination{grid-column:1 / -1}
+@media (min-width:1000px){
+	.slk-shop-head__title{font-size:34px}
+}
+'
+		);
+	},
+	30
+);

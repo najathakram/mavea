@@ -1050,7 +1050,10 @@ a.slk-chip{text-decoration:none}
 		border:0;border-radius:0;box-shadow:none;
 	}
 	.slk-filterbox .slk-sheet__grabber{display:none}
-	.slk-filters__head{padding:0 0 var(--slk-space-1)}
+	/* The design's desktop sidebar has NO "Filters / Clear all" header — the
+	   Price panel just starts (07-desktop.html:146). The header belongs to the
+	   mobile sheet only; Clear lives in the empty state. */
+	.slk-filters__head{display:none}
 	.slk-filterbox .slk-filters__group{
 		background:var(--slk-glass-solid);
 		border:1px solid var(--slk-glass-edge);
@@ -1058,14 +1061,21 @@ a.slk-chip{text-decoration:none}
 	}
 	.slk-filters__body{padding:0;overflow:visible}
 	.slk-filters__foot{padding:0;background:none}
-	/* Checkbox rows, as 07-desktop.html:148-158 draws them. */
-	.slk-facets{display:grid;grid-template-columns:1fr;gap:0}
+	/* Checkbox rows, as 07-desktop.html:148-158 draws them.
+	   MEASURED BUG this replaces: grid-template-columns:1fr stacked the input
+	   and its sibling label on separate rows — circle above text — because
+	   each facet is TWO grid children. Two columns pair them: inputs in the
+	   18px track, labels beside, every row 38px and centred. */
+	.slk-facets{
+		display:grid;grid-template-columns:18px 1fr;
+		align-items:center;column-gap:10px;row-gap:0;
+	}
 	.slk-facet__input{
-		position:static;width:18px;height:18px;opacity:1;flex:none;
-		accent-color:var(--slk-color-ink);
+		position:static;width:18px;height:18px;opacity:1;
+		accent-color:var(--slk-color-ink);margin:0;justify-self:center;
 	}
 	.slk-facet{
-		min-height:38px;padding:0;gap:10px;
+		min-height:38px;padding:0;
 		background:none;border:0;border-radius:0;
 		font:400 13px/1.4 var(--slk-font-ui);
 	}
