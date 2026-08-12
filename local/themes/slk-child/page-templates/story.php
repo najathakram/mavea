@@ -23,7 +23,7 @@ get_header();
 
 	<div class="slk-story__hero">
 		<?php
-		$hero = slk_editorial_image( 'room_wide', 'full', array( 'alt' => __( 'The atelier in Galle, in daylight.', 'slk' ) ) );
+		$hero = slk_editorial_image( 'room_wide', 'full', array( 'alt' => __( 'The atelier in Galle, in daylight.', 'slk' ), 'loading' => 'eager', 'fetchpriority' => 'high' ) );
 
 		if ( $hero ) {
 			echo $hero; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside slk_editorial_image().

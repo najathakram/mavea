@@ -230,7 +230,7 @@ add_action(
 
 /* -- dark CTA card ---------------------------------------------------------- */
 .slk-help-cta{background:var(--slk-color-ink);color:var(--slk-color-on-ink);border-radius:var(--slk-radius-card);padding:var(--slk-space-6)}
-.slk-help-cta h3{font-family:var(--slk-font-ui);font-weight:500;font-size:var(--slk-text-base);margin:0 0 6px}
+.slk-help-cta h3{font-family:var(--slk-font-ui);font-weight:500;font-size:var(--slk-text-base);margin:0 0 6px;color:var(--slk-color-on-ink)} /* Blocksy paints all h3s --theme-headings-color (ink) — invisible on this ink card; measured on /exchanges/ */
 .slk-help-cta p{margin:0 0 var(--slk-space-4);font:300 var(--slk-text-sm)/1.6 var(--slk-font-ui);opacity:.75}
 .slk-help-cta .slk-btn--primary{background:var(--slk-color-on-ink);color:var(--slk-color-ink)}
 

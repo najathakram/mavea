@@ -77,6 +77,11 @@ $rules = array(
 					<a class="slk-btn slk-btn--primary" href="<?php echo esc_url( $wa_url ); ?>">
 						<?php esc_html_e( 'W · Check my size first', 'slk' ); ?>
 					</a>
+				<?php else : ?>
+					<?php /* No WhatsApp number configured yet — the card must still lead somewhere, not trail off. */ ?>
+					<a class="slk-btn slk-btn--primary" href="<?php echo esc_url( function_exists( 'slk_page_url' ) ? slk_page_url( 'contact' ) : home_url( '/' ) ); ?>">
+						<?php esc_html_e( 'Message us first', 'slk' ); ?>
+					</a>
 				<?php endif; ?>
 			</div>
 		</div>

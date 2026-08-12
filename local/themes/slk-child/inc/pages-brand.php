@@ -50,7 +50,7 @@ add_action(
 			$css .= <<<'CSS'
 /* -- Our story ----------------------------------------------------------- */
 .slk-story__hero{aspect-ratio:4/5;overflow:hidden}
-.slk-story__hero img{width:100%;height:100%;object-fit:cover;object-position:50% 80%;display:block}
+.slk-story__hero img{width:100%;height:100%;object-fit:cover;display:block}
 .slk-story__intro{padding-block:var(--slk-space-6) 0;max-width:70ch}
 .slk-story__intro h1{font-size:var(--slk-display-s);margin:var(--slk-space-2) 0 var(--slk-space-4)}
 .slk-story__lede{font:400 var(--slk-text-base)/var(--slk-leading-body) var(--slk-font-ui);color:var(--slk-color-ink-soft);margin:0}
@@ -75,7 +75,7 @@ add_action(
 .slk-story__cta{padding-block:var(--slk-space-6) var(--slk-space-12);text-align:center}
 
 @media (min-width:1000px){
-	.slk-story__hero{aspect-ratio:21/9}
+	.slk-story__hero{aspect-ratio:16/9} /* 21/9 letterboxed any source; 16/9 is the widest ratio the design itself uses, and the hero source is now genuinely landscape (DSC_2503) */
 	.slk-story__intro{max-width:760px;margin-inline:auto;text-align:center;padding-block:var(--slk-space-12) 0}
 	.slk-story__intro h1{font-size:var(--slk-display-l)}
 	.slk-story__lede{text-align:left}

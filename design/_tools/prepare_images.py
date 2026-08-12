@@ -32,19 +32,34 @@ PRODUCTS = {
 }
 
 # editorial stills from the curated web set, for the pages rather than the grid
+# Najath picked three frames himself (2026-08-12, pasted in chat) — they are
+# the canon for the three big slots. HERO SLOTS TAKE LANDSCAPE SOURCES ONLY:
+# a portrait in a wide letterbox shows a slice wherever the crop sits.
 EDITORIAL = {
-    "hero-group":   "DSC_3763",  # three women, gold + floral — the home hero
+    "hero-group":   "DSC_3760",  # HIS PICK — white-studio trio, subjects LEFT, wide
+                                 # negative space right; the glass panel moves bottom-RIGHT
     "hero-alt":     "DSC_3699",
-    "portrait-warm": "DSC_2615",  # close warm portrait — story / about
+    "portrait-warm": "DSC_2615",  # close warm portrait — story body
     "pair-close":   "DSC_2573",
     "single-floral": "DSC_3657",
-    "room-wide":    "DSC_3646",  # two figures in a room — story
-    "studio-pair":  "DSC_2503",
+    "room-wide":    "DSC_3842",  # HIS PICK — single figure at the cream telephone,
+                                 # panelled room: the story hero AND the home paying
+                                 # panel ("a person calls to confirm" made literal)
+    "studio-pair":  "DSC_2503",  # HIS PICK — dark-lounge trio; 3:4 crop centres the
+                                 # seated conversation for the story body pair
+}
+
+# per-key cover() focus overrides: (focus_x, focus_y)
+FOCUS = {
+    "hero-group": (0.0, 0.5),    # keep the trio hard left, space to the right
+    "room-wide":  (0.45, 0.30),  # keep her face + the phone, trim floor not head
+    "studio-pair": (0.42, 0.5),  # centre the seated pair inside the trio
 }
 
 PRODUCT_W, PRODUCT_H = 1200, 1600   # 3:4
 HERO_W, HERO_H = 1800, 1200         # 3:2 landscape for the home hero
 STORY_W, STORY_H = 1200, 1600       # 3:4 portrait
+STORY_HERO_W, STORY_HERO_H = 1800, 1013  # 16:9 — the widest ratio the design uses
 
 
 def load(path: Path) -> Image.Image:
@@ -120,16 +135,24 @@ def main() -> int:
             missing.append(f"_web/{stem}")
             continue
         out = temp / f"editorial-{name}.jpg"
+        # default (0.5, 0.0) == the old top-anchored crop: heads survive, floor goes
+        fx, fy = FOCUS.get(name, (0.5, 0.0))
         if name.startswith("hero"):
-            # Down and to the left: drop the empty studio wall above the models,
-            # and seat them right of centre so the design's glass panel has
-            # clear ground bottom-left to sit on.
             cover(
                 load(src), HERO_W, HERO_H,
-                top_anchor=False, focus_x=0.34, focus_y=0.82,
+                top_anchor=False, focus_x=fx, focus_y=fy,
+            ).save(out, quality=84, optimize=True, progressive=True)
+        elif name == "room-wide":
+            # Landscape-to-landscape 16:9 — the frame keeps the ROOM.
+            cover(
+                load(src), STORY_HERO_W, STORY_HERO_H,
+                top_anchor=False, focus_x=fx, focus_y=fy,
             ).save(out, quality=84, optimize=True, progressive=True)
         else:
-            cover(load(src), STORY_W, STORY_H).save(out, quality=82, optimize=True, progressive=True)
+            cover(
+                load(src), STORY_W, STORY_H,
+                top_anchor=False, focus_x=fx, focus_y=fy,
+            ).save(out, quality=82, optimize=True, progressive=True)
         manifest.append((str(out.relative_to(root)), str(src), out.stat().st_size))
 
     total = sum(m[2] for m in manifest)

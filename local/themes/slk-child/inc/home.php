@@ -496,7 +496,10 @@ add_action(
 @media (min-width:1000px){
 	.slk-hero__media{aspect-ratio:16/9}
 	.slk-hero__inner{bottom:var(--slk-space-12)}
-	.slk-hero__panel{max-width:440px;padding:var(--slk-space-8)}
+	/* Panel sits bottom-RIGHT: Najath's hero frame (DSC_3760) seats the trio
+	   hard left with the negative space on the right — the mockup's bottom-left
+	   placement assumed a figure right of centre. The panel follows the space. */
+	.slk-hero__panel{max-width:440px;padding:var(--slk-space-8);margin-inline-start:auto}
 	.slk-hero__title{font-size:var(--slk-display-l)}
 	.slk-hero__actions .slk-btn--primary{flex:none}
 
