@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 get_header();
 
-$related = function_exists( 'slk_cart_empty_related_products' ) ? slk_cart_empty_related_products( 2 ) : array();
+$related = function_exists( 'slk_cart_empty_related_products' ) ? slk_cart_empty_related_products( 4 ) : array();
 ?>
 
 <main id="primary" class="slk-page slk-404">

@@ -239,7 +239,7 @@ function slk_cart_empty_content() {
 	</div>
 	<?php
 
-	$related = slk_cart_empty_related_products( 2 );
+	$related = slk_cart_empty_related_products( 4 );
 
 	if ( ! empty( $related ) ) {
 		?>
@@ -385,9 +385,35 @@ add_action(
 .slk-cart-empty__title{font-size:var(--slk-display-s);margin:0 0 var(--slk-space-2)}
 .slk-cart-empty__copy{font:400 var(--slk-text-base)/1.65 var(--slk-font-ui);color:var(--slk-color-muted);max-width:32ch;margin:0 auto var(--slk-space-4)}
 .slk-cart-empty__related{max-width:600px;margin:var(--slk-space-8) auto 0;padding:0 var(--slk-space-4)}
-.slk-cart-empty__related-label{margin-bottom:var(--slk-space-3)}
-.slk-cart-empty__rail{display:flex;gap:var(--slk-space-3);overflow-x:auto;padding-bottom:var(--slk-space-2)}
-.slk-cart-empty__card{flex:none;width:150px}
+.slk-cart-empty__related-label{margin-bottom:var(--slk-space-3);text-align:center}
+
+/* Phone: the swipe rail the design drew (390px screen, 150px cards).
+   overflow-x on its own is not safe here — CSS promotes the other axis from
+   visible to auto, so anything a pixel too tall grows a second, vertical
+   scrollbar down the side of the strip. Pin overflow-y, and hide the bar
+   itself: this is a swipe rail, not a scrolling pane. */
+.slk-cart-empty__rail{
+	display:flex;gap:var(--slk-space-3);
+	overflow-x:auto;overflow-y:hidden;
+	scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+	padding-bottom:var(--slk-space-2);
+	scrollbar-width:none;
+}
+.slk-cart-empty__rail::-webkit-scrollbar{display:none}
+.slk-cart-empty__card{flex:none;width:150px;scroll-snap-align:start}
+
+/* Desktop: the design never drew this screen wide. A two-card swipe rail
+   stranded in a 600px column reads as a mistake, so above the breakpoint the
+   cards become a plain centred row that fills the column and scrolls nowhere. */
+@media (min-width:1000px){
+	/* 700px keeps four cards at roughly the 150px the design drew them. */
+	.slk-cart-empty__related{max-width:700px}
+	.slk-cart-empty__rail{
+		display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));
+		gap:var(--slk-space-4);overflow:visible;padding-bottom:0;
+	}
+	.slk-cart-empty__card{width:auto}
+}
 .slk-cart-empty__whatsapp{max-width:600px;margin:var(--slk-space-6) auto 0;display:flex;align-items:center;gap:var(--slk-space-3);padding:var(--slk-space-2) var(--slk-space-3) var(--slk-space-2) var(--slk-space-4);text-decoration:none;color:inherit}
 .slk-cart-empty__whatsapp-text{flex:1;font:500 var(--slk-text-sm)/1.35 var(--slk-font-ui)}
 .slk-cart-empty__whatsapp-sub{display:block;font-weight:400;color:var(--slk-color-muted);font-size:var(--slk-text-xs)}

@@ -260,15 +260,21 @@ h1, h2, h3 {
 .slk-card { display: block; text-decoration: none; color: inherit;
   transition: transform 320ms var(--slk-ease); }
 .slk-card:hover { transform: translateY(-4px); }
+/* display:block is load-bearing, not tidiness. The archive grid builds these
+   from div/h2, but the empty-bag rail builds them from <span>: inline boxes
+   ignore aspect-ratio, overflow and radius, so the media collapsed to one line
+   of leading, the image spilled out of it, and name and price ran together on
+   one row. The component must not depend on which tag the caller used. */
 .slk-card__media {
+  display: block;
   aspect-ratio: var(--slk-ratio-portrait);
   border-radius: var(--slk-radius-tile);
   overflow: hidden;
   box-shadow: var(--slk-shadow-lift);
 }
-.slk-card__media img { width: 100%; height: 100%; object-fit: cover; }
-.slk-card__name { font: 500 13.5px/1.4 var(--slk-font-ui); padding-top: 10px; }
-.slk-card__price { font: 400 13.5px/1.4 var(--slk-font-ui); color: var(--slk-color-muted); }
+.slk-card__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.slk-card__name { display: block; font: 500 13.5px/1.4 var(--slk-font-ui); padding-top: 10px; }
+.slk-card__price { display: block; font: 400 13.5px/1.4 var(--slk-font-ui); color: var(--slk-color-muted); }
 .slk-swatches { display: flex; gap: 6px; padding-top: 7px; }
 .slk-swatch { width: 13px; height: 13px; border-radius: 50%; }
 
