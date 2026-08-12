@@ -224,6 +224,45 @@ add_action(
 	20
 );
 
+/* -------------------------------------------------------------------------
+ * Below the summary: the design has NO tab band.
+ *
+ * WooCommerce ships Description/Reviews as tabs, and Blocksy paints the
+ * active one as a dark pill — nothing like the design, which keeps the PDP
+ * quiet below the fold: the garment copy in the reading column, then related
+ * pieces. And a brand-new store shows no "REVIEWS (0)" tab: an empty counter
+ * is anti-trust, the exact opposite of what it is for.
+ * ---------------------------------------------------------------------- */
+
+remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_output_product_data_tabs', 10 );
+
+add_action(
+	'woocommerce_after_single_product_summary',
+	static function () {
+		$content = get_the_content();
+
+		if ( '' === trim( wp_strip_all_tags( $content ) ) ) {
+			return;
+		}
+
+		printf(
+			'<section class="slk-pdp-about"><h2 class="slk-pdp-about__title">%1$s</h2><div class="slk-pdp-about__body">%2$s</div></section>',
+			esc_html__( 'About this piece', 'slk' ),
+			wp_kses_post( wpautop( $content ) )
+		);
+	},
+	10
+);
+
+/* Related products keep the catalogue's 3:4 portrait (600x800) — Blocksy was
+   pulling a squarer size and cropping the models at the forehead. */
+add_filter(
+	'single_product_archive_thumbnail_size',
+	static function ( $size ) {
+		return is_product() ? 'woocommerce_thumbnail' : $size;
+	}
+);
+
 function slk_pdp_whatsapp_button() {
 	global $product;
 
@@ -440,14 +479,67 @@ add_action(
 	display:none;
 }
 
-/* Blocksy\'s +/− spans measured 31x31 on the PDP — under the 44px touch law
-   (verify, D4). Widen the box a step so 44px controls fit beside the value. */
-.slk-pdp form.cart .quantity{--quantity-width:150px}
-.slk-pdp form.cart .quantity .ct-increase,
-.slk-pdp form.cart .quantity .ct-decrease{
-	width:var(--slk-touch);
-	height:var(--slk-touch);
-	display:inline-flex;align-items:center;justify-content:center;
+/* The stepper, owned outright. Blocksy\'s type-2 quantity positions its empty
+   +/− spans with fractional inset math; every partial override so far produced
+   a new deformity (the − rendered as an underscore inside the input, the +
+   floated detached). Deterministic layout instead: a 150px pill, 44px round
+   controls pinned left and right with their glyphs supplied here, the value
+   centred between them. Nothing of Blocksy\'s math survives to fight. */
+.slk-pdp form.cart .quantity[data-type]{
+	position:relative;
+	width:150px;min-width:150px;min-height:48px;
+	background:rgba(35,34,32,.05);
+	border-radius:var(--slk-radius-pill);
+}
+.slk-pdp form.cart .quantity .ct-decrease,
+.slk-pdp form.cart .quantity .ct-increase{
+	position:absolute;top:50%;transform:translateY(-50%);
+	inset-inline:auto;
+	width:var(--slk-touch);height:var(--slk-touch);
+	display:grid;place-items:center;
+	border-radius:50%;cursor:pointer;
+	font:400 16px/1 var(--slk-font-ui);color:var(--slk-color-ink);
+	transition:background var(--slk-motion-base) var(--slk-ease);
+}
+.slk-pdp form.cart .quantity .ct-decrease{left:2px}
+.slk-pdp form.cart .quantity .ct-increase{right:2px}
+.slk-pdp form.cart .quantity .ct-decrease:hover,
+.slk-pdp form.cart .quantity .ct-increase:hover{background:var(--slk-color-white)}
+.slk-pdp form.cart .quantity .ct-decrease::before{content:"\2212"}
+.slk-pdp form.cart .quantity .ct-increase::before{content:"\002B"}
+.slk-pdp form.cart .quantity input.qty{
+	width:100%;min-height:48px;margin:0;
+	padding-inline:var(--slk-touch);text-align:center;
+	border:0;background:none;
+	font:500 14px/1 var(--slk-font-ui);color:var(--slk-color-ink);
+	appearance:textfield;-moz-appearance:textfield;
+}
+.slk-pdp form.cart .quantity input.qty::-webkit-outer-spin-button,
+.slk-pdp form.cart .quantity input.qty::-webkit-inner-spin-button{appearance:none;margin:0}
+
+/* Below the summary: the reading column. The tab band is gone (see the PHP
+   above); the garment copy and related pieces align to the 1140 column the
+   rest of the page lives in — measured before: they broke out to the wide
+   Blocksy wrapper and started ~176px left of everything else. */
+.slk-pdp-about{
+	max-width:var(--slk-container);
+	margin:var(--slk-space-12) auto 0;
+	padding-inline:var(--slk-gutter);
+}
+.slk-pdp-about__title{
+	font-family:var(--slk-font-display);font-weight:300;font-size:27px;margin:0 0 var(--slk-space-3);
+}
+.slk-pdp-about__body{
+	max-width:62ch;
+	font:400 var(--slk-text-base)/1.7 var(--slk-font-ui);color:var(--slk-color-ink-soft);
+}
+.slk-pdp .related.products{
+	max-width:var(--slk-container);
+	margin:var(--slk-space-12) auto 0;
+	padding-inline:var(--slk-gutter);
+}
+.slk-pdp .related.products > h2{
+	font-family:var(--slk-font-display);font-weight:300;font-size:27px;margin:0 0 var(--slk-space-4);
 }
 .slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] ol{
 	display:grid;grid-template-columns:1fr 1fr;gap:var(--slk-space-3);
