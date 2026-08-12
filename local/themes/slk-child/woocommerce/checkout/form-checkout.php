@@ -38,6 +38,16 @@ if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_requir
 
 ?>
 
+<?php
+/*
+ * The page's one real <h1>. Blocksy's hero band used to supply a "Checkout"
+ * title; with that band gated off (this template carries the heading), hiding
+ * it had left this page with NO h1 at all — the sr-only "Your order" below is
+ * an h2 for the aside, not a page title. Independent verify, D3.
+ */
+?>
+<h1 class="slk-checkout__title"><?php esc_html_e( 'Checkout', 'slk' ); ?></h1>
+
 <form name="checkout" method="post" class="checkout woocommerce-checkout slk-checkout" action="<?php echo esc_url( wc_get_checkout_url() ); ?>" enctype="multipart/form-data" aria-label="<?php echo esc_attr__( 'Checkout', 'woocommerce' ); ?>">
 
 	<?php if ( $checkout->get_checkout_fields() ) : ?>

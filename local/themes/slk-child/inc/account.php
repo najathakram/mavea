@@ -54,6 +54,18 @@ function slk_account_order_statuses( $statuses ) {
 }
 add_filter( 'wc_order_statuses', 'slk_account_order_statuses', 20 );
 
+/*
+ * Remove Blocksy's hero band from the account area at the source — the login
+ * and dashboard templates title themselves, so the band's "My account" was a
+ * second h1 in the served HTML even while display:none'd. Verify, D3.
+ */
+add_filter(
+	'blocksy:single:has-default-hero',
+	static function ( $has ) {
+		return ( function_exists( 'is_account_page' ) && is_account_page() ) ? false : $has;
+	}
+);
+
 /**
  * The bare status slug (no wc- prefix) for an order — the piece every helper
  * below keys off.
@@ -424,7 +436,7 @@ add_action(
 .woocommerce-account .woocommerce-form-row{margin:0 0 var(--slk-space-3)}
 .woocommerce-account .woocommerce-form-row label{display:block;font:500 12px/1 var(--slk-font-ui);margin-bottom:7px}
 .woocommerce-account .woocommerce-form-row .input-text{
-	width:100%;min-height:48px;border:1px solid var(--slk-field-border);background:#fff;
+	width:100%;min-height:48px;border:1px solid var(--slk-field-border);background:var(--slk-color-white);
 	border-radius:var(--slk-radius-field);padding:0 16px;font:400 14px var(--slk-font-ui);color:var(--slk-color-ink);
 }
 .woocommerce-account .woocommerce-form-login__rememberme{display:flex;align-items:center;gap:8px;font:400 12.5px var(--slk-font-ui);color:var(--slk-color-muted);margin-bottom:var(--slk-space-3)}
@@ -561,7 +573,7 @@ add_action(
 	background:var(--slk-glass-solid);border:1px solid rgba(35,34,32,.16);border-radius:var(--slk-radius-pill);
 	color:var(--slk-color-ink);text-decoration:none;font:500 12.5px var(--slk-font-ui);
 }
-@media (min-width:640px){
+@media (min-width:1000px){ /* was 640px — the theme's ONLY breakpoint is 1000 (verify, D6) */
 	.woocommerce-orders-table tbody tr{display:flex;flex-wrap:wrap;align-items:center;border-radius:20px;padding:14px 18px}
 	.woocommerce-orders-table tbody tr th,
 	.woocommerce-orders-table tbody tr td{display:block;padding:4px 10px 4px 0;width:auto}
@@ -618,7 +630,7 @@ add_action(
 .woocommerce-account .form-row label{display:block;font:500 12px/1 var(--slk-font-ui);margin-bottom:7px}
 .woocommerce-account .woocommerce-Input,
 .woocommerce-account select.woocommerce-Input{
-	width:100%;min-height:48px;border:1px solid var(--slk-field-border);background:#fff;
+	width:100%;min-height:48px;border:1px solid var(--slk-field-border);background:var(--slk-color-white);
 	border-radius:var(--slk-radius-field);padding:0 16px;font:400 14px var(--slk-font-ui);color:var(--slk-color-ink);
 }
 .woocommerce-account .woocommerce-Button,
@@ -637,7 +649,7 @@ add_action(
 	background:var(--slk-glass);border:1px solid var(--slk-glass-edge);border-radius:20px;
 	font:400 12.5px/1.45 var(--slk-font-ui);
 }
-.woocommerce-account .woocommerce-error{background:var(--slk-color-error-tint);border-color:rgba(154,40,32,.2);color:#7a1f19}
+.woocommerce-account .woocommerce-error{background:var(--slk-color-error-tint);border-color:color-mix(in srgb, var(--slk-color-error) 20%, transparent);color:var(--slk-color-error-ink)}
 CSS;
 
 		wp_add_inline_style( 'slk-child', $css );

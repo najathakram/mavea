@@ -119,6 +119,17 @@ function slk_chrome_product_cat_url( $slug ) {
 		return '';
 	}
 
+	/*
+	 * An empty category returns no URL, so its nav/footer item drops out —
+	 * and reappears by itself the day the first product lands in it. Found
+	 * live: "Hijabs" had zero products, was linked from every page, and its
+	 * archive answered with "No pieces match those filters" when no filters
+	 * were applied. A link that leads to an apology is worse than no link.
+	 */
+	if ( (int) $term->count < 1 ) {
+		return '';
+	}
+
 	$url = get_term_link( $term );
 
 	return is_wp_error( $url ) ? '' : (string) $url;

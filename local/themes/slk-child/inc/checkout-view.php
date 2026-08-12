@@ -140,6 +140,20 @@ add_filter(
 
 add_filter( 'woocommerce_ship_to_different_address_checked', '__return_false', 20 );
 
+/*
+ * Remove Blocksy's hero band from checkout AT THE SOURCE (documented gate,
+ * blocksy/template-parts/single.php). The old style.css display:none hid the
+ * duplicate title visually but left a second <h1> in the served HTML —
+ * and on checkout, which titles itself in the template, that was the ONLY
+ * h1, leaving zero once hidden. Verify, D3.
+ */
+add_filter(
+	'blocksy:single:has-default-hero',
+	static function ( $has ) {
+		return ( function_exists( 'is_checkout' ) && is_checkout() ) ? false : $has;
+	}
+);
+
 /* -------------------------------------------------------------------------
  * 2. Decorate native field markup with the design-system classes.
  *
@@ -304,7 +318,7 @@ function slk_checkout_view_css() {
   margin:0 0 var(--slk-space-4);padding:14px 16px;
   border-radius:20px;font:400 12.5px/1.45 var(--slk-font-ui);
 }
-.slk-checkout .woocommerce-error{background:var(--slk-color-error-tint);border:1px solid rgba(154,40,32,.2);color:#7a1f19}
+.slk-checkout .woocommerce-error{background:var(--slk-color-error-tint);border:1px solid color-mix(in srgb, var(--slk-color-error) 20%, transparent);color:var(--slk-color-error-ink)}
 .slk-checkout .woocommerce-message,
 .slk-checkout .woocommerce-info{background:var(--slk-glass-solid);border:1px solid var(--slk-glass-edge)}
 .slk-checkout .woocommerce-error li,
@@ -320,7 +334,7 @@ function slk_checkout_view_css() {
   transition:background var(--slk-motion-base) var(--slk-ease),border-color var(--slk-motion-base) var(--slk-ease);
 }
 .slk-checkout__payment-slot li.wc_payment_method:has(input:checked),
-#order_review li.wc_payment_method:has(input:checked){border:2px solid var(--slk-color-ink);background:#fff}
+#order_review li.wc_payment_method:has(input:checked){border:2px solid var(--slk-color-ink);background:var(--slk-color-white)}
 .slk-checkout__payment-slot li.wc_payment_method label,
 #order_review li.wc_payment_method label{display:flex;align-items:center;gap:var(--slk-space-3);font:500 13.5px/1.3 var(--slk-font-ui);cursor:pointer;min-height:var(--slk-touch);margin:0}
 .slk-checkout__payment-slot li.wc_payment_method input[type=radio],

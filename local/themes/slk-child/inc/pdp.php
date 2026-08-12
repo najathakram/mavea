@@ -375,16 +375,34 @@ add_action(
    and the sticky panel was simply lost. So the layout
    stays here; only the width is corrected to the single documented
    breakpoint. */
+/* CORRECTION (independent verify, D1): the block above was written onto
+   .slk-pdp.product — but gallery and summary are NOT its grid children; they
+   live inside Blocksy\'s .product-entry-wrapper, so the declared tracks sat
+   EMPTY while Blocksy\'s own flex (gallery 33% / summary 67%) actually painted
+   the page — the design\'s split (1.25fr/1fr, gallery wide) inverted. Grid the
+   wrapper Blocksy really builds, and neutralise its width/margin math. */
 @media (min-width: 1000px) {
-	.slk-pdp.product{
+	.slk-pdp.slk-pdp .product-entry-wrapper{ /* doubled class: Blocksy targets this wrapper with :has(), scoring (0,3,0) — the double bumps us to (0,3,0)+ and our sheet loads later, so we win deterministically */
 		display:grid;
 		grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);
-		gap:var(--slk-space-8);
+		column-gap:36px; /* the design\'s exact gutter (07-desktop #d-pdp) */
 		align-items:start;
 	}
-	.slk-pdp .slk-pdp__summary{
+	.slk-pdp.slk-pdp .product-entry-wrapper > .woocommerce-product-gallery{
+		width:auto;margin:0;
+	}
+	.slk-pdp.slk-pdp .product-entry-wrapper > .summary.entry-summary{
+		width:auto;margin-inline-start:0;
+		padding:30px;
+		background:var(--slk-glass-solid);
+		border:1px solid var(--slk-glass-edge);
+		border-radius:28px;
+		backdrop-filter:blur(20px);
+		-webkit-backdrop-filter:blur(20px);
+		box-shadow:var(--slk-shadow-lift);
 		position:sticky;
 		top:var(--slk-space-6);
+		align-self:start;
 	}
 }
 
@@ -393,22 +411,60 @@ add_action(
 	border-radius:var(--slk-radius-tile);
 	overflow:hidden;
 }
-.slk-pdp .woocommerce-product-gallery__image{
+/* CORRECTION (verify, D7): .woocommerce-product-gallery__image matches ZERO
+   elements under Blocksy — its slides are .flexy-item > figure.ct-media-container,
+   the same class-mismatch that killed the .flex-control-thumbs rule below.
+   Main slide ratio is the design\'s 4/5 (07-desktop #d-pdp-1), stated literally
+   because --slk-ratio-hero is 2/3 — a third value would be a third opinion. */
+.slk-pdp .woocommerce-product-gallery .flexy-item .ct-media-container{
 	border-radius:var(--slk-radius-tile);
 	overflow:hidden;
-	aspect-ratio:var(--slk-ratio-hero);
+	aspect-ratio:4/5;
 }
-.slk-pdp .woocommerce-product-gallery__image img{
+.slk-pdp .woocommerce-product-gallery .flexy-item .ct-media-container img{
 	width:100%;height:100%;object-fit:cover;display:block;
 }
-.slk-pdp .woocommerce-product-gallery .flex-control-thumbs{
-	display:flex;gap:var(--slk-space-3);padding-top:var(--slk-space-3);list-style:none;margin:0;
+/* Blocksy does not print the classic Flexslider .flex-control-thumbs markup;
+   its own gallery component uses .flexy-pills[data-type="thumbs"] > ol > li,
+   confirmed against the rendered DOM (view-source on /product/amara/) — the
+   .flex-control-thumbs selector below never matched anything, which is why
+   the two secondary shots rendered at Blocksy\'s untouched default 100x100
+   instead of the design\'s half-width 3:4 tiles under the main image. */
+.slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"]{
+	padding-top:var(--slk-space-3);
 }
-.slk-pdp .woocommerce-product-gallery .flex-control-thumbs li{
-	flex:1;aspect-ratio:3/4;border-radius:var(--slk-radius-tile);overflow:hidden;
+/* Blocksy\'s pills enumerate ALL slides, so pill 1 duplicated the main image
+   and left tile 3 orphaned on its own row (verify, D7). The design shows the
+   main shot once, then exactly two 3:4 tiles: back view and detail. */
+.slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] li:first-child{
+	display:none;
 }
-.slk-pdp .woocommerce-product-gallery .flex-control-thumbs img{
-	width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;
+
+/* Blocksy\'s +/− spans measured 31x31 on the PDP — under the 44px touch law
+   (verify, D4). Widen the box a step so 44px controls fit beside the value. */
+.slk-pdp form.cart .quantity{--quantity-width:150px}
+.slk-pdp form.cart .quantity .ct-increase,
+.slk-pdp form.cart .quantity .ct-decrease{
+	width:var(--slk-touch);
+	height:var(--slk-touch);
+	display:inline-flex;align-items:center;justify-content:center;
+}
+.slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] ol{
+	display:grid;grid-template-columns:1fr 1fr;gap:var(--slk-space-3);
+	list-style:none;margin:0;padding:0;
+}
+.slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] li{
+	/* Blocksy\'s flexy.min.css sets width:var(--thumbs-width, 20%) on this
+	   same element (.flexy-pills ol li) for its default horizontal-strip
+	   layout; that rule has no competing width declaration here to beat, so
+	   it still won even though our own selector out-specifies it on every
+	   other property. Fill the grid column explicitly instead of leaving
+	   width ungoverned. */
+	width:100%;aspect-ratio:3/4;border-radius:var(--slk-radius-tile);overflow:hidden;cursor:pointer;
+}
+.slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] .ct-media-container,
+.slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] img{
+	width:100%;height:100%;object-fit:cover;display:block;
 }
 
 /* ── Summary panel: map WooCommerce\'s real element classes onto a grid ──
@@ -436,6 +492,16 @@ add_action(
    by the grid. The extra class raises specificity over Blocksy\'s dynamic CSS,
    which is printed after this block. */
 .slk-pdp.product .slk-pdp__summary > *{ margin-block:0; }
+/* style.css (owned by nobody this round; no touching per house rule) carries
+   .woocommerce div.product form.cart{ margin: var(--slk-space-6) 0 0; } at
+   specificity (0,3,2) — two type selectors (div, form) plus three classes.
+   Every reset attempted here, including the rule above, tops out at (0,3,0)
+   or (0,3,1) and loses the cascade regardless of load order, so form.cart
+   kept a real extra 24px margin-top stacked on top of the grid\'s own
+   row-gap between the description and the cart row (measured: 48px instead
+   of the intended 24px). !important is the only way to win this without
+   editing the file we do not own. */
+.slk-pdp__summary form.cart{ margin:0 !important; }
 .slk-pdp__summary > .ct-product-divider{ display:none; }
 .slk-pdp__summary > .ct-product-add-to-cart{ grid-area:cart;margin:0; }
 .slk-pdp__summary > .ct-product-add-to-cart > form.cart{ margin:0; }
@@ -522,7 +588,16 @@ add_action(
    claims the whole row and pushes the WhatsApp circle onto a third line.
    flex:1 1 0 + width:auto lets it share the row instead. The quantity keeps
    its own full-width line above, as in the mockup. */
-.slk-pdp__summary form.cart .quantity{ flex:1 1 100%; }
+/* flex:1 1 100% forces the quantity control onto its own full-width row
+   (the wrap trick), but Blocksy\'s .ct-increase/.ct-decrease are absolutely
+   positioned at inset-inline-end/start:9% of THIS element\'s own box,
+   sized for its native width:130px (type-2.scss). Stretching the box to
+   the full 700+px row stretches that 9% math with it, so the "+" button
+   measured ~540px away from the "-"/input pair instead of hugging it -
+   read live as a detached second stepper. max-width re-clamps the resolved
+   box back to Blocksy\'s own --quantity-width so the two controls hug the
+   input again, while flex-basis:100% still does its job of forcing the wrap. */
+.slk-pdp__summary form.cart .quantity{ flex:1 1 100%; max-width:var(--quantity-width, 130px); }
 .slk-pdp__summary form.cart .single_add_to_cart_button{
 	flex:1 1 0;width:auto;min-width:0;min-height:var(--slk-touch);
 }

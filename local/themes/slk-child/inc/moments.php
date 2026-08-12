@@ -917,7 +917,7 @@ add_action(
 .slk-facets{display:flex;flex-wrap:wrap;gap:var(--slk-space-2)}
 /* The field stays focusable — only its box is traded for the pill it labels. */
 .slk-facet__input{position:absolute;width:1px;height:1px;opacity:0;margin:0}
-.slk-facet{display:inline-flex;align-items:center;padding:0 16px;cursor:pointer}
+.slk-facet{display:inline-flex;align-items:center;min-height:var(--slk-touch);padding:0 16px;cursor:pointer}
 .slk-facet__input:checked + .slk-facet{
 	background:var(--slk-color-ink);color:var(--slk-color-on-ink);border-color:transparent;
 }

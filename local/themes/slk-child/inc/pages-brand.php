@@ -50,7 +50,7 @@ add_action(
 			$css .= <<<'CSS'
 /* -- Our story ----------------------------------------------------------- */
 .slk-story__hero{aspect-ratio:4/5;overflow:hidden}
-.slk-story__hero img{width:100%;height:100%;object-fit:cover;display:block}
+.slk-story__hero img{width:100%;height:100%;object-fit:cover;object-position:50% 80%;display:block}
 .slk-story__intro{padding-block:var(--slk-space-6) 0;max-width:70ch}
 .slk-story__intro h1{font-size:var(--slk-display-s);margin:var(--slk-space-2) 0 var(--slk-space-4)}
 .slk-story__lede{font:400 var(--slk-text-base)/var(--slk-leading-body) var(--slk-font-ui);color:var(--slk-color-ink-soft);margin:0}
@@ -101,17 +101,17 @@ CSS;
 	padding:5px;margin-top:var(--slk-space-4);
 }
 .slk-sizeguide__tab{
-	flex:1;min-height:40px;border:0;border-radius:20px;
+	flex:1;min-height:var(--slk-touch);border:0;border-radius:var(--slk-radius-pill);
 	background:none;color:var(--slk-color-muted);
 	font:400 var(--slk-text-sm)/1 var(--slk-font-ui);cursor:pointer;padding:0 20px;
 	transition:background var(--slk-motion-base) var(--slk-ease),color var(--slk-motion-base) var(--slk-ease);
 }
 .slk-sizeguide__tab.is-active{
-	background:#fff;color:var(--slk-color-ink);font-weight:500;
+	background:var(--slk-color-white);color:var(--slk-color-ink);font-weight:500;
 	box-shadow:0 3px 10px rgba(35,34,32,.1);
 }
 
-.slk-sizeguide__body{padding-top:var(--slk-space-4) 0 var(--slk-space-12)}
+.slk-sizeguide__body{padding-block:var(--slk-space-4) var(--slk-space-12)} /* was padding-top with 3 values — a parse error, so the whole declaration was silently dropped (verify, D2) */
 .slk-sizeguide__table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
 .slk-sizeguide__table{
@@ -149,7 +149,7 @@ CSS;
 .slk-sizeguide__wa-h{font:500 var(--slk-text-base)/1.4 var(--slk-font-ui);margin-bottom:6px}
 .slk-sizeguide__wa-p{font:300 var(--slk-text-sm)/1.6 var(--slk-font-ui);opacity:.75;margin:0 0 var(--slk-space-4)}
 .slk-sizeguide__wa-btn{background:var(--slk-color-on-ink);color:var(--slk-color-ink)}
-.slk-sizeguide__wa-btn:hover{background:#fff}
+.slk-sizeguide__wa-btn:hover{background:var(--slk-color-white)}
 
 @media (min-width:1000px){
 	.slk-sizeguide__intro{max-width:880px;margin-inline:auto;padding-top:var(--slk-space-12)}

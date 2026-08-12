@@ -242,7 +242,7 @@ add_action(
 
 /* -- FAQ category chips ----------------------------------------------------- */
 .slk-faq-tabs{display:flex;gap:var(--slk-space-2);flex-wrap:wrap;margin:0 0 var(--slk-space-4);padding:0;list-style:none}
-.slk-faq-tab{min-height:40px;border:1px solid rgba(35,34,32,.14);padding:0 var(--slk-space-4);background:var(--slk-glass-solid);border-radius:var(--slk-radius-pill);font:400 12px/1 var(--slk-font-ui);cursor:pointer;color:var(--slk-color-ink)}
+.slk-faq-tab{min-height:var(--slk-touch);border:1px solid rgba(35,34,32,.14);padding:0 var(--slk-space-4);background:var(--slk-glass-solid);border-radius:var(--slk-radius-pill);font:400 12px/1 var(--slk-font-ui);cursor:pointer;color:var(--slk-color-ink)}
 .slk-faq-tab[aria-pressed="true"]{background:var(--slk-color-ink);color:var(--slk-color-on-ink);border-color:transparent;font-weight:500}
 
 /* -- accordion --------------------------------------------------------------- */

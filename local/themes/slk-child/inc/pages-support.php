@@ -213,7 +213,7 @@ add_action(
 .slk-track__panel .form-row label{display:block;font:500 12px/1 var(--slk-font-ui);margin-bottom:7px}
 .slk-track__panel .form-row .input-text{
 	width:100%;min-height:48px;border:1px solid var(--slk-field-border);
-	background:#fff;border-radius:var(--slk-radius-field);padding:0 16px;
+	background:var(--slk-color-white);border-radius:var(--slk-radius-field);padding:0 16px;
 	font:400 14px var(--slk-font-ui);color:var(--slk-color-ink);
 }
 .slk-track__panel .form-row button[name="track"]{

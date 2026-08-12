@@ -66,6 +66,94 @@ function slk_whatsapp_url( $message = '' ) {
 }
 
 /* -------------------------------------------------------------------------
+ * 0b. Kill Blocksy's own +/- stepper on the cart quantity field.
+ *
+ * Blocksy prints its own <span class="ct-increase">/<span class="ct-decrease">
+ * pair before every woocommerce_quantity_input() (inc/components/woocommerce/
+ * general.php, hooked to woocommerce_before_quantity_input_field), gated by
+ * the 'has_custom_quantity' theme mod (default 'yes'). Measured on /cart/
+ * with product 18 in the bag: the quantity wrapper renders
+ * data-type="type-2" with the two ct-* spans INSIDE it, alongside this
+ * template's own .slk-qty__btn pill buttons — two stepper controls stacked,
+ * same root cause as the PDP. blocksy_get_theme_mod() reads through
+ * Blocksy\Database::get_theme_mod(), which runs every value through
+ * apply_filters( "theme_mod_{$name}", $value ) — the documented WP core
+ * filter point — so short-circuiting it here removes Blocksy's spans at the
+ * source instead of fighting them with CSS. Scoped to is_cart() only: the
+ * PDP stepper is out of this file's ownership.
+ * ---------------------------------------------------------------------- */
+
+add_filter(
+	'theme_mod_has_custom_quantity',
+	static function ( $value ) {
+		return ( function_exists( 'is_cart' ) && is_cart() ) ? false : $value;
+	}
+);
+
+/*
+ * Remove Blocksy's hero band from the cart at the source — the cart template
+ * titles itself ("Your bag"), so the band's "Cart" was a second h1 in the
+ * served HTML even while display:none'd. Verify, D3.
+ */
+add_filter(
+	'blocksy:single:has-default-hero',
+	static function ( $has ) {
+		return ( function_exists( 'is_cart' ) && is_cart() ) ? false : $has;
+	}
+);
+
+/* -------------------------------------------------------------------------
+ * 0c. No discounts culture — no coupon UI, anywhere.
+ *
+ * design/sections/07-desktop.html #d-cart has no "Have a coupon?" row: this
+ * brand runs no discount codes (see hard brand rule on 1-of-1 pieces, and
+ * the store-wide "no sale theatre" law). `woocommerce_coupons_enabled` is
+ * the one documented filter both wc_coupons_enabled() call sites read —
+ * woocommerce/templates/cart/cart.php (the coupon form this theme's
+ * cart.php override still guards with `if ( wc_coupons_enabled() )`) and
+ * woocommerce/templates/checkout/form-coupon.php — so a single switch here
+ * removes the row from both cart and checkout without touching either
+ * template's markup.
+ * ---------------------------------------------------------------------- */
+
+add_filter( 'woocommerce_coupons_enabled', '__return_false' );
+
+/* -------------------------------------------------------------------------
+ * 0d. "Delivery" / "Delivery — <district>", not "Shipment".
+ *
+ * Measured: WC_Cart::get_shipping_package_name() (includes/class-wc-cart.php)
+ * hardcodes `_x( 'Shipment', 'shipping packages', 'woocommerce' )` as the <th>
+ * of the shipping row's real markup (cart/cart-shipping.php) whenever the
+ * cart has exactly one shipping package — which is every case here, this
+ * store never splits an order into multiple packages. That text is not a
+ * Blocksy or slk-checkout string; it is core WooCommerce's own default and
+ * the one documented filter point for it is `woocommerce_shipping_package_name`.
+ * District is billing_state (see slk-checkout's class-slk-checkout-fields.php
+ * and class-slk-shipping.php — shipping is billing-only per the filter in
+ * inc/checkout-view.php, and SL states/districts share the same value, e.g.
+ * option value="Colombo" label="Colombo" — no code-to-label lookup needed).
+ * Before checkout, WC()->customer only carries a billing_state if a logged-in
+ * customer's account/last order already set one; otherwise it is '' and the
+ * plain "Delivery" label is used, per design/sections/07-desktop.html #d-cart.
+ * ---------------------------------------------------------------------- */
+
+add_filter(
+	'woocommerce_shipping_package_name',
+	static function ( $name ) {
+		$district = WC()->customer ? WC()->customer->get_billing_state() : '';
+
+		if ( '' === $district ) {
+			return __( 'Delivery', 'slk' );
+		}
+
+		/* translators: %s: district name. */
+		return sprintf( __( 'Delivery — %s', 'slk' ), $district );
+	},
+	10,
+	1
+);
+
+/* -------------------------------------------------------------------------
  * 1. Empty cart — "you looked at these" (design/sections/04-pages.html)
  *
  * Reads WooCommerce's own `woocommerce_recently_viewed` cookie (set by core
@@ -244,8 +332,8 @@ add_action(
 
 /* -- quantity stepper — real input, styled as a pill ------------------- */
 .slk-qty{display:flex;align-items:center;gap:2px;background:rgba(35,34,32,.05);border-radius:var(--slk-radius-pill);padding:2px}
-.slk-qty__btn{width:36px;height:36px;border:0;background:none;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;color:var(--slk-color-ink);transition:background var(--slk-motion-base) var(--slk-ease)}
-.slk-qty__btn:hover:not(:disabled){background:#fff}
+.slk-qty__btn{width:var(--slk-touch);height:var(--slk-touch);border:0;background:none;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;color:var(--slk-color-ink);transition:background var(--slk-motion-base) var(--slk-ease)}
+.slk-qty__btn:hover:not(:disabled){background:var(--slk-color-white)}
 .slk-qty__btn:disabled{opacity:.3;cursor:not-allowed}
 .slk-qty .quantity{display:inline-flex;margin:0}
 .slk-qty__input{width:34px;min-height:36px;border:0;background:none;text-align:center;font:500 13px var(--slk-font-ui);color:var(--slk-color-ink);-moz-appearance:textfield}
@@ -255,11 +343,6 @@ add_action(
 /* -- continue / actions -------------------------------------------------*/
 .slk-cart-continue{display:inline-flex;align-items:center;min-height:var(--slk-touch);font:400 var(--slk-text-sm)/1 var(--slk-font-ui);color:var(--slk-color-muted);text-decoration:none}
 .slk-cart-actions{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--slk-space-3);padding:var(--slk-space-4) 0}
-.slk-cart-coupon{flex:1 1 260px}
-.slk-cart-coupon__toggle{cursor:pointer;font:500 var(--slk-text-sm)/1 var(--slk-font-ui);color:var(--slk-color-muted);min-height:var(--slk-touch);display:flex;align-items:center}
-.slk-cart-coupon__row{margin-top:var(--slk-space-2)}
-.slk-cart-coupon__inline{display:flex;gap:var(--slk-space-2)}
-.slk-cart-coupon__inline .slk-input{flex:1}
 .slk-cart-update{margin-left:auto}
 
 /* -- collaterals / totals panel (default cart-totals.php markup) ------- */
