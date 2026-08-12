@@ -172,11 +172,14 @@ final class SLK_Districts {
 				'priority' => 60,
 			),
 			'state'      => array(
-				'label'    => __( 'District', 'slk' ),
-				'required' => true,
-				'hidden'   => false,
-				'class'    => array( 'form-row-last' ),
-				'priority' => 70,
+				'label'       => __( 'District', 'slk' ),
+				// WooCommerce's default reads "Select an option…", which tells a
+				// shopper nothing about which of the 25 they are picking.
+				'placeholder' => __( 'Choose your district', 'slk' ),
+				'required'    => true,
+				'hidden'      => false,
+				'class'       => array( 'form-row-last' ),
+				'priority'    => 70,
 			),
 			'postcode'   => array(
 				'label'    => __( 'Postal code', 'slk' ),

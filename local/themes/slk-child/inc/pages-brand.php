@@ -115,17 +115,27 @@ CSS;
 }
 
 .slk-sizeguide__body{padding-block:var(--slk-space-4) var(--slk-space-12)} /* was padding-top with 3 values — a parse error, so the whole declaration was silently dropped (verify, D2) */
+/* Kept as a safety net for very narrow phones; the table below is sized to fit
+   without it. A size chart you have to drag sideways is a size chart half the
+   readers never see the end of. */
 .slk-sizeguide__table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
 .slk-sizeguide__table{
-	width:100%;min-width:420px;border-collapse:collapse;
+	width:100%;border-collapse:collapse;
 	background:var(--slk-glass-solid);border:1px solid var(--slk-glass-edge);
 	border-radius:var(--slk-radius-card);overflow:hidden;
 }
 .slk-sizeguide__table th,.slk-sizeguide__table td{
-	padding:13px 16px;text-align:center;
-	font:400 var(--slk-text-sm)/1 var(--slk-font-ui);
+	padding:13px 7px;text-align:center;
+	font:400 13px/1 var(--slk-font-ui);
 	border-bottom:1px solid rgba(35,34,32,.06);
+	white-space:nowrap;
+}
+.slk-sizeguide__table th[scope="row"]{padding-inline-start:14px}
+@media (min-width:1000px){
+	.slk-sizeguide__table th,.slk-sizeguide__table td{
+		padding:13px 16px;font-size:var(--slk-text-sm);
+	}
 }
 .slk-sizeguide__table thead th{
 	font:500 var(--slk-text-xs)/1 var(--slk-font-ui);color:var(--slk-color-muted);

@@ -1018,8 +1018,8 @@ textarea,
   resize: vertical;
 }
 select {
-  /* Keep the native control — a custom dropdown would cost the keyboard and
-     screen-reader behaviour the platform gives for free. */
+  /* Fallback skin only. inc/select.php replaces every select with the house
+     dropdown; these rules are what a no-JS visitor sees. */
   padding-inline: var(--slk-space-3);
   appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--slk-color-muted) 50%),

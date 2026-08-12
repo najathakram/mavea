@@ -312,19 +312,36 @@ add_filter(
  *     below.
  * ---------------------------------------------------------------------- */
 
-add_filter(
-	'theme_mod_woo_categories_hero_enabled',
-	static function ( $value ) {
-		return ( is_shop() || is_product_taxonomy() ) ? 'no' : $value;
-	}
-);
+/**
+ * True on every view where this file renders the listing head, i.e. the one
+ * real <h1>. Blocksy's hero must be off in exactly these cases and nowhere
+ * else — a plain (non-product) search still wants its own title band.
+ */
+function slk_is_product_listing() {
+	return function_exists( 'is_shop' ) && ( is_shop() || is_product_taxonomy() );
+}
+
+/*
+ * Blocksy picks the hero band's theme_mod by view prefix, so one key is not
+ * enough: a product search is `search`, not `woo_categories`, and used to
+ * print "Search Results for dress" above our own head — two <h1>s on the page.
+ */
+foreach ( array( 'woo_categories', 'search' ) as $slk_hero_prefix ) {
+	add_filter(
+		"theme_mod_{$slk_hero_prefix}_hero_enabled",
+		static function ( $value ) {
+			return slk_is_product_listing() ? 'no' : $value;
+		}
+	);
+}
+unset( $slk_hero_prefix );
 
 remove_action( 'woocommerce_before_shop_loop', 'woocommerce_result_count', 20 );
 
 add_action(
 	'woocommerce_before_shop_loop',
 	static function () {
-		if ( ! is_shop() && ! is_product_taxonomy() ) {
+		if ( ! slk_is_product_listing() ) {
 			return;
 		}
 
@@ -348,7 +365,7 @@ add_action(
 add_action(
 	'wp_enqueue_scripts',
 	static function () {
-		if ( ! is_shop() && ! is_product_taxonomy() ) {
+		if ( ! slk_is_product_listing() ) {
 			return;
 		}
 
