@@ -237,11 +237,31 @@ add_action(
 remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_output_product_data_tabs', 10 );
 
 /*
- * "About this piece" lives in the RIGHT column, under the add-to-bag actions
- * and trust rows, as its own generous box (Najath, 2026-08-12) — not as a
- * full-width band below the fold. Priority 60 places it after everything else
- * the summary renders (title 5 / price 10 / excerpt 20 / cart 30 / trust 45).
+ * The right column is TWO separate floating boxes (Najath, 2026-08-12): the
+ * main card (title → price → cart → trust rows) and, below it, "About this
+ * piece" in an identical glass panel. WooCommerce renders everything onto one
+ * summary hook, so the split is made by bracketing the main content in its
+ * own card div: open at priority 1 (before the title at 5), close at 59
+ * (after the trust rows at 45, before the About box at 60). The .summary
+ * element itself becomes a transparent sticky column — the CSS strips its
+ * old panel skin so the two cards inside it are the only surfaces.
  */
+
+add_action(
+	'woocommerce_single_product_summary',
+	static function () {
+		echo '<div class="slk-summary-card">';
+	},
+	1
+);
+
+add_action(
+	'woocommerce_single_product_summary',
+	static function () {
+		echo '</div>';
+	},
+	59
+);
 add_action(
 	'woocommerce_single_product_summary',
 	static function () {
@@ -436,19 +456,27 @@ add_action(
 	.slk-pdp.slk-pdp .product-entry-wrapper > .woocommerce-product-gallery{
 		width:auto;margin:0;
 	}
+	/* The summary element is a TRANSPARENT sticky column now — its old panel
+	   skin moved onto .slk-summary-card, so the two cards inside it (main +
+	   About) are the only painted surfaces. */
 	.slk-pdp.slk-pdp .product-entry-wrapper > .summary.entry-summary{
 		width:auto;margin-inline-start:0;
-		padding:30px;
-		background:var(--slk-glass-solid);
-		border:1px solid var(--slk-glass-edge);
-		border-radius:28px;
-		backdrop-filter:blur(20px);
-		-webkit-backdrop-filter:blur(20px);
-		box-shadow:var(--slk-shadow-lift);
+		padding:0;
+		background:none;
+		border:0;
+		box-shadow:none;
+		backdrop-filter:none;
+		-webkit-backdrop-filter:none;
 		position:sticky;
 		top:var(--slk-space-6);
 		align-self:start;
+		/* Stripping the skin exposed a Blocksy flex on this element — the two
+		   cards sat side by side. One column, one gap. */
+		display:grid;
+		grid-template-columns:minmax(0,1fr);
+		gap:var(--slk-space-6);
 	}
+	.slk-pdp .slk-pdp-about{margin-top:0} /* the grid gap owns the spacing here */
 }
 
 /* ── Gallery: rounded, cropped, CLS-safe (width/height ship with the img tag) ── */
@@ -522,15 +550,20 @@ add_action(
 .slk-pdp form.cart .quantity input.qty::-webkit-outer-spin-button,
 .slk-pdp form.cart .quantity input.qty::-webkit-inner-spin-button{appearance:none;margin:0}
 
-/* "About this piece" — a distinct, generous box INSIDE the summary column,
-   under the actions and trust rows. Solid fill against the glass panel so it
-   reads as its own object, not more of the same card. */
+/* The two floating cards of the right column. Identical skin — the About box
+   is the main card\'s twin, not an inset (Najath\'s correction, 2026-08-12). */
+.slk-pdp .slk-summary-card,
+.slk-pdp .slk-pdp-about{
+	padding:30px;
+	background:var(--slk-glass-solid);
+	border:1px solid var(--slk-glass-edge);
+	border-radius:28px;
+	backdrop-filter:blur(20px);
+	-webkit-backdrop-filter:blur(20px);
+	box-shadow:var(--slk-shadow-lift);
+}
 .slk-pdp-about{
 	margin-top:var(--slk-space-6);
-	padding:var(--slk-space-6);
-	background:var(--slk-color-white);
-	border:1px solid var(--slk-hairline);
-	border-radius:var(--slk-radius-tile);
 }
 .slk-pdp-about__title{
 	font-family:var(--slk-font-display);font-weight:300;font-size:var(--slk-text-xl);margin:0 0 var(--slk-space-2);
@@ -578,8 +611,12 @@ add_action(
    came from — and it meant `> form.cart{grid-area:cart}` never matched, so
    the cart row was never a flex row either. Both wrapper shapes are named
    below; the dividers are not part of this design. */
-.slk-pdp__summary{
-	padding:var(--slk-space-8);
+/* This internal layout moved from .slk-pdp__summary onto .slk-summary-card
+   when the column was split into two floating boxes: the named children
+   (title/price/desc/cart/trust) live inside the card now, and leaving the
+   areas on the summary made it a phantom two-column grid that laid the two
+   CARDS side by side (measured: gridCols "0px 466px"). */
+.slk-pdp .slk-summary-card{
 	display:grid;
 	grid-template-columns:1fr auto;
 	gap:var(--slk-space-6) var(--slk-space-3);
@@ -594,7 +631,7 @@ add_action(
    row gap to ~51px between the description and the cart row. One rhythm, owned
    by the grid. The extra class raises specificity over Blocksy\'s dynamic CSS,
    which is printed after this block. */
-.slk-pdp.product .slk-pdp__summary > *{ margin-block:0; }
+.slk-pdp.product .slk-summary-card > *{ margin-block:0; }
 /* style.css (owned by nobody this round; no touching per house rule) carries
    .woocommerce div.product form.cart{ margin: var(--slk-space-6) 0 0; } at
    specificity (0,3,2) — two type selectors (div, form) plus three classes.
@@ -605,24 +642,24 @@ add_action(
    of the intended 24px). !important is the only way to win this without
    editing the file we do not own. */
 .slk-pdp__summary form.cart{ margin:0 !important; }
-.slk-pdp__summary > .ct-product-divider{ display:none; }
-.slk-pdp__summary > .ct-product-add-to-cart{ grid-area:cart;margin:0; }
-.slk-pdp__summary > .ct-product-add-to-cart > form.cart{ margin:0; }
-.slk-pdp__summary > h1.product_title{
+.slk-summary-card > .ct-product-divider{ display:none; }
+.slk-summary-card > .ct-product-add-to-cart{ grid-area:cart;margin:0; }
+.slk-summary-card > .ct-product-add-to-cart > form.cart{ margin:0; }
+.slk-summary-card > h1.product_title{
 	grid-area:title;margin:0;font-size:var(--slk-display-s);font-weight:400;
 }
-.slk-pdp__summary > p.price{
+.slk-summary-card > p.price{
 	grid-area:price;margin:0;font:500 var(--slk-text-xl)/1 var(--slk-font-ui);white-space:nowrap;
 }
-.slk-pdp__summary > .woocommerce-product-details__short-description{
+.slk-summary-card > .woocommerce-product-details__short-description{
 	grid-area:desc;font:400 var(--slk-text-sm)/1.6 var(--slk-font-ui);color:var(--slk-color-muted);
 }
-.slk-pdp__summary > .woocommerce-product-rating,
-.slk-pdp__summary > .product_meta{
+.slk-summary-card > .woocommerce-product-rating,
+.slk-summary-card > .product_meta{
 	/* Not part of this design; hidden without removing the hook. */
 	display:none;
 }
-.slk-pdp__summary > form.cart{ grid-area:cart; }
+.slk-summary-card > form.cart{ grid-area:cart; }
 .slk-pdp__summary form.cart{
 	margin:0;
 	display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--slk-space-4);
