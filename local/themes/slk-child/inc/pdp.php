@@ -236,8 +236,14 @@ add_action(
 
 remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_output_product_data_tabs', 10 );
 
+/*
+ * "About this piece" lives in the RIGHT column, under the add-to-bag actions
+ * and trust rows, as its own generous box (Najath, 2026-08-12) — not as a
+ * full-width band below the fold. Priority 60 places it after everything else
+ * the summary renders (title 5 / price 10 / excerpt 20 / cart 30 / trust 45).
+ */
 add_action(
-	'woocommerce_after_single_product_summary',
+	'woocommerce_single_product_summary',
 	static function () {
 		$content = get_the_content();
 
@@ -251,7 +257,7 @@ add_action(
 			wp_kses_post( wpautop( $content ) )
 		);
 	},
-	10
+	60
 );
 
 /* Related products keep the catalogue's 3:4 portrait (600x800) — Blocksy was
@@ -472,12 +478,11 @@ add_action(
 .slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"]{
 	padding-top:var(--slk-space-3);
 }
-/* Blocksy\'s pills enumerate ALL slides, so pill 1 duplicated the main image
-   and left tile 3 orphaned on its own row (verify, D7). The design shows the
-   main shot once, then exactly two 3:4 tiles: back view and detail. */
-.slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] li:first-child{
-	display:none;
-}
+/* All three pills visible, one row (Najath, 2026-08-12): hiding pill 1 made
+   the front view unreachable once the carousel moved on — the thumb strip is
+   navigation, not a summary. Three columns kills the orphan-row problem the
+   old first-child hide was papering over. */
+
 
 /* The stepper, owned outright. Blocksy\'s type-2 quantity positions its empty
    +/− spans with fractional inset math; every partial override so far produced
@@ -517,22 +522,28 @@ add_action(
 .slk-pdp form.cart .quantity input.qty::-webkit-outer-spin-button,
 .slk-pdp form.cart .quantity input.qty::-webkit-inner-spin-button{appearance:none;margin:0}
 
-/* Below the summary: the reading column. The tab band is gone (see the PHP
-   above); the garment copy and related pieces align to the 1140 column the
-   rest of the page lives in — measured before: they broke out to the wide
-   Blocksy wrapper and started ~176px left of everything else. */
+/* "About this piece" — a distinct, generous box INSIDE the summary column,
+   under the actions and trust rows. Solid fill against the glass panel so it
+   reads as its own object, not more of the same card. */
 .slk-pdp-about{
-	max-width:var(--slk-container);
-	margin:var(--slk-space-12) auto 0;
-	padding-inline:var(--slk-gutter);
+	margin-top:var(--slk-space-6);
+	padding:var(--slk-space-6);
+	background:var(--slk-color-white);
+	border:1px solid var(--slk-hairline);
+	border-radius:var(--slk-radius-tile);
 }
 .slk-pdp-about__title{
-	font-family:var(--slk-font-display);font-weight:300;font-size:27px;margin:0 0 var(--slk-space-3);
+	font-family:var(--slk-font-display);font-weight:300;font-size:var(--slk-text-xl);margin:0 0 var(--slk-space-2);
 }
 .slk-pdp-about__body{
-	max-width:62ch;
 	font:400 var(--slk-text-base)/1.7 var(--slk-font-ui);color:var(--slk-color-ink-soft);
 }
+.slk-pdp-about__body p:last-child{margin-bottom:0}
+
+/* Related products: Blocksy stamps ct-hidden-sm/ct-hidden-md on its wrapper,
+   hiding the rail from every phone and tablet — the shoppers who need it
+   most. The doubled classes out-rank the utility\'s media rules. */
+.slk-pdp .related.products.ct-hidden-sm.ct-hidden-md{display:block}
 .slk-pdp .related.products{
 	max-width:var(--slk-container);
 	margin:var(--slk-space-12) auto 0;
@@ -542,7 +553,7 @@ add_action(
 	font-family:var(--slk-font-display);font-weight:300;font-size:27px;margin:0 0 var(--slk-space-4);
 }
 .slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] ol{
-	display:grid;grid-template-columns:1fr 1fr;gap:var(--slk-space-3);
+	display:grid;grid-template-columns:repeat(3,1fr);gap:var(--slk-space-3);
 	list-style:none;margin:0;padding:0;
 }
 .slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] li{
