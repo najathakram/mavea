@@ -54,6 +54,21 @@ if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_requir
 
 		<?php do_action( 'woocommerce_checkout_before_customer_details' ); ?>
 
+		<?php
+		/*
+		 * Sign in, create an account, or continue as a guest — before the
+		 * "1 · You" panel begins, so an unrecognised shopper is offered a
+		 * choice instead of dropping straight into the guest form. Guest is
+		 * the default: nothing here blocks a shopper who takes no action.
+		 * Rendered by inc/account.php, which also turns on the two
+		 * WooCommerce options this depends on. Logged-in shoppers skip it
+		 * entirely — they are already who they are.
+		 */
+		if ( ! is_user_logged_in() && function_exists( 'slk_checkout_account_choice' ) ) {
+			slk_checkout_account_choice( $checkout );
+		}
+		?>
+
 		<div class="slk-checkout__grid" id="customer_details">
 
 			<div class="slk-checkout__fields col2-set">

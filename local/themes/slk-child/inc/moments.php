@@ -342,6 +342,7 @@ function slk_moments_render_filters() {
 	$buckets  = slk_moments_price_buckets();
 	$terms    = is_shop() ? slk_moments_cat_terms() : array();
 	$total    = slk_moments_result_total();
+	$context  = slk_moments_listing_context();
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$orderby  = isset( $_GET['orderby'] ) ? sanitize_text_field( wp_unslash( $_GET['orderby'] ) ) : '';
 	?>
@@ -349,7 +350,8 @@ function slk_moments_render_filters() {
 		<div class="slk-scrim" data-slk-sheet-close></div>
 
 		<form class="slk-filters" method="get" action="<?php echo esc_url( slk_moments_listing_url() ); ?>"
-			role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'Filters', 'slk' ); ?>">
+			role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'Filters', 'slk' ); ?>"
+			<?php if ( $context ) : ?>data-slk-ctx-tax="<?php echo esc_attr( $context['taxonomy'] ); ?>" data-slk-ctx-term="<?php echo esc_attr( $context['term'] ); ?>"<?php endif; ?>>
 
 			<?php if ( $orderby ) : ?>
 				<input type="hidden" name="orderby" value="<?php echo esc_attr( $orderby ); ?>">
@@ -510,6 +512,159 @@ add_action(
 	},
 	5
 );
+
+/**
+ * The taxonomy term the current listing is already scoped to, if any.
+ *
+ * On /product-category/abayas/ the sheet renders no category boxes and the form
+ * submits back into the term, so the term itself is part of the result set the
+ * button is counting. It is carried to the count endpoint as data attributes
+ * rather than a hidden field, because a hidden field would also be submitted
+ * and would put a redundant filter arg on an already scoped URL.
+ *
+ * @return array{taxonomy:string,term:string}|array{}
+ */
+function slk_moments_listing_context() {
+	if ( ! function_exists( 'is_product_taxonomy' ) || ! is_product_taxonomy() ) {
+		return array();
+	}
+
+	$term = get_queried_object();
+
+	if ( ! $term instanceof WP_Term ) {
+		return array();
+	}
+
+	return array(
+		'taxonomy' => $term->taxonomy,
+		'term'     => $term->slug,
+	);
+}
+
+/**
+ * The price condition the shop archive itself applies, as a posts_clauses filter.
+ *
+ * WooCommerce resolves ?min_price/?max_price in
+ * WC_Query::price_filter_post_clauses(), which joins wc_product_meta_lookup and
+ * tests the shopper's range and the product's range for overlap. That method
+ * only runs on the main query, so the count query borrows its exact join and
+ * its exact condition. It cannot use a product-query argument instead: there is
+ * no price argument in WC_Product_Query, and an unknown one is passed through
+ * to WP_Query and dropped in silence, which leaves the button promising a
+ * result the archive will not deliver.
+ *
+ * @param float $min Lowest price to include.
+ * @param float $max Highest price to include.
+ * @return callable A posts_clauses callback.
+ */
+function slk_moments_price_clause( $min, $max ) {
+	// The archive shifts the bounds when prices are stored one way and shown
+	// another. The same shift is applied here, or the two would disagree the
+	// day tax is switched on.
+	if ( wc_tax_enabled() && 'incl' === get_option( 'woocommerce_tax_display_shop' ) && ! wc_prices_include_tax() ) {
+		$rates = WC_Tax::get_rates( apply_filters( 'woocommerce_price_filter_widget_tax_class', '' ) );
+
+		if ( $rates ) {
+			$min -= WC_Tax::get_tax_total( WC_Tax::calc_inclusive_tax( $min, $rates ) );
+			$max -= WC_Tax::get_tax_total( WC_Tax::calc_inclusive_tax( $max, $rates ) );
+		}
+	}
+
+	return static function ( $clauses ) use ( $min, $max ) {
+		global $wpdb;
+
+		if ( ! strstr( $clauses['join'], 'wc_product_meta_lookup' ) ) {
+			$clauses['join'] .= " LEFT JOIN {$wpdb->wc_product_meta_lookup} wc_product_meta_lookup ON {$wpdb->posts}.ID = wc_product_meta_lookup.product_id ";
+		}
+
+		$clauses['where'] .= $wpdb->prepare(
+			' AND NOT (%f<wc_product_meta_lookup.min_price OR %f>wc_product_meta_lookup.max_price ) ',
+			$max,
+			$min
+		);
+
+		return $clauses;
+	};
+}
+
+/**
+ * AJAX: how many products a candidate filter selection matches, before the
+ * form is submitted.
+ *
+ * The query is the archive's own: same status, same category args, the
+ * archive's own term when the listing is a term archive, and the archive's own
+ * price clause, so the number handed back can never disagree with what
+ * submitting the form would actually produce. Registered for both wp_ajax_ and
+ * wp_ajax_nopriv_ because most shoppers on the shop page are not logged in.
+ */
+function slk_moments_ajax_filter_count() {
+	if ( ! function_exists( 'wc_get_products' ) ) {
+		wp_send_json_error( array(), 500 );
+	}
+
+	// A read-only count of already-public product data; nothing here is
+	// written or disclosed beyond the same number the archive itself shows.
+	// The endpoint answers unauthenticated callers, so only scalars are handed
+	// to sanitize_title() (an array element would raise a TypeError inside it)
+	// and the list of slugs is capped.
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$raw_cats   = isset( $_POST['product_cat'] ) ? wp_unslash( $_POST['product_cat'] ) : array();
+	$raw_cats   = array_slice( array_filter( (array) $raw_cats, 'is_scalar' ), 0, 50 );
+	$categories = array_values( array_unique( array_filter( array_map( 'sanitize_title', $raw_cats ) ) ) );
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$bucket_key = isset( $_POST['slk_price'] ) ? sanitize_key( wp_unslash( $_POST['slk_price'] ) ) : '';
+	$buckets    = slk_moments_price_buckets();
+	$min        = 0;
+	$max        = 0;
+
+	if ( isset( $buckets[ $bucket_key ] ) ) {
+		$min = null !== $buckets[ $bucket_key ]['min'] ? (int) $buckets[ $bucket_key ]['min'] : 0;
+		$max = null !== $buckets[ $bucket_key ]['max'] ? (int) $buckets[ $bucket_key ]['max'] : 0;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$ctx_tax = isset( $_POST['slk_ctx_tax'] ) ? sanitize_key( wp_unslash( $_POST['slk_ctx_tax'] ) ) : '';
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$raw_term = isset( $_POST['slk_ctx_term'] ) && is_scalar( $_POST['slk_ctx_term'] ) ? wp_unslash( $_POST['slk_ctx_term'] ) : '';
+	$ctx_term = sanitize_title( $raw_term );
+
+	$args = array(
+		'status'   => 'publish',
+		'limit'    => -1,
+		'return'   => 'ids',
+		// Pinned, because the default also counts variations.
+		'type'     => array_keys( wc_get_product_types() ),
+		'category' => $categories, // array of slugs, empty for all
+	);
+
+	if ( $ctx_tax && $ctx_term && in_array( $ctx_tax, get_object_taxonomies( 'product' ), true ) ) {
+		$args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- the archive runs the same clause.
+			array(
+				'taxonomy' => $ctx_tax,
+				'field'    => 'slug',
+				'terms'    => array( $ctx_term ),
+			),
+		);
+	}
+
+	$clause = null;
+
+	if ( $min > 0 || $max > 0 ) {
+		$clause = slk_moments_price_clause( $min, $max > 0 ? $max : PHP_INT_MAX );
+		add_filter( 'posts_clauses', $clause );
+	}
+
+	$count = count( (array) wc_get_products( $args ) );
+
+	if ( $clause ) {
+		remove_filter( 'posts_clauses', $clause );
+	}
+
+	wp_send_json_success( array( 'count' => $count ) );
+}
+add_action( 'wp_ajax_slk_filter_count', 'slk_moments_ajax_filter_count' );
+add_action( 'wp_ajax_nopriv_slk_filter_count', 'slk_moments_ajax_filter_count' );
 
 /*
  * Layout wrapper.
@@ -1148,7 +1303,13 @@ CSS;
 			'slk-moments',
 			'window.slkMoments=' . wp_json_encode(
 				array(
-					'addedUrl' => class_exists( 'WC_AJAX' ) ? WC_AJAX::get_endpoint( 'slk_added_sheet' ) : '',
+					'addedUrl'          => class_exists( 'WC_AJAX' ) ? WC_AJAX::get_endpoint( 'slk_added_sheet' ) : '',
+					'filterCountUrl'    => admin_url( 'admin-ajax.php' ),
+					'filterCountAction' => 'slk_filter_count',
+					/* translators: %s: number of products, singular. */
+					'showPiece'         => __( 'Show %s piece', 'slk' ),
+					/* translators: %s: number of products, plural. */
+					'showPieces'        => __( 'Show %s pieces', 'slk' ),
 					'zoomOpen' => __( 'Zoom', 'slk' ),
 					'zoomOf'   => __( 'Image %1$s of %2$s', 'slk' ),
 					/*
@@ -1287,6 +1448,94 @@ CSS;
 				form.querySelectorAll('input[name="slk_price"]'),
 				function (el) { el.disabled = true; }
 			);
+		});
+	}
+
+	/* ── Filter count: keep the submit button's number live ────────────────
+	   Runs on every category checkbox or price radio change, debounced so a
+	   fast run of clicks fires one request, not one per click. The count
+	   comes from slk_moments_ajax_filter_count, which runs the same
+	   wc_get_products query the archive itself runs, so the number never
+	   promises a result the grid cannot deliver. On any failure the button
+	   is left showing whatever count it already had, never a wrong one. */
+	if (form && cfg.filterCountUrl && cfg.filterCountAction) {
+		var countBtn = form.querySelector('.slk-filters__submit');
+		var countTimer = null;
+		var countAbort = null;
+		/* Which request is the current one. An older request that settles late,
+		   including one this code aborted, must not touch the button: it would
+		   either write a stale number or report the newer request as finished. */
+		var countSeq = 0;
+		var ctxTax = form.getAttribute('data-slk-ctx-tax');
+		var ctxTerm = form.getAttribute('data-slk-ctx-term');
+
+		var setCount = function (n) {
+			if (!countBtn) { return; }
+			var tpl = n === 1 ? cfg.showPiece : cfg.showPieces;
+			if (!tpl) { return; }
+			countBtn.textContent = tpl.replace('%s', n.toLocaleString());
+		};
+
+		var requestCount = function () {
+			if (!window.fetch) { return; }
+			if (countAbort && countAbort.abort) { countAbort.abort(); }
+
+			var body = new FormData();
+			body.append('action', cfg.filterCountAction);
+
+			Array.prototype.forEach.call(
+				form.querySelectorAll('input[name="product_cat[]"]:checked'),
+				function (el) { body.append('product_cat[]', el.value); }
+			);
+
+			var price = form.querySelector('input[name="slk_price"]:checked');
+			if (price) { body.append('slk_price', price.value); }
+
+			/* A term archive scopes the results without any input in the form,
+			   so the term travels with the request or the count would be the
+			   whole store while the form submits back into the term. */
+			if (ctxTax && ctxTerm) {
+				body.append('slk_ctx_tax', ctxTax);
+				body.append('slk_ctx_term', ctxTerm);
+			}
+
+			var seq = ++countSeq;
+
+			countAbort = window.AbortController ? new AbortController() : null;
+			if (countBtn) { countBtn.setAttribute('aria-busy', 'true'); }
+
+			window.fetch(cfg.filterCountUrl, {
+				method: 'POST',
+				credentials: 'same-origin',
+				body: body,
+				signal: countAbort ? countAbort.signal : undefined
+			})
+				.then(function (r) { return r.json(); })
+				.then(function (json) {
+					if (seq !== countSeq) { return; }
+
+					if (json && json.success && json.data && typeof json.data.count === 'number') {
+						setCount(json.data.count);
+					}
+					// A malformed response is treated the same as a failed
+					// one: the button keeps whatever count it already had.
+				})
+				.catch(function () {
+					// Request failed, or was aborted by a newer request:
+					// same rule, the last known good count stays put.
+				})
+				.then(function () {
+					// Only the newest request may say the button is settled.
+					// A superseded one leaves the flag to its replacement.
+					if (countBtn && seq === countSeq) { countBtn.setAttribute('aria-busy', 'false'); }
+				});
+		};
+
+		form.addEventListener('change', function (e) {
+			if (!e.target.matches('input[name="product_cat[]"], input[name="slk_price"]')) { return; }
+
+			if (countTimer) { window.clearTimeout(countTimer); }
+			countTimer = window.setTimeout(requestCount, 250);
 		});
 	}
 

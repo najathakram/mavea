@@ -329,6 +329,7 @@ function slk_checkout_view_css() {
 #order_review ul.payment_methods{list-style:none;margin:0;padding:0;display:grid;gap:var(--slk-space-2)}
 .slk-checkout__payment-slot li.wc_payment_method,
 #order_review li.wc_payment_method{
+  position:relative;
   border:1px solid var(--slk-field-border);border-radius:var(--slk-radius-field);
   padding:var(--slk-space-4);background:var(--slk-glass-solid);
   transition:background var(--slk-motion-base) var(--slk-ease),border-color var(--slk-motion-base) var(--slk-ease);
@@ -337,10 +338,25 @@ function slk_checkout_view_css() {
 #order_review li.wc_payment_method:has(input:checked){border:2px solid var(--slk-color-ink);background:var(--slk-color-white)}
 .slk-checkout__payment-slot li.wc_payment_method label,
 #order_review li.wc_payment_method label{display:flex;align-items:center;gap:var(--slk-space-3);font:500 13.5px/1.3 var(--slk-font-ui);cursor:pointer;min-height:var(--slk-touch);margin:0}
+/* Click-to-select fix: measured live, the card <li> is ~198x228px but its
+   <label> is only ~164x44px, so most of the card was dead space and a
+   shopper\'s first click usually missed. The label\'s ::after is stretched
+   over the whole card (the li above already carries position:relative, so
+   inset:0 spans the full card) so a click anywhere on it checks the radio.
+   The radio and .payment_box below get a higher z-index so the payment
+   description\'s own fields/links stay clickable above the overlay.
+   WooCommerce\'s markup and change events are untouched.
+   Scoped to both locations this file\'s JS can leave the payment list in
+   (moved into #slk-payment-slot, or left in #order_review if JS is off),
+   matching every other rule in this section. */
+.slk-checkout__payment-slot li.wc_payment_method > label::after,
+#order_review li.wc_payment_method > label::after{
+  content:"";position:absolute;inset:0;z-index:1;cursor:pointer;
+}
 .slk-checkout__payment-slot li.wc_payment_method input[type=radio],
-#order_review li.wc_payment_method input[type=radio]{width:20px;height:20px;accent-color:var(--slk-color-ink);flex:none}
+#order_review li.wc_payment_method input[type=radio]{width:20px;height:20px;accent-color:var(--slk-color-ink);flex:none;position:relative;z-index:2}
 .slk-checkout__payment-slot .payment_box,
-#order_review .payment_box{margin-top:var(--slk-space-2);padding:var(--slk-space-3) 0 0 32px;font:400 12px/1.6 var(--slk-font-ui);color:var(--slk-color-muted)}
+#order_review .payment_box{margin-top:var(--slk-space-2);padding:var(--slk-space-3) 0 0 32px;font:400 12px/1.6 var(--slk-font-ui);color:var(--slk-color-muted);position:relative;z-index:2}
 .slk-checkout__payment-slot .payment_box p,
 #order_review .payment_box p{margin:0 0 8px}
 

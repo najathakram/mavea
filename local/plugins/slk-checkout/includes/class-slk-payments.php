@@ -1,6 +1,7 @@
 <?php
 /**
- * Payment rules: COD handling fee, gateway order, Koko threshold.
+ * Payment rules: COD handling fee, gateway order, Koko threshold, and gating
+ * PayHere/Mintpay until each has a merchant id configured.
  *
  * @package slk
  */
@@ -124,12 +125,18 @@ final class SLK_Payments {
 	 * the design's copy rather than left silent, but that line is the theme's
 	 * to render; this only decides availability.
 	 *
+	 * PayHere and Mintpay are removed outright while unconfigured, before
+	 * sorting even runs, so a half-built gateway is never something a shopper
+	 * can order the list by.
+	 *
 	 * @param array $gateways Available gateways, keyed by id.
 	 */
 	public static function sort_and_gate( $gateways ) {
 		if ( ! is_array( $gateways ) || empty( $gateways ) ) {
 			return $gateways;
 		}
+
+		$gateways = self::gate_unconfigured( $gateways );
 
 		// Koko threshold.
 		$total = self::cart_items_total();
@@ -144,7 +151,7 @@ final class SLK_Payments {
 
 		$preferred = (array) apply_filters(
 			'slk_gateway_order',
-			array( 'cod', 'payhere', 'payhere_gateway', 'bacs', 'koko', 'kokopayments' )
+			array( 'cod', 'payhere', 'payhere_gateway', 'bacs', 'mintpay', 'koko', 'kokopayments' )
 		);
 
 		$sorted = array();
@@ -155,7 +162,57 @@ final class SLK_Payments {
 			}
 		}
 
-		return $sorted + $gateways;
+		return self::add_descriptions( $sorted + $gateways );
+	}
+
+	/**
+	 * Hide a gateway that is active but has no merchant id set, so a shopper
+	 * is never offered a payment method that cannot actually take their
+	 * money. PayHere and Mintpay both read their merchant id from their own
+	 * settings under the key `merchant_id`, which `get_option()` on the
+	 * gateway instance already resolves for us.
+	 *
+	 * @param array $gateways Available gateways, keyed by id.
+	 */
+	private static function gate_unconfigured( $gateways ) {
+		$ids = (array) apply_filters( 'slk_credentialed_gateway_ids', array( 'payhere', 'payhere_gateway', 'mintpay' ) );
+
+		foreach ( $ids as $id ) {
+			if ( ! isset( $gateways[ $id ] ) || ! is_object( $gateways[ $id ] ) || ! method_exists( $gateways[ $id ], 'get_option' ) ) {
+				continue;
+			}
+			if ( '' === trim( (string) $gateways[ $id ]->get_option( 'merchant_id' ) ) ) {
+				unset( $gateways[ $id ] );
+			}
+		}
+
+		return $gateways;
+	}
+
+	/**
+	 * Short, plain descriptions under each gateway name, written in the
+	 * shopper's own words rather than the plugin's own marketing copy.
+	 *
+	 * @param array $gateways Available gateways, keyed by id.
+	 */
+	private static function add_descriptions( $gateways ) {
+		$descriptions = (array) apply_filters(
+			'slk_gateway_descriptions',
+			array(
+				'cod'             => __( 'Pay in cash when your order arrives.', 'slk' ),
+				'payhere'         => __( 'Pay by card, eZ Cash, helaPay or LankaQR.', 'slk' ),
+				'payhere_gateway' => __( 'Pay by card, eZ Cash, helaPay or LankaQR.', 'slk' ),
+				'mintpay'         => __( 'Split the cost into instalments with Mintpay.', 'slk' ),
+			)
+		);
+
+		foreach ( $descriptions as $id => $description ) {
+			if ( isset( $gateways[ $id ] ) && is_object( $gateways[ $id ] ) ) {
+				$gateways[ $id ]->description = $description;
+			}
+		}
+
+		return $gateways;
 	}
 
 	/**

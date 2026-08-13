@@ -40,15 +40,24 @@ install woocommerce-pdf-invoices-packing-slips activate \
   "packing slips carry the landmark + district a COD courier actually navigates by"
 install seo-by-rank-math activate \
   "product schema and sitemaps; Google Merchant Center feed later"
+install payhere-payment-gateway activate \
+  "cards, eZ Cash, helaPay and LankaQR in one screen; active but left unconfigured"
+install mintpay activate \
+  "instalments; Koko's own plugin is immature, this is the healthier BNPL pick; active but left unconfigured"
+
+echo
+echo "    PayHere and Mintpay are installed and ACTIVE but have NO merchant"
+echo "    credentials set. Each needs a merchant ID and secret that only"
+echo "    Najath can obtain from the provider. PayHere approval additionally"
+echo "    requires a live site with published policy pages before it will"
+echo "    issue credentials. Until a merchant ID is entered under WooCommerce"
+echo "    > Settings > Payments, class-slk-payments.php keeps that gateway"
+echo "    hidden from shoppers, so being active here is safe."
 
 echo
 echo "==> PARKED: installed, inactive until credentials exist"
-install payhere-payment-gateway parked \
-  "needs the PayHere merchant account, which needs a live site with policy pages"
 install paykoko-bnpl-payment-gateway parked \
   "needs a signed Koko merchant agreement (~10-12% commission — negotiate first)"
-install mintpay parked \
-  "BNPL alternative to Koko; pick one after both quote"
 install notifylk-sms-for-woocommerce parked \
   "needs a Notify.lk account and an approved sender ID"
 install wp-mail-smtp parked \

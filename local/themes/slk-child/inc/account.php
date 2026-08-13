@@ -398,7 +398,183 @@ function slk_account_render_tracking( $order_id ) {
 add_action( 'woocommerce_view_order', 'slk_account_render_tracking', 20 );
 
 /* -------------------------------------------------------------------------
- * 5. Styling — restyle the native login form, nav, dashboard, orders table
+ * 5. Checkout — sign in, create an account, or continue as a guest.
+ *
+ * A logged-out shopper used to drop straight into the guest form with no
+ * choice. This turns on WooCommerce's own account creation and login
+ * reminder (real, editable settings, not a hard-coded filter, so a merchant
+ * can later switch either off in WooCommerce > Settings > Accounts &
+ * Privacy without this file fighting back) and requires the one thing an
+ * account cannot exist without: an email, only when the shopper actually
+ * asks to create one. Guest checkout itself is untouched and stays enabled.
+ * ---------------------------------------------------------------------- */
+
+add_action(
+	'init',
+	static function () {
+		if ( get_option( 'slk_checkout_account_options_bound' ) ) {
+			return;
+		}
+
+		update_option( 'woocommerce_enable_signup_and_login_from_checkout', 'yes' );
+		update_option( 'woocommerce_enable_checkout_login_reminder', 'yes' );
+		update_option( 'slk_checkout_account_options_bound', 'yes', false );
+	},
+	15
+);
+
+/**
+ * Email is optional at this checkout by design (see the slk-checkout
+ * plugin's SLK_Checkout_Fields / SLK_Email_Policy), but an account cannot
+ * exist without one. Require it only when "Create an account?" is actually
+ * checked, and say why in the same sentence. Guests are never touched by
+ * this: the check is gated on $data['createaccount'].
+ *
+ * @param array    $data   Posted checkout data.
+ * @param WP_Error $errors Error bag.
+ */
+add_action(
+	'woocommerce_after_checkout_validation',
+	static function ( $data, $errors ) {
+		if ( ! is_array( $data ) || ! is_wp_error( $errors ) ) {
+			return;
+		}
+
+		$creating_account = ! empty( $data['createaccount'] );
+		$email            = isset( $data['billing_email'] ) ? trim( (string) $data['billing_email'] ) : '';
+
+		if ( $creating_account && '' === $email ) {
+			$errors->add(
+				'billing_email',
+				__( 'An email is needed to create your account, so we can send your login link and order updates.', 'slk' ),
+				array( 'id' => 'billing_email' )
+			);
+		}
+	},
+	10,
+	2
+);
+
+/**
+ * The "how would you like to check out" block: sign in, create an account,
+ * or continue as a guest. Called from
+ * woocommerce/checkout/form-checkout.php, above the "1 · You" panel, only
+ * for a logged-out shopper.
+ *
+ * Every control here operates on WooCommerce's own markup; nothing here is
+ * a parallel sign-in or registration system:
+ *
+ * - "Sign in" is an <a class="showlogin">, the exact class WooCommerce's
+ *   own checkout.js binds a delegated click handler to. Clicking it opens
+ *   the same hidden login form woocommerce_checkout_login_form() already
+ *   printed via the woocommerce_before_checkout_form hook, and scrolls the
+ *   page to it, because that click handler is bound to document.body, not
+ *   to one specific link.
+ * - "Create an account" is a <label for="createaccount">, pointing at the
+ *   real checkbox woocommerce/checkout/form-billing.php renders further
+ *   down the page (that template is untouched). A label toggles a checkbox
+ *   anywhere in the same document, moves focus to it (which scrolls it
+ *   into view) and fires the native change event checkout.js listens for
+ *   to reveal the account fields — no id collision, no duplicate markup.
+ * - "Continue as a guest" needs no control at all: it is what already
+ *   happens when neither of the above is used, so it is shown as the
+ *   selected default rather than as a button.
+ *
+ * @param WC_Checkout|null $checkout Current checkout instance.
+ */
+function slk_checkout_account_choice( $checkout ) {
+	if ( ! $checkout instanceof WC_Checkout || ! $checkout->is_registration_enabled() ) {
+		return;
+	}
+	?>
+	<div class="slk-panel slk-panel--lifted slk-checkout__panel slk-account-choice">
+
+		<div class="slk-eyebrow slk-checkout__panel-label"><?php esc_html_e( 'Before you begin', 'slk' ); ?></div>
+
+		<p class="slk-account-choice__intro">
+			<?php esc_html_e( 'Sign in, create an account, or continue as a guest. Guest is already selected, so there is nothing you need to do.', 'slk' ); ?>
+		</p>
+
+		<div class="slk-account-choice__options">
+
+			<a href="#" class="slk-account-choice__option slk-account-choice__option--signin showlogin">
+				<span class="slk-account-choice__option-title"><?php esc_html_e( 'Sign in', 'slk' ); ?></span>
+				<span class="slk-account-choice__option-sub"><?php esc_html_e( 'Use your saved details to check out faster.', 'slk' ); ?></span>
+			</a>
+
+			<label for="createaccount" class="slk-account-choice__option slk-account-choice__option--create">
+				<span class="slk-account-choice__option-title"><?php esc_html_e( 'Create an account', 'slk' ); ?></span>
+				<span class="slk-account-choice__option-sub"><?php esc_html_e( 'We ask for your email so we can send your login link and order updates.', 'slk' ); ?></span>
+			</label>
+
+			<div class="slk-account-choice__option slk-account-choice__option--guest">
+				<span class="slk-account-choice__option-title">
+					<?php esc_html_e( 'Continue as a guest', 'slk' ); ?>
+					<span class="slk-account-choice__badge"><?php esc_html_e( 'Default', 'slk' ); ?></span>
+				</span>
+				<span class="slk-account-choice__option-sub"><?php esc_html_e( 'This is already selected, so you do not need to do anything.', 'slk' ); ?></span>
+			</div>
+
+		</div>
+
+	</div>
+	<?php
+}
+
+/* -------------------------------------------------------------------------
+ * 6. Styling — the checkout account-choice block above. Scoped to the
+ * checkout page itself (section 7's style block below is scoped to the
+ * account area); .slk-panel, .slk-panel--lifted, .slk-checkout__panel,
+ * .slk-checkout__panel-label and .slk-eyebrow are already defined by the
+ * components layer and inc/checkout-view.php, so only the new option tiles
+ * need rules here.
+ * ---------------------------------------------------------------------- */
+
+add_action(
+	'wp_enqueue_scripts',
+	static function () {
+		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+			return;
+		}
+		if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
+			return;
+		}
+
+		$css = <<<'CSS'
+.slk-account-choice{margin-bottom:var(--slk-space-4)}
+.slk-account-choice__intro{margin:0 0 var(--slk-space-4);font:400 12.5px/1.6 var(--slk-font-ui);color:var(--slk-color-muted)}
+.slk-account-choice__options{display:grid;gap:var(--slk-space-3)}
+.slk-account-choice__option{
+	display:block;padding:var(--slk-space-4);border:1px solid var(--slk-field-border);
+	border-radius:var(--slk-radius-field);background:var(--slk-color-white);
+	text-decoration:none;color:inherit;cursor:pointer;
+	transition:border-color var(--slk-motion-base) var(--slk-ease),opacity var(--slk-motion-base) var(--slk-ease);
+}
+.slk-account-choice__option--signin:hover,
+.slk-account-choice__option--create:hover{border-color:var(--slk-color-ink)}
+.slk-account-choice__option--guest{cursor:default;background:var(--slk-glass-solid)}
+.slk-account-choice__option-title{
+	display:flex;align-items:center;gap:8px;
+	font:500 13.5px/1.3 var(--slk-font-ui);color:var(--slk-color-ink);
+}
+.slk-account-choice__option-sub{display:block;font:400 12px/1.5 var(--slk-font-ui);color:var(--slk-color-muted);padding-top:4px}
+.slk-account-choice__badge{
+	display:inline-flex;align-items:center;min-height:20px;padding:0 9px;
+	background:var(--slk-color-ink);color:var(--slk-color-on-ink);border-radius:var(--slk-radius-pill);
+	font:500 10px/1 var(--slk-font-ui);letter-spacing:.04em;
+}
+@media (min-width:1000px){
+	.slk-account-choice__options{grid-template-columns:repeat(3,1fr)}
+}
+CSS;
+
+		wp_add_inline_style( 'slk-child', $css );
+	},
+	31
+);
+
+/* -------------------------------------------------------------------------
+ * 7. Styling — restyle the native login form, nav, dashboard, orders table
  * and order-view screen to the glass-panel / pill contract. Tokens only,
  * one 1000px breakpoint.
  * ---------------------------------------------------------------------- */

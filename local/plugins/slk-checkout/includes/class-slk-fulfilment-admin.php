@@ -62,6 +62,49 @@ final class SLK_Fulfilment_Admin {
 		return SLK_Fulfilment::OPTION . '[' . $key . ']';
 	}
 
+	/**
+	 * The free delivery threshold lives on the "Sri Lanka delivery" shipping
+	 * method instance, not in SLK_Fulfilment::OPTION: SLK_Shipping::free_over()
+	 * reads the instance option `free_over`, and this field must write the
+	 * exact same option so there is one threshold, not two that can disagree.
+	 *
+	 * If the shipping zone has not been provisioned yet (no active instance
+	 * to write to), the field is shown disabled rather than silently writing
+	 * nowhere.
+	 */
+	private static function free_over_field(): array {
+		$method = SLK_Shipping::active_method();
+
+		if ( ! $method instanceof WC_Shipping_Method ) {
+			return array(
+				'title'             => __( 'Free delivery threshold (Rs.)', 'slk' ),
+				'desc'              => __( 'Not available yet: the Sri Lanka shipping zone has not been set up. Reload this page after visiting WooCommerce -> Settings -> Shipping.', 'slk' ),
+				'id'                => 'slk_fulfilment_free_over_unavailable',
+				'type'              => 'number',
+				'value'             => (string) SLK_Shipping::FREE_OVER,
+				'custom_attributes' => array(
+					'min'      => '0',
+					'step'     => '1',
+					'disabled' => 'disabled',
+				),
+				'desc_tip'          => false,
+			);
+		}
+
+		return array(
+			'title'             => __( 'Free delivery threshold (Rs.)', 'slk' ),
+			'desc'              => __( 'Cart value of the goods, before delivery, at or above which a shipment travels free. Set to 0 to switch free delivery off.', 'slk' ),
+			'id'                => $method->get_instance_option_key() . '[free_over]',
+			'type'              => 'number',
+			'value'             => (string) SLK_Money::rupees( $method->get_option( 'free_over', SLK_Shipping::FREE_OVER ) ),
+			'custom_attributes' => array(
+				'min'  => '0',
+				'step' => '1',
+			),
+			'desc_tip'          => true,
+		);
+	}
+
 	private static function settings_fields(): array {
 		$settings = SLK_Fulfilment::settings();
 
@@ -80,7 +123,7 @@ final class SLK_Fulfilment_Admin {
 			array(
 				'title' => __( 'Delivery promise', 'slk' ),
 				'type'  => 'title',
-				'desc'  => __( 'How a ready date is worked out for a cart line, and how a split order is charged.', 'slk' ),
+				'desc'  => __( 'How a ready date is worked out for a cart line, and how a split order is charged. Items ready the same day always travel together, delivery is charged per shipment, and a shipment at or above the free delivery threshold below travels free.', 'slk' ),
 				'id'    => 'slk_fulfilment_options',
 			),
 
@@ -171,6 +214,8 @@ final class SLK_Fulfilment_Admin {
 				),
 				'desc_tip'          => true,
 			),
+
+			self::free_over_field(),
 
 			array(
 				'title' => __( 'Split shipments', 'slk' ),
