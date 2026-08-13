@@ -870,7 +870,15 @@ add_filter(
 				'captionEl'         => true,
 				'indexIndicatorSep' => ' of ',
 				'closeOnScroll'     => false,
-				'history'           => false,
+				/*
+				 * The zoom needs more than one way out. Escape only helps on a
+				 * desktop, and tapping the picture zooms rather than closes
+				 * because the image is zoomable, so on a phone the close button
+				 * was the only exit. history:true puts the gallery in the
+				 * browser history, which makes the back button and the Android
+				 * back gesture close it, the thing anyone reaches for first.
+				 */
+				'history'           => true,
 				'timeToIdle'        => 0,
 			)
 		);
@@ -982,6 +990,11 @@ a.slk-chip{text-decoration:none}
    as local custom properties derived from the ink/on-ink tokens. */
 .pswp--slk{--slk-zoom-ui:rgba(250,249,246,.16);--slk-zoom-edge:rgba(255,255,255,.20)}
 .pswp--slk .pswp__bg{background:var(--slk-color-ink)}
+/* WooCommerce ships `.woocommerce .pswp__bg{opacity:.7!important}`, so the
+   bgOpacity:1 above was ignored and the storefront stayed legible behind the
+   zoom, competing with the garment. Beaten on specificity plus important.
+   No transition is lost: the open and close animation durations are 0. */
+.pswp--slk.pswp .pswp__bg{opacity:1 !important}
 .pswp--slk .pswp__top-bar{
 	background:none;height:auto;padding:12px;
 	display:flex;align-items:center;gap:var(--slk-space-2);
@@ -994,32 +1007,51 @@ a.slk-chip{text-decoration:none}
 .pswp--slk .pswp__counter::after{content:attr(data-slk-title)}
 .pswp--slk .pswp__button--close{order:1}
 .pswp--slk .pswp__button--zoom{order:3;display:block}
-.pswp--slk .pswp__button{
+/* `!important` is not decoration here. Something upstream ships
+   `button.pswp__button{background-color:transparent !important}`, which no
+   amount of specificity beats, so the glass disc never painted and the close
+   control was a hairline ring around a sprite. Important-vs-important is
+   settled by specificity, which is why this is also scoped through
+   .pswp__ui. */
+.pswp--slk .pswp__ui .pswp__button{
 	position:static;width:var(--slk-touch);height:var(--slk-touch);flex:none;
 	margin:0;border-radius:50%;opacity:1;
-	background-color:var(--slk-zoom-ui);
+	background-color:var(--slk-zoom-ui) !important;
 	border:1px solid var(--slk-zoom-edge);
 	backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
-.pswp--slk .pswp__button--arrow--left,
-.pswp--slk .pswp__button--arrow--right{position:absolute;top:50%;margin-top:-22px;background-image:none}
-.pswp--slk .pswp__button--arrow--left{left:12px}
-.pswp--slk .pswp__button--arrow--right{right:12px}
+/* Same scope as the rule above, or `position:static` from it outranks these
+   and both arrows collapse into the top-left corner, on top of the close
+   button. */
+.pswp--slk .pswp__ui .pswp__button--arrow--left,
+.pswp--slk .pswp__ui .pswp__button--arrow--right{position:absolute;top:50%;margin-top:-22px;background-image:none}
+.pswp--slk .pswp__ui .pswp__button--arrow--left{left:12px}
+.pswp--slk .pswp__ui .pswp__button--arrow--right{right:12px}
 .pswp--slk .pswp__caption{background:none}
 .pswp--slk .pswp__caption__center{
 	max-width:none;padding:0 var(--slk-space-4) 14px;text-align:center;
 	font:400 11.5px/1.6 var(--slk-font-ui);color:var(--slk-color-on-ink);opacity:.6;
 }
-/* The thumbnail strip from 02-moments.html:101-106. */
+/* The thumbnail strip from 02-moments.html:101-106.
+
+   The strip is sized to its thumbnails and centred, NOT stretched edge to
+   edge. It used to be pinned left:12/right:12 with flex:1 thumbs, which is
+   correct on the 390px screen it was drawn on and catastrophic anywhere
+   wider: at 1905px each thumb took a third of the viewport, aspect-ratio 3/4
+   then made it 821px tall, and the strip covered the entire lightbox at
+   z-index 1550. Measured 1881x839 starting at y=-6, over the close button.
+   The zoom looked like it had opened every image at once and trapped you
+   there, because the only visible exit was underneath our own filmstrip. */
 .slk-zoom__thumbs{
-	position:absolute;left:12px;right:12px;bottom:56px;z-index:1550;
+	position:absolute;left:50%;transform:translateX(-50%);bottom:56px;z-index:1550;
+	max-width:calc(100% - 24px);
 	display:flex;gap:var(--slk-space-2);padding:var(--slk-space-2);
 	background:var(--slk-zoom-ui);
 	backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
 	border:1px solid var(--slk-zoom-edge);border-radius:22px;
 }
 .slk-zoom__thumb{
-	flex:1;aspect-ratio:var(--slk-ratio-portrait);min-height:0;
+	flex:none;width:48px;aspect-ratio:var(--slk-ratio-portrait);min-height:0;
 	padding:0;border:0;background:none;border-radius:14px;overflow:hidden;
 	opacity:.55;cursor:pointer;
 	transition:opacity var(--slk-motion-base) var(--slk-ease);
