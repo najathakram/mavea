@@ -78,9 +78,43 @@ echo "$PRODUCTS" | while IFS='|' read -r slug name price cat desc long; do
 
   wp post meta update "$id" _regular_price "$price" >/dev/null
   wp post meta update "$id" _price "$price" >/dev/null
-  wp post meta update "$id" _manage_stock no >/dev/null
-  wp post meta update "$id" _stock_status instock >/dev/null
   wp post meta update "$id" _visibility visible >/dev/null
+
+  # Stock, backorders, making time and retirement: the states the cart-ready
+  # dates feature demonstrates. Mizna is out of stock but still made (the
+  # making-time path); Dahlia is out of stock and retired (not available at
+  # all); every other product carries a small in-stock quantity.
+  wp post meta update "$id" _manage_stock yes >/dev/null
+  case "$slug" in
+    mizna)
+      wp post meta update "$id" _stock 0 >/dev/null
+      wp post meta update "$id" _backorders notify >/dev/null
+      wp post meta update "$id" _stock_status onbackorder >/dev/null
+      ;;
+    dahlia)
+      wp post meta update "$id" _stock 0 >/dev/null
+      wp post meta update "$id" _backorders no >/dev/null
+      wp post meta update "$id" _stock_status outofstock >/dev/null
+      wp post meta update "$id" _slk_retired yes >/dev/null
+      ;;
+    *)
+      wp post meta update "$id" _stock 3 >/dev/null
+      wp post meta update "$id" _backorders notify >/dev/null
+      wp post meta update "$id" _stock_status instock >/dev/null
+      ;;
+  esac
+
+  case "$slug" in
+    amara|noor|liana)
+      wp post meta update "$id" _slk_making_days 4 >/dev/null
+      ;;
+    inaya|mira)
+      wp post meta update "$id" _slk_making_days 10 >/dev/null
+      ;;
+    *)
+      wp post meta delete "$id" _slk_making_days >/dev/null 2>&1 || true
+      ;;
+  esac
   # Brand law: this store never carries a sale price.
   wp post meta delete "$id" _sale_price >/dev/null 2>&1 || true
   wp post update "$id" --post_excerpt="$desc" --post_content="$long" >/dev/null

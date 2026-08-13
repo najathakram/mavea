@@ -98,18 +98,50 @@ class SLK_Shipping_Method extends WC_Shipping_Method {
 			return; // This method only rates Sri Lankan addresses.
 		}
 
-		// Goods value for this package, excluding tax and any existing fees.
-		$contents_cost = isset( $package['contents_cost'] ) ? (float) $package['contents_cost'] : 0.0;
+		// The per-shipment pricing in SLK_Shipments has to charge what this
+		// instance charges, so hand it the instance before asking it for a
+		// number. Otherwise the rates edited in the zone UI would move the
+		// checkout total and leave the cart's own delivery lines behind.
+		SLK_Shipping::set_rating_method( $this );
 
-		$free_over = SLK_Money::rupees( $this->get_option( 'free_over', SLK_Shipping::FREE_OVER ) );
-		$is_free   = $free_over > 0 && $contents_cost >= $free_over;
+		$shipments = SLK_Shipments::build();
 
-		if ( $is_free ) {
-			$cost  = 0.0;
-			$label = __( 'Free delivery', 'slk' );
+		if ( empty( $shipments ) ) {
+			// An empty or unusual cart must never price as free by accident:
+			// fall back to the single-fee behaviour this method always had.
+			$contents_cost = isset( $package['contents_cost'] ) ? (float) $package['contents_cost'] : 0.0;
+
+			$free_over = SLK_Shipping::free_over();
+			$is_free   = $free_over > 0 && $contents_cost >= $free_over;
+
+			if ( $is_free ) {
+				$cost  = 0.0;
+				$label = __( 'Free delivery', 'slk' );
+			} else {
+				$cost  = SLK_Shipping::fee_for_district( $district );
+				$label = $this->rate_label( $district );
+			}
 		} else {
-			$cost  = $this->district_cost( $district );
-			$label = $this->rate_label( $district );
+			// One rate for the whole cart, priced as the sum of every
+			// shipment: the cart keeps one shipping line and WooCommerce
+			// keeps one package.
+			$cost    = SLK_Shipments::total_fee( $district );
+			$is_free = $cost <= 0.0;
+
+			if ( $is_free ) {
+				$label = __( 'Free delivery', 'slk' );
+			} else {
+				$shipment_count = count( $shipments );
+				$detail         = $shipment_count > 1
+					? sprintf(
+						/* translators: %s: number of shipments */
+						_n( '%s shipment', '%s shipments', $shipment_count, 'slk' ),
+						number_format_i18n( $shipment_count )
+					)
+					: null;
+
+				$label = $this->rate_label( $district, $detail );
+			}
 		}
 
 		$this->add_rate(
@@ -126,36 +158,21 @@ class SLK_Shipping_Method extends WC_Shipping_Method {
 	}
 
 	/**
-	 * An unknown or not-yet-chosen district rates at the island band. Quoting
-	 * the cheapest band before the shopper picks a district would show a number
-	 * that then goes UP, which reads as a bait — and quoting it after the fact
-	 * would mean shipping the far districts at a loss.
+	 * @param string      $district District name.
+	 * @param string|null $detail   Overrides the trailing detail, e.g. a
+	 *                              shipment count, instead of the expected
+	 *                              working-day range for a single delivery.
 	 */
-	private function district_cost( $district ): float {
-		switch ( SLK_Districts::tier( $district ) ) {
-			case SLK_Districts::TIER_METRO:
-				$option = $this->get_option( 'fee_metro', SLK_Shipping::FEE_METRO );
-				break;
-			case SLK_Districts::TIER_REGIONAL:
-				$option = $this->get_option( 'fee_regional', SLK_Shipping::FEE_REGIONAL );
-				break;
-			default:
-				$option = $this->get_option( 'fee_island', SLK_Shipping::FEE_ISLAND );
-		}
-
-		return max( 0.0, SLK_Money::rupees( $option ) );
-	}
-
-	private function rate_label( $district ): string {
+	private function rate_label( $district, ?string $detail = null ): string {
 		$base = $this->title ? $this->title : __( 'Delivery', 'slk' );
 
 		if ( SLK_Districts::is_district( $district ) ) {
 			return sprintf(
-				/* translators: 1: method name, 2: district, 3: expected days */
+				/* translators: 1: method name, 2: district, 3: expected days, or the number of shipments when the order is split */
 				__( '%1$s to %2$s · %3$s', 'slk' ),
 				$base,
 				$district,
-				SLK_Shipping::tier_label( $district )
+				null !== $detail ? $detail : SLK_Shipping::tier_label( $district )
 			);
 		}
 

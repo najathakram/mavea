@@ -1,6 +1,6 @@
 # Plan: cart ready dates and split shipments
 
-> Authored 2026-08-12. Status: APPROVED
+> Authored 2026-08-12. Status: IMPLEMENTED
 > This file is the ONLY context the implementation and review agents receive.
 > It must stand alone.
 

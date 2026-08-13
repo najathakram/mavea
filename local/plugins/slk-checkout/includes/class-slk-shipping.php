@@ -25,11 +25,20 @@ final class SLK_Shipping {
 
 	public const METHOD_ID = 'slk_delivery';
 
-	/** Rs., from design/assets/sri-lanka-commerce.json. */
+	/** Rs., from design/assets/sri-lanka-commerce.json. Defaults only: the live
+	 * numbers are the instance settings of the method in the shipping zone. */
 	public const FEE_METRO    = 350;
 	public const FEE_REGIONAL = 400;
 	public const FEE_ISLAND   = 450;
 	public const FREE_OVER    = 15000;
+
+	/** The instance rating the current package, set by the method itself. */
+	private static $rating_method = null;
+
+	/** The first enabled instance found in the zones, looked up at most once. */
+	private static $zone_method = null;
+
+	private static $zone_method_looked_up = false;
 
 	public static function init(): void {
 		add_action( 'woocommerce_shipping_init', array( __CLASS__, 'load_method' ) );
@@ -57,21 +66,96 @@ final class SLK_Shipping {
 	}
 
 	/**
-	 * Default rate for a district, before the free-delivery threshold.
+	 * Remember the instance that is rating the current package.
+	 *
+	 * Delivery is priced in two places: inside the method, and in
+	 * SLK_Shipments while the cart lists what each shipment costs. Both must
+	 * quote the same rupees, so both read the same instance settings, and the
+	 * instance doing the rating is the authority on which settings those are.
+	 *
+	 * @param WC_Shipping_Method $method The method rating the package.
+	 */
+	public static function set_rating_method( $method ): void {
+		self::$rating_method = $method;
+	}
+
+	/**
+	 * The method instance whose settings price this cart, or null when no zone
+	 * offers the method yet and the constants above are all we have.
+	 */
+	public static function active_method() {
+		if ( self::$rating_method instanceof WC_Shipping_Method ) {
+			return self::$rating_method;
+		}
+
+		if ( self::$zone_method_looked_up || ! class_exists( 'WC_Shipping_Zones' ) ) {
+			return self::$zone_method;
+		}
+
+		self::$zone_method_looked_up = true;
+
+		$candidates = array();
+
+		foreach ( WC_Shipping_Zones::get_zones() as $zone_data ) {
+			$candidates = array_merge( $candidates, (array) ( $zone_data['shipping_methods'] ?? array() ) );
+		}
+
+		// Zone 0, "locations not covered by your other zones", is not in
+		// get_zones() but can carry the method just the same.
+		$rest_of_world = WC_Shipping_Zones::get_zone( 0 );
+		if ( $rest_of_world instanceof WC_Shipping_Zone ) {
+			$candidates = array_merge( $candidates, $rest_of_world->get_shipping_methods() );
+		}
+
+		foreach ( $candidates as $candidate ) {
+			if ( isset( $candidate->id ) && self::METHOD_ID === $candidate->id && $candidate->is_enabled() ) {
+				self::$zone_method = $candidate;
+				break;
+			}
+		}
+
+		return self::$zone_method;
+	}
+
+	/**
+	 * One instance setting, falling back to the shipped default when no zone
+	 * offers the method and when the field has been left blank.
+	 */
+	private static function setting( string $key, $default ) {
+		$method = self::active_method();
+
+		return $method ? $method->get_option( $key, $default ) : $default;
+	}
+
+	/**
+	 * Rate for a district, before the free-delivery threshold.
+	 *
+	 * An unknown or not-yet-chosen district rates at the island band. Quoting
+	 * the cheapest band before the shopper picks a district would show a number
+	 * that then goes UP, which reads as a bait, and quoting it after the fact
+	 * would mean shipping the far districts at a loss.
 	 */
 	public static function fee_for_district( $district ): float {
 		switch ( SLK_Districts::tier( $district ) ) {
 			case SLK_Districts::TIER_METRO:
-				$fee = self::FEE_METRO;
+				$fee = self::setting( 'fee_metro', self::FEE_METRO );
 				break;
 			case SLK_Districts::TIER_REGIONAL:
-				$fee = self::FEE_REGIONAL;
+				$fee = self::setting( 'fee_regional', self::FEE_REGIONAL );
 				break;
 			default:
-				$fee = self::FEE_ISLAND;
+				$fee = self::setting( 'fee_island', self::FEE_ISLAND );
 		}
 
-		return SLK_Money::rupees( $fee );
+		return max( 0.0, SLK_Money::rupees( $fee ) );
+	}
+
+	/**
+	 * The order value at which delivery stops being charged. Zero means the
+	 * merchant has switched free delivery off.
+	 */
+	public static function free_over(): float {
+		return max( 0.0, SLK_Money::rupees( self::setting( 'free_over', self::FREE_OVER ) ) );
 	}
 
 	/**

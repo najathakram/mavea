@@ -128,19 +128,24 @@ add_filter( 'woocommerce_coupons_enabled', '__return_false' );
  * store never splits an order into multiple packages. That text is not a
  * Blocksy or slk-checkout string; it is core WooCommerce's own default and
  * the one documented filter point for it is `woocommerce_shipping_package_name`.
- * District is billing_state (see slk-checkout's class-slk-checkout-fields.php
- * and class-slk-shipping.php — shipping is billing-only per the filter in
- * inc/checkout-view.php, and SL states/districts share the same value, e.g.
- * option value="Colombo" label="Colombo" — no code-to-label lookup needed).
- * Before checkout, WC()->customer only carries a billing_state if a logged-in
- * customer's account/last order already set one; otherwise it is '' and the
- * plain "Delivery" label is used, per design/sections/07-desktop.html #d-cart.
+ * District is shipping_state, because that is the field
+ * WC_Cart::get_shipping_packages() puts in the package this label names, and
+ * so the field SLK_Shipping_Method prices against: naming the billing district
+ * beside a charge rated on the shipping one would contradict the amount on its
+ * own row. Shipping is billing-only per the filter in inc/checkout-view.php,
+ * and WooCommerce copies billing_state into shipping_state for a shopper with
+ * no shipping address of their own, so the two agree in the ordinary case; SL
+ * states/districts share the same value, e.g. option value="Colombo"
+ * label="Colombo" — no code-to-label lookup needed. Before checkout,
+ * WC()->customer only carries a state if a logged-in customer's account/last
+ * order already set one; otherwise it is '' and the plain "Delivery" label is
+ * used, per design/sections/07-desktop.html #d-cart.
  * ---------------------------------------------------------------------- */
 
 add_filter(
 	'woocommerce_shipping_package_name',
 	static function ( $name ) {
-		$district = WC()->customer ? WC()->customer->get_billing_state() : '';
+		$district = WC()->customer ? (string) WC()->customer->get_shipping_state() : '';
 
 		if ( '' === $district ) {
 			return __( 'Delivery', 'slk' );
@@ -330,6 +335,32 @@ add_action(
 .slk-cart-item__footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--slk-space-3)}
 .slk-cart-item__subtotal{margin-left:auto;font:500 var(--slk-text-base)/1 var(--slk-font-ui)}
 
+/* -- ready date, per line ------------------------------------------------ */
+.slk-cart__ready{display:block;margin-top:3px;font:400 var(--slk-text-sm)/1.6 var(--slk-font-ui);color:var(--slk-color-muted)}
+
+/* -- ship mode choice, above the list ------------------------------------ */
+.slk-cart__ship-mode{border:0;margin:0 0 var(--slk-space-4);padding:0;display:grid;gap:var(--slk-space-2)}
+.slk-cart__ship-mode-legend{margin:0 0 var(--slk-space-2);padding:0;font:500 var(--slk-text-sm)/1.3 var(--slk-font-ui);color:var(--slk-color-muted)}
+.slk-cart__ship-mode-option{
+  display:flex;align-items:center;gap:var(--slk-space-3);min-height:var(--slk-touch);
+  padding:var(--slk-space-3);background:var(--slk-glass-solid);
+  border:1px solid var(--slk-field-border);border-radius:var(--slk-radius-field);
+  font:500 var(--slk-text-sm)/1.35 var(--slk-font-ui);color:var(--slk-color-ink);cursor:pointer;
+  transition:background var(--slk-motion-base) var(--slk-ease),border-color var(--slk-motion-base) var(--slk-ease);
+}
+.slk-cart__ship-mode-option:has(input:checked){border:2px solid var(--slk-color-ink);background:var(--slk-color-white)}
+.slk-cart__ship-mode-option input[type=radio]{width:20px;height:20px;accent-color:var(--slk-color-ink);flex:none}
+
+/* -- shipment headings, split mode ---------------------------------------- */
+.slk-cart__shipment{display:grid;gap:var(--slk-space-3)}
+.slk-cart__shipment-head{padding:0 var(--slk-space-1)}
+.slk-cart__shipment-title{margin:0;font:600 var(--slk-text-xs)/1.4 var(--slk-font-ui);color:var(--slk-color-ink);text-transform:uppercase;letter-spacing:var(--slk-track-label)}
+.slk-cart__shipment-fee{margin:4px 0 0;font:400 var(--slk-text-sm)/1.5 var(--slk-font-ui);color:var(--slk-color-muted)}
+.slk-cart__shipment-items{list-style:none;margin:0;padding:0;display:grid;gap:var(--slk-space-3)}
+
+/* -- "everything ships" note, together mode ------------------------------- */
+.slk-cart__ship-note{margin:0 0 var(--slk-space-4);font:400 var(--slk-text-sm)/1.5 var(--slk-font-ui);color:var(--slk-color-muted)}
+
 /* -- quantity stepper — real input, styled as a pill ------------------- */
 .slk-qty{display:flex;align-items:center;gap:2px;background:rgba(35,34,32,.05);border-radius:var(--slk-radius-pill);padding:2px}
 .slk-qty__btn{width:var(--slk-touch);height:var(--slk-touch);border:0;background:none;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;color:var(--slk-color-ink);transition:background var(--slk-motion-base) var(--slk-ease)}
@@ -494,4 +525,80 @@ JS;
 		wp_add_inline_script( 'slk-cart', $js );
 	},
 	31
+);
+
+/* -------------------------------------------------------------------------
+ * 4. Ship mode toggle — "send together" / "send each piece as soon as it
+ *    is ready" (see woocommerce/cart/cart.php, the .slk-cart__ship-mode
+ *    radios, and SLK_Shipments in slk-checkout).
+ *
+ * The radios post to the slk_set_ship_mode AJAX action (registered by
+ * SLK_Shipments::init(), which stores the choice on the session) and then
+ * reload the page. A full reload, not a partial refresh, is deliberate:
+ * switching mode changes the ready dates, the shipment grouping and the
+ * shipping cost together, and the safest way to keep all three in step is
+ * to let the normal cart render run again from a clean request.
+ * ---------------------------------------------------------------------- */
+
+add_action(
+	'wp_enqueue_scripts',
+	static function () {
+		if ( ! function_exists( 'is_cart' ) || ! is_cart() ) {
+			return;
+		}
+
+		// 'slk-cart' is registered in section 3, above, at an earlier
+		// priority, so it already exists as an enqueue target here.
+		$js = <<<'JS'
+(function () {
+	"use strict";
+
+	function onShipModeChange( event ) {
+		var input = event.target;
+		if ( ! input || ! input.matches || ! input.matches( '[data-slk-ship-mode]' ) ) {
+			return;
+		}
+
+		if ( typeof window.slkCart === 'undefined' ) {
+			window.location.reload();
+			return;
+		}
+
+		var fields = document.querySelectorAll( '[data-slk-ship-mode]' );
+		Array.prototype.forEach.call( fields, function ( field ) {
+			field.disabled = true;
+		} );
+
+		var body = new URLSearchParams();
+		body.set( 'action', slkCart.shipModeAction );
+		body.set( 'mode', input.value );
+		body.set( 'nonce', slkCart.shipModeNonce );
+
+		window.fetch( slkCart.ajaxUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: body.toString()
+		} ).finally( function () {
+			window.location.reload();
+		} );
+	}
+
+	document.addEventListener( 'change', onShipModeChange );
+})();
+JS;
+
+		wp_add_inline_script( 'slk-cart', $js );
+
+		wp_localize_script(
+			'slk-cart',
+			'slkCart',
+			array(
+				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+				'shipModeAction' => 'slk_set_ship_mode',
+				'shipModeNonce'  => wp_create_nonce( 'slk-ship-mode' ),
+			)
+		);
+	},
+	32
 );

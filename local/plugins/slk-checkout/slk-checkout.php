@@ -77,6 +77,10 @@ add_action(
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-payments.php';
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-shipping.php';
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-order-admin.php';
+		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-calendar.php';
+		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-fulfilment.php';
+		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-shipments.php';
+		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-fulfilment-admin.php';
 
 		SLK_Districts::init();
 		SLK_Checkout_Fields::init();
@@ -84,6 +88,8 @@ add_action(
 		SLK_Payments::init();
 		SLK_Shipping::init();
 		SLK_Order_Admin::init();
+		SLK_Shipments::init();
+		SLK_Fulfilment_Admin::init();
 	},
 	5
 );
