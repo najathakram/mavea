@@ -101,7 +101,7 @@ function slk_faq_groups() {
 					'q' => __( 'Do I pay anything before it arrives?', 'slk' ),
 					/* translators: %s: COD handling fee, e.g. "Rs. 150". */
 					'a' => sprintf(
-						__( 'Nothing is charged when you order. With cash on delivery you pay the courier at your door, in cash. The %s handling fee is added to your total and shown before you place the order.', 'slk' ),
+						__( 'You pay nothing when you order. With cash on delivery you pay the courier at your door, in cash. The %s handling fee is added to your total, and you see it before you order.', 'slk' ),
 						$cod_fee
 					),
 				),

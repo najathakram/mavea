@@ -27,7 +27,7 @@ $sent = isset( $_GET['slk_contact'] ) ? sanitize_text_field( wp_unslash( $_GET['
 <main id="primary" class="slk-page slk-contact">
 	<div class="slk-page__head">
 		<h1><?php esc_html_e( 'Talk to us', 'slk' ); ?></h1>
-		<p class="slk-page__intro"><?php esc_html_e( 'A person reads every message. Usually back within the hour, always the same day.', 'slk' ); ?></p>
+		<p class="slk-page__intro"><?php esc_html_e( 'A person reads every message. We usually reply within the hour, and always on the same day.', 'slk' ); ?></p>
 	</div>
 
 	<?php if ( $wa_url ) : ?>
@@ -71,9 +71,9 @@ $sent = isset( $_GET['slk_contact'] ) ? sanitize_text_field( wp_unslash( $_GET['
 
 	<?php if ( $atelier_image ) : ?>
 		<div class="slk-atelier">
-			<span class="slk-eyebrow"><?php esc_html_e( 'The atelier', 'slk' ); ?></span>
+			<span class="slk-eyebrow"><?php esc_html_e( 'The workshop', 'slk' ); ?></span>
 			<div class="slk-atelier__media"><?php echo $atelier_image; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside slk_editorial_image(). ?></div>
-			<p class="slk-atelier__copy"><?php esc_html_e( 'We are in Galle and visits are by appointment. Message us first and we will keep the kettle on.', 'slk' ); ?></p>
+			<p class="slk-atelier__copy"><?php esc_html_e( 'We are in Galle and visits are by appointment. Message us first so we know you are coming.', 'slk' ); ?></p>
 		</div>
 	<?php endif; ?>
 

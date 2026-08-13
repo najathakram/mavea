@@ -20,7 +20,7 @@ get_header();
 <main id="primary" class="slk-page slk-track">
 	<div class="slk-page__head">
 		<h1><?php esc_html_e( 'Track your order', 'slk' ); ?></h1>
-		<p class="slk-page__intro"><?php esc_html_e( 'Look it up with your order number and the email you checked out with.', 'slk' ); ?></p>
+		<p class="slk-page__intro"><?php esc_html_e( 'Enter your order number and the email you used when you ordered.', 'slk' ); ?></p>
 	</div>
 
 	<div class="slk-track__panel">

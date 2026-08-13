@@ -34,7 +34,7 @@ $slk_hero = slk_editorial_image(
 $slk_atelier = slk_editorial_image(
 	'room_wide',
 	'large',
-	array( 'alt' => __( 'The atelier in Galle, in daylight.', 'slk' ) )
+	array( 'alt' => __( 'The workshop in Galle, in daylight.', 'slk' ) )
 );
 
 $slk_total    = slk_home_product_count();
@@ -165,11 +165,11 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 				if ( $slk_cod_fee ) {
 					printf(
 						/* translators: %s: cash-on-delivery handling fee, e.g. "Rs. 150". */
-						esc_html__( 'Cash on delivery reaches all 25 districts. A person calls to confirm before we ship, and the %s handling fee is said up front. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' ),
+						esc_html__( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and the %s handling fee is shown before you order. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' ),
 						esc_html( $slk_cod_fee )
 					);
 				} else {
-					esc_html_e( 'Cash on delivery reaches all 25 districts. A person calls to confirm before we ship, and the handling fee is said up front. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' );
+					esc_html_e( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and the handling fee is shown before you order. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' );
 				}
 				?>
 			</p>

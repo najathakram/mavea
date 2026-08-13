@@ -17,27 +17,27 @@ $wa_url   = slk_whatsapp_url( __( 'Hi! Before I order, could you check my size a
 $rules = array(
 	array(
 		'title' => __( 'You have 7 days', 'slk' ),
-		'body'  => __( 'We count from the day it reaches you. Message us on WhatsApp and we start it there, with no forms to fill in.', 'slk' ),
+		'body'  => __( 'We count from the day it reaches you. Message us on WhatsApp and we start it there. There are no forms.', 'slk' ),
 	),
 	array(
 		'title' => __( 'The courier collects', 'slk' ),
 		/* translators: %s: exchange send fee, e.g. "Rs. 350". */
 		'body'  => sprintf(
-			__( 'From your door, at a time you choose. We pay the return leg; you pay %s towards sending the new size out.', 'slk' ),
+			__( 'From your door, at a time you choose. We pay to collect it. You pay %s to send the new size.', 'slk' ),
 			wp_strip_all_tags( wc_price( $send_fee ) )
 		),
 	),
 	array(
 		'title' => __( 'Unworn, with the tag on', 'slk' ),
-		'body'  => __( 'Try it on over your clothes. If it has been worn out, washed, altered or perfumed, we cannot exchange it.', 'slk' ),
+		'body'  => __( 'Try it on over your clothes. We cannot exchange a piece that has been worn outside, washed, altered or perfumed.', 'slk' ),
 	),
 	array(
 		'title' => __( 'Hijabs and undercaps', 'slk' ),
-		'body'  => __( 'Only if the seal is unopened. That is a hygiene rule rather than fine print.', 'slk' ),
+		'body'  => __( 'Only if the seal is unopened. This is for hygiene.', 'slk' ),
 	),
 	array(
 		'title' => __( 'If we got it wrong', 'slk' ),
-		'body'  => __( 'If we sent the wrong piece, or it has a fault, or it was damaged on the way, we collect it and send the right one and you pay nothing at all.', 'slk' ),
+		'body'  => __( 'If we sent the wrong piece, or it is faulty, or it was damaged on the way, we collect it and send the right one. You pay nothing.', 'slk' ),
 	),
 );
 
@@ -55,7 +55,7 @@ $rules = array(
 		<div class="slk-help-hero">
 			<span class="slk-eyebrow"><?php esc_html_e( 'Exchange policy', 'slk' ); ?></span>
 			<h1><?php esc_html_e( 'Exchanges', 'slk' ); ?></h1>
-			<p><?php esc_html_e( 'We exchange, we do not refund. Every piece is made to order, so this covers what that means, in plain words.', 'slk' ); ?></p>
+			<p><?php esc_html_e( 'We exchange, we do not refund. Every piece is made to order.', 'slk' ); ?></p>
 		</div>
 
 		<div class="slk-help-section">
@@ -71,7 +71,7 @@ $rules = array(
 
 		<div class="slk-help-section">
 			<div class="slk-help-cta">
-				<h3><?php esc_html_e( 'Avoid the exchange entirely', 'slk' ); ?></h3>
+				<h3><?php esc_html_e( 'Get the size right the first time', 'slk' ); ?></h3>
 				<p><?php esc_html_e( 'Send us your bust and height before you order and we will measure the actual piece.', 'slk' ); ?></p>
 				<?php if ( $wa_url ) : ?>
 					<a class="slk-btn slk-btn--primary" href="<?php echo esc_url( $wa_url ); ?>">

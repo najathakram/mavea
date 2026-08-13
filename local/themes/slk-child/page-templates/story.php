@@ -23,7 +23,7 @@ get_header();
 
 	<div class="slk-story__hero">
 		<?php
-		$hero = slk_editorial_image( 'room_wide', 'full', array( 'alt' => __( 'The atelier in Galle, in daylight.', 'slk' ), 'loading' => 'eager', 'fetchpriority' => 'high' ) );
+		$hero = slk_editorial_image( 'room_wide', 'full', array( 'alt' => __( 'The workshop in Galle, in daylight.', 'slk' ), 'loading' => 'eager', 'fetchpriority' => 'high' ) );
 
 		if ( $hero ) {
 			echo $hero; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside slk_editorial_image().
@@ -35,16 +35,16 @@ get_header();
 
 		<div class="slk-story__intro">
 			<span class="slk-eyebrow"><?php esc_html_e( 'Our story', 'slk' ); ?></span>
-			<h1><?php esc_html_e( 'A small atelier in Galle, sewing clothes we actually wear.', 'slk' ); ?></h1>
+			<h1><?php esc_html_e( 'A small workshop in Galle, sewing clothes we wear ourselves.', 'slk' ); ?></h1>
 			<p class="slk-story__lede">
-				<?php esc_html_e( 'We started with a simple irritation. Dressing modestly here meant choosing between imported abayas cut for another climate and fast fashion that treats modesty as an afterthought. So we cut our own, for heat, for monsoon humidity, for buses and weddings and work.', 'slk' ); ?>
+				<?php esc_html_e( 'We could not find what we wanted to wear. The imported abayas were cut for a colder country, and the cheap ones treated modesty as an afterthought. So we started making our own, for the heat, the rain, and long days out.', 'slk' ); ?>
 			</p>
 		</div>
 
 		<div class="slk-story__stats">
 			<div class="slk-panel slk-story__stat">
 				<div class="slk-story__stat-n">8</div>
-				<div class="slk-story__stat-l"><?php esc_html_e( 'women in the atelier', 'slk' ); ?></div>
+				<div class="slk-story__stat-l"><?php esc_html_e( 'women in the workshop', 'slk' ); ?></div>
 			</div>
 			<div class="slk-panel slk-story__stat">
 				<div class="slk-story__stat-n">20</div>
@@ -79,11 +79,11 @@ get_header();
 
 		<div class="slk-story__closing">
 			<p>
-				<?php esc_html_e( 'Every piece is cut and finished by hand, in small numbers, and never restocked in bulk. When a run sells, we make the next thing. The fabric offcuts become our hijab undercaps, so nothing useful leaves the room.', 'slk' ); ?>
+				<?php esc_html_e( 'We cut and finish every piece by hand, in small numbers. When a run sells out, we make the next one. The leftover fabric becomes our hijab undercaps.', 'slk' ); ?>
 			</p>
 			<h2 class="slk-story__find-h"><?php esc_html_e( 'Where to find us', 'slk' ); ?></h2>
 			<p class="slk-story__find-p">
-				<?php esc_html_e( 'The atelier is in Galle, and the address and business numbers will sit here. Come by appointment, because we would rather you saw the work than took our word for it.', 'slk' ); ?>
+				<?php esc_html_e( 'The workshop is in Galle. The address and phone numbers will go here. Come and visit by appointment. It is better to see the work than to take our word for it.', 'slk' ); ?>
 			</p>
 		</div>
 

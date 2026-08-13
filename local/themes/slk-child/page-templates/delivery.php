@@ -23,12 +23,12 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 
 		<div class="slk-help-hero">
 			<span class="slk-eyebrow"><?php esc_html_e( 'Delivery & cash on delivery', 'slk' ); ?></span>
-			<h1><?php esc_html_e( 'Delivery, plainly.', 'slk' ); ?></h1>
+			<h1><?php esc_html_e( 'Delivery', 'slk' ); ?></h1>
 			<p>
 				<?php
 				/* translators: %s: free-delivery threshold, e.g. "Rs. 15,000". */
 				printf(
-					esc_html__( 'Every order, every district, one courier partner. Free delivery over %s.', 'slk' ),
+					esc_html__( 'One courier, all 25 districts. Delivery is free over %s.', 'slk' ),
 					wp_kses_post( wc_price( $free_over ) )
 				);
 				?>
@@ -63,17 +63,17 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 		</div>
 
 		<div class="slk-help-section">
-			<h2><?php esc_html_e( 'Cash on delivery, done properly.', 'slk' ); ?></h2>
-			<p><?php esc_html_e( 'Most of our orders are cash on delivery. It is not a fallback. It is how we would want to buy from a store we had never met.', 'slk' ); ?></p>
+			<h2><?php esc_html_e( 'Cash on delivery', 'slk' ); ?></h2>
+			<p><?php esc_html_e( 'Most people here pay cash on delivery, so this is how it works.', 'slk' ); ?></p>
 
 			<ol class="slk-help-steps">
 				<li class="slk-panel slk-help-step">
 					<span class="slk-help-step__num" aria-hidden="true">1</span>
-					<p><?php esc_html_e( 'You place the order. Nothing is charged, nothing is asked for.', 'slk' ); ?></p>
+					<p><?php esc_html_e( 'You place the order. You pay nothing now.', 'slk' ); ?></p>
 				</li>
 				<li class="slk-panel slk-help-step">
 					<span class="slk-help-step__num" aria-hidden="true">2</span>
-					<p><?php esc_html_e( 'A real person calls or WhatsApps to confirm the piece, the size and the address. Nothing ships until you say yes.', 'slk' ); ?></p>
+					<p><?php esc_html_e( 'We call or send a WhatsApp message to check the piece, the size and your address. Nothing ships until you say yes.', 'slk' ); ?></p>
 				</li>
 				<li class="slk-panel slk-help-step">
 					<span class="slk-help-step__num" aria-hidden="true">3</span>
@@ -81,7 +81,7 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 						<?php
 						/* translators: %s: COD handling fee, e.g. "Rs. 150". */
 						printf(
-							esc_html__( 'The courier arrives and you pay in cash at your door. Cash on delivery adds %s handling, and we show it before you order rather than after.', 'slk' ),
+							esc_html__( 'The courier comes and you pay in cash at your door. Cash on delivery adds %s, and you see it before you order.', 'slk' ),
 							wp_kses_post( wc_price( $cod_fee ) )
 						);
 						?>
@@ -95,11 +95,11 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 			<div class="slk-help-cards">
 				<div class="slk-panel slk-help-card">
 					<h3><?php esc_html_e( 'Card · eZ Cash · helaPay · LankaQR', 'slk' ); ?></h3>
-					<p><?php esc_html_e( 'One secure PayHere screen covers all of them. No COD fee.', 'slk' ); ?></p>
+					<p><?php esc_html_e( 'All of these go through one secure PayHere screen. There is no cash on delivery fee.', 'slk' ); ?></p>
 				</div>
 				<div class="slk-panel slk-help-card">
 					<h3><?php esc_html_e( 'Bank transfer', 'slk' ); ?></h3>
-					<p><?php esc_html_e( 'We hold your pieces for 24 hours. Send the slip on WhatsApp and they ship the same day.', 'slk' ); ?></p>
+					<p><?php esc_html_e( 'We hold your pieces for 24 hours. Send the slip on WhatsApp and we post them the same day.', 'slk' ); ?></p>
 				</div>
 			</div>
 		</div>
