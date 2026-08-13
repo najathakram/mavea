@@ -72,6 +72,7 @@ add_action(
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-money.php';
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-districts.php';
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-phone.php';
+		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-google.php';
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-checkout-fields.php';
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-email-policy.php';
 		require_once SLK_CHECKOUT_PATH . 'includes/class-slk-payments.php';

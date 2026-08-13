@@ -288,8 +288,77 @@ function slk_checkout_view_css() {
   color:var(--slk-color-muted);margin:var(--slk-space-4) 0 var(--slk-space-4);
 }
 
+/* ── Sign in row (Google + "sign in" link) and the divider before the fields ──
+   inc/account.php renders this at the top of "1 · You" (inside
+   .woocommerce-billing-fields, via the woocommerce_before_checkout_billing_form
+   hook that form-billing.php already fires) for a logged-out shopper only.
+   The markup it actually emits, matched here verbatim:
+     .slk-checkout__signin           – outer wrapper; block, spacing only. The
+                                       flex row must NOT live here, or the
+                                       divider below becomes a third flex item
+                                       and "or" lands beside the sign-in link.
+       .slk-checkout__signin-row     – the row itself: Google button beside the
+                                       "Already have an account? Sign in" link.
+         .slk-google-button          – exactly what SLK_Google::button() (WP3)
+                                       returns, along with its __icon / __text
+                                       children. Deliberately kept lighter than
+                                       #place_order — secondary to the form,
+                                       not a hero.
+         a.showlogin                 – WooCommerce\'s own class; its click
+                                       handler (revealing the login form) is
+                                       already bound sitewide, nothing new to
+                                       wire up here.
+       .slk-checkout__signin-divider – the "or" rule between the row and Mobile
+                                       number; carries its own <span>or</span>.
+   None of it prints for a logged-in shopper, and the Google button is absent
+   whenever Google is not configured, so this CSS is simply unused on those
+   pageviews. ── */
+.slk-checkout__signin{margin-bottom:var(--slk-space-4)}
+.slk-checkout__signin-row{
+  display:flex;flex-wrap:wrap;align-items:center;gap:var(--slk-space-3);
+}
+.slk-checkout__signin .slk-google-button{
+  min-height:var(--slk-touch);padding:0 20px;border-radius:var(--slk-radius-pill);
+  border:1px solid var(--slk-field-border);background:var(--slk-color-white);
+  color:var(--slk-color-ink);font:500 13px/1 var(--slk-font-ui);
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--slk-space-2);
+  text-decoration:none;cursor:pointer;
+  transition:border-color var(--slk-motion-base) var(--slk-ease),transform var(--slk-motion-base) var(--slk-ease);
+}
+.slk-checkout__signin .slk-google-button:hover{border-color:var(--slk-color-ink);transform:translateY(-1px)}
+/* The icon span SLK_Google::button() emits is empty and aria-hidden, so its
+   mark comes from CSS — the same way the account area draws its WhatsApp mark.
+   A letterform also keeps this rule inside the tokens-only, no-raw-hex rule. */
+.slk-checkout__signin .slk-google-button__icon{
+  width:18px;height:18px;flex:none;display:grid;place-items:center;
+  font:600 12px/1 var(--slk-font-ui);color:var(--slk-color-ink);
+}
+.slk-checkout__signin .slk-google-button__icon::before{content:"G"}
+.slk-checkout__signin .showlogin{
+  display:inline-flex;align-items:center;min-height:var(--slk-touch);
+  font:400 12.5px/1.4 var(--slk-font-ui);color:var(--slk-color-muted);
+  text-decoration:underline;text-underline-offset:3px;
+}
+.slk-checkout__signin-divider{
+  display:flex;align-items:center;gap:var(--slk-space-3);
+  margin:var(--slk-space-4) 0 0;
+  font:500 11px/1 var(--slk-font-ui);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--slk-color-faint);
+}
+.slk-checkout__signin-divider::before,
+.slk-checkout__signin-divider::after{content:"";flex:1;height:1px;background:var(--slk-hairline)}
+
 /* ── Fields (native WooCommerce markup, decorated via woocommerce_form_field_args) ── */
 .slk-checkout .form-row{margin:0 0 var(--slk-space-4)}
+/* woocommerce_form_field() gives a type="hidden" field the same
+   <p class="form-row"> wrapper as a visible one (wc-template-functions.php:
+   only the label\'s `for` attribute is suppressed). billing_country and
+   billing_last_name are posted but never shown, so each left an empty row
+   carrying the 16px bottom margin above — one of them at the very top of the
+   "2 · Where" panel, reading as an unexplained gap. Hide the rows, never the
+   inputs: both values still have to post. */
+.slk-checkout #billing_country_field,
+.slk-checkout #billing_last_name_field{display:none}
 .slk-checkout .form-row label{display:block;font:500 12px/1 var(--slk-font-ui);margin-bottom:7px;color:var(--slk-color-ink)}
 .slk-checkout .form-row .required{color:var(--slk-color-error);text-decoration:none}
 .slk-checkout .form-row .optional{color:var(--slk-color-faint);font-weight:400}
@@ -309,6 +378,30 @@ function slk_checkout_view_css() {
 .slk-checkout .form-row.woocommerce-invalid .woocommerce-input-wrapper .description,
 .slk-checkout .form-row .woocommerce-invalid-message{display:flex;gap:var(--slk-space-2);padding-top:var(--slk-space-2);font:400 12px/1.5 var(--slk-font-ui);color:var(--slk-color-error)}
 .slk-checkout select.slk-select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--slk-color-muted) 50%),linear-gradient(135deg,var(--slk-color-muted) 50%,transparent 50%);background-position:calc(100% - 20px) center,calc(100% - 15px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+
+/* ── Account checkbox ("Save my details for next time") + its hint ───────
+   Native WooCommerce markup, untouched (woocommerce/checkout/form-billing.php):
+   .woocommerce-account-fields > p.create-account > label.woocommerce-form__
+   label-for-checkbox > #createaccount, relabelled by the slk-checkout plugin.
+   The hint line ("Orders on an account earn points towards credit.") is
+   printed by that same plugin as <p class="slk-field__hint slk-account-hint">,
+   NOT as a WooCommerce `.description`, so it is matched on .slk-account-hint
+   here. The left offset lines it up with the label text beside the checkbox
+   rather than with the checkbox box, so it reads as part of the You step
+   instead of an afterthought bolted below it. */
+.slk-checkout .woocommerce-account-fields{margin-top:var(--slk-space-1)}
+.slk-checkout .woocommerce-account-fields p.create-account{margin:0}
+.slk-checkout .woocommerce-account-fields label.woocommerce-form__label-for-checkbox{
+  display:flex;align-items:flex-start;gap:10px;min-height:var(--slk-touch);
+  font:500 12.5px/1.4 var(--slk-font-ui);color:var(--slk-color-ink);cursor:pointer;
+}
+.slk-checkout .woocommerce-account-fields input.input-checkbox{
+  width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--slk-color-ink);
+}
+.slk-checkout .woocommerce-account-fields .slk-account-hint{
+  display:block;padding-top:0;margin:var(--slk-space-1) 0 0 30px;
+  font:400 11.5px/1.5 var(--slk-font-ui);color:var(--slk-color-faint);
+}
 
 /* ── Notices as glass toasts (native WC classes, no markup change needed) ── */
 .slk-checkout .woocommerce-error,

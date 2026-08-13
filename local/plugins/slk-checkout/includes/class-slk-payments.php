@@ -21,6 +21,30 @@ final class SLK_Payments {
 		add_filter( 'woocommerce_available_payment_gateways', array( __CLASS__, 'sort_and_gate' ), 20 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
 		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'record_cod_fee' ), 30, 2 );
+		add_action( 'wp_loaded', array( __CLASS__, 'silence_gateway_advertising' ) );
+	}
+
+	/**
+	 * Third-party gateways advertise on our checkout. Mintpay's price-breakdown
+	 * file hooks woocommerce_review_order_before_payment and prints "Use code
+	 * MINT20 for 20% OFF up to Rs. 1000 on your first transaction", in its own
+	 * bold capitals, inside the order summary.
+	 *
+	 * This store runs no discount codes and shows no sale theatre. That is a
+	 * brand rule, not a preference, and it is not suspended because a plugin
+	 * would like to run a promotion on someone else's shopfront. The banner also
+	 * offers a code we neither issue nor honour, so it is a promise we cannot
+	 * keep to a shopper who tries it.
+	 *
+	 * Removed by callback name rather than by disabling the gateway, because the
+	 * banner renders whether or not Mintpay is configured or even available.
+	 *
+	 * One hook, because one is all the plugin registers: verified against the
+	 * installed copy, price-breakdown/index.php line 367. If a future version
+	 * advertises somewhere else, this is where to add it.
+	 */
+	public static function silence_gateway_advertising(): void {
+		remove_action( 'woocommerce_review_order_before_payment', 'mintpay_display_price_breakdown_in_checkout_page' );
 	}
 
 	/* ------------------------------------------------------------------ */

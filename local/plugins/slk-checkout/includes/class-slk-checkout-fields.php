@@ -4,7 +4,12 @@
  *
  * Field order follows design/sections/06-mobile.html:
  *   1 · You     mobile number → full name → email (optional)
- *   2 · Where   address → landmark → city / district → postal code
+ *   2 · Where   address → landmark → city / district → delivery notes
+ *
+ * Country/region is posted but never rendered: this store ships only to
+ * Sri Lanka, so the control is pure noise (see the billing_country block in
+ * self::fields()). Postal code is removed outright, not merely hidden:
+ * couriers navigate by landmark and delivery is priced by district.
  *
  * @package slk
  */
@@ -21,6 +26,26 @@ final class SLK_Checkout_Fields {
 		add_filter( 'woocommerce_checkout_posted_data', array( __CLASS__, 'normalise_posted_data' ) );
 		add_action( 'woocommerce_after_checkout_validation', array( __CLASS__, 'validate' ), 10, 2 );
 		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'save_order_data' ), 10, 2 );
+
+		// Delivery notes now render inside the "Where" panel (self::fields()
+		// moves order_comments into the billing group), so WooCommerce's own
+		// "Additional information" section has nothing left to show. Turning
+		// it off here is what actually removes the heading: form-shipping.php
+		// prints "Additional information" whenever this filter is truthy,
+		// whether or not any order fields remain to go under it. Front end only
+		// — see self::hide_order_notes_section().
+		add_filter( 'woocommerce_enable_order_notes_field', array( __CLASS__, 'hide_order_notes_section' ) );
+
+		// "Create an account?" is WooCommerce's own hard-coded checkbox label
+		// in woocommerce/checkout/form-billing.php, not a filterable field, so
+		// it is reworded through its translation call instead of a template
+		// override.
+		add_filter( 'gettext', array( __CLASS__, 'reword_account_checkbox' ), 10, 3 );
+
+		// One line under the checkbox saying what the account is for.
+		// woocommerce_before_checkout_registration_form fires immediately
+		// after the checkbox in that same template.
+		add_action( 'woocommerce_before_checkout_registration_form', array( __CLASS__, 'render_account_hint' ) );
 
 		// Hints must be readable by screen readers. WooCommerce renders field
 		// descriptions inside <span class="description" aria-hidden="true">,
@@ -114,8 +139,21 @@ final class SLK_Checkout_Fields {
 
 		/* ---- 2 · Where ----------------------------------------------- */
 
+		// A single-option dropdown on a store that ships only to Sri Lanka is
+		// pure noise. Switched to WooCommerce's own 'hidden' field type,
+		// rather than hidden with CSS, so LK still posts with the form and
+		// shipping and the district list keep working exactly as before.
 		if ( isset( $billing['billing_country'] ) ) {
-			$billing['billing_country']['priority'] = 40;
+			$billing['billing_country'] = array_merge(
+				$billing['billing_country'],
+				array(
+					'type'     => 'hidden',
+					'label'    => '',
+					'required' => false,
+					'priority' => 40,
+					'class'    => array( 'form-row-wide' ),
+				)
+			);
 		}
 
 		if ( isset( $billing['billing_address_1'] ) ) {
@@ -156,13 +194,21 @@ final class SLK_Checkout_Fields {
 			$billing['billing_state']['priority']    = 70;
 			$billing['billing_state']['class']       = array( 'form-row-last', 'slk-field' );
 			$billing['billing_state']['input_class'] = array( 'slk-select' );
+			// We own district validation entirely (see self::validate), the same
+			// way we own phone validation above. WooCommerce's own 'state' rule
+			// has to go: WC_Checkout::validate_posted_data() UPPERCASES a state
+			// value before any validation runs, and our district keys are the
+			// district names rather than codes (see the header of
+			// class-slk-districts.php). 'Galle' therefore arrived as 'GALLE',
+			// which no district check matches, so every order was rejected — and
+			// had one got through, 'GALLE' is what the packing slip and the
+			// courier handoff would have carried.
+			$billing['billing_state']['validate']    = array();
 		}
-		if ( isset( $billing['billing_postcode'] ) ) {
-			$billing['billing_postcode']['required']    = false;
-			$billing['billing_postcode']['priority']    = 80;
-			$billing['billing_postcode']['class']       = array( 'form-row-wide', 'slk-field' );
-			$billing['billing_postcode']['input_class'] = array( 'slk-input' );
-		}
+		// Couriers navigate by landmark and delivery is priced by district;
+		// postal code is a field nobody reads. Removed outright, not merely
+		// hidden, the same way address_2 and company are removed below.
+		unset( $billing['billing_postcode'] );
 
 		// address_2 and company are removed outright, in both groups. The
 		// locale marks them hidden, but that is applied by WooCommerce's
@@ -175,20 +221,26 @@ final class SLK_Checkout_Fields {
 		}
 		unset( $billing['billing_address_2'], $billing['billing_company'] );
 
-		$fields['billing'] = $billing;
-
+		// Delivery notes move into the billing group, at a priority above the
+		// "Where" boundary, so it renders inside that panel's own field loop
+		// instead of WooCommerce's separate "Additional information" section
+		// (switched off entirely in self::init()).
 		if ( isset( $fields['order']['order_comments'] ) ) {
-			$fields['order']['order_comments'] = array_merge(
+			$billing['order_comments'] = array_merge(
 				$fields['order']['order_comments'],
 				array(
-					'label'          => __( 'Delivery notes', 'slk' ),
-					'placeholder'    => __( 'Anything else the courier should know', 'slk' ),
-					'required'       => false,
-					'class'          => array( 'form-row-wide', 'slk-field' ),
-					'input_class'    => array( 'slk-textarea' ),
+					'label'       => __( 'Delivery notes', 'slk' ),
+					'placeholder' => __( 'Anything else the courier should know', 'slk' ),
+					'required'    => false,
+					'priority'    => 90,
+					'class'       => array( 'form-row-wide', 'slk-field' ),
+					'input_class' => array( 'slk-textarea' ),
 				)
 			);
+			unset( $fields['order']['order_comments'] );
 		}
+
+		$fields['billing'] = $billing;
 
 		return $fields;
 	}
@@ -311,6 +363,61 @@ final class SLK_Checkout_Fields {
 		}
 
 		return (string) $order->get_meta( self::LANDMARK_META );
+	}
+
+	/**
+	 * Switch off WooCommerce's "Additional information" section, on the front
+	 * end only.
+	 *
+	 * The delivery-notes field now renders inside the "Where" panel, so the
+	 * section has nothing left to show. The admin order screen reads this same
+	 * filter to decide whether to print the customer's note
+	 * (class-wc-meta-box-order-data.php, both the read view and the editable
+	 * textarea), so returning false everywhere would hide the note from the one
+	 * person it is written for: whoever packs and dispatches the order.
+	 *
+	 * The checkout POST goes to ?wc-ajax=checkout, which is not an admin
+	 * request, so the front-end suppression still applies where it is meant to.
+	 *
+	 * @param bool $enabled Whether the order notes field is enabled.
+	 */
+	public static function hide_order_notes_section( $enabled ) {
+		return is_admin() ? $enabled : false;
+	}
+
+	/**
+	 * WooCommerce hard-codes the "Create an account?" checkbox label in
+	 * woocommerce/checkout/form-billing.php rather than exposing it as a
+	 * filterable field, so it is reworded through its own translation call
+	 * instead of a template override.
+	 *
+	 * @param string $translated Translated text.
+	 * @param string $text       Original (source) text.
+	 * @param string $domain     Text domain.
+	 */
+	public static function reword_account_checkbox( $translated, $text, $domain ) {
+		if ( 'woocommerce' === $domain && 'Create an account?' === $text && function_exists( 'is_checkout' ) && is_checkout() ) {
+			return __( 'Save my details for next time', 'slk' );
+		}
+
+		return $translated;
+	}
+
+	/**
+	 * One line under the account checkbox saying what the account is for.
+	 * Fires from woocommerce/checkout/form-billing.php immediately after the
+	 * checkbox, and only renders when the checkbox itself is showing
+	 * (registration optional, not forced).
+	 *
+	 * @param WC_Checkout|null $checkout Current checkout instance.
+	 */
+	public static function render_account_hint( $checkout ) {
+		if ( ! $checkout instanceof WC_Checkout || $checkout->is_registration_required() ) {
+			return;
+		}
+		?>
+		<p class="slk-field__hint slk-account-hint"><?php esc_html_e( 'Orders on an account earn points towards credit.', 'slk' ); ?></p>
+		<?php
 	}
 
 	/**

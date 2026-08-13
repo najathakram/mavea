@@ -26,7 +26,7 @@
  * `woocommerce_after_checkout_billing_form` still firing before and after the
  * loop as a whole.
  *
- * Two structural notes for the next maintainer:
+ * Three structural notes for the next maintainer:
  *
  *  1. Each panel keeps its own `.woocommerce-billing-fields` >
  *     `.woocommerce-billing-fields__field-wrapper` pair. That is not
@@ -46,6 +46,18 @@
  *     inc/checkout-view.php forces `woocommerce_ship_to_destination` to
  *     `billing_only`, so `WC_Cart::needs_shipping_address()` is false and
  *     form-shipping.php emits only the notes.
+ *
+ *  3. The `.woocommerce-account-fields` block ("Save my details for next time"
+ *     plus the points line) is emitted inside the "1 · You" panel, not after
+ *     the billing group where the stock template puts it. With the billing
+ *     group split across two panels, the stock position lands it between the
+ *     "2 · Where" and "3 · Paying" panels, outside every glass card, which is
+ *     neither where the account prompt belongs nor somewhere it can be
+ *     styled as part of a step. Its markup, guard and both registration hooks
+ *     are unchanged, and it is still a sibling of `.woocommerce-billing-fields`
+ *     as in the stock template; only the panel it sits in is different.
+ *     WooCommerce's own #createaccount handler is delegated from the document,
+ *     so the checkbox keeps working wherever the block is rendered.
  *
  * This template can be overridden by copying it to
  * yourtheme/woocommerce/checkout/form-billing.php.
@@ -85,6 +97,43 @@ $slk_billing_split  = function_exists( 'slk_checkout_billing_split' )
 
 	</div>
 
+	<?php
+	/**
+	 * The account checkbox + its hint. See note 3 in the file header: the
+	 * stock template prints this after the billing group, which here would
+	 * drop it between the "2 · Where" and "3 · Paying" panels with no panel
+	 * of its own. It belongs under Email, inside "1 · You".
+	 */
+	?>
+	<?php if ( ! is_user_logged_in() && $checkout->is_registration_enabled() ) : ?>
+		<div class="woocommerce-account-fields">
+			<?php if ( ! $checkout->is_registration_required() ) : ?>
+
+				<p class="form-row form-row-wide create-account">
+					<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
+						<input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="createaccount" <?php checked( ( true === $checkout->get_value( 'createaccount' ) || ( true === apply_filters( 'woocommerce_create_account_default_checked', false ) ) ), true ); ?> type="checkbox" name="createaccount" value="1" /> <span><?php esc_html_e( 'Create an account?', 'woocommerce' ); ?></span>
+					</label>
+				</p>
+
+			<?php endif; ?>
+
+			<?php do_action( 'woocommerce_before_checkout_registration_form', $checkout ); ?>
+
+			<?php if ( $checkout->get_checkout_fields( 'account' ) ) : ?>
+
+				<div class="create-account">
+					<?php foreach ( $checkout->get_checkout_fields( 'account' ) as $key => $field ) : ?>
+						<?php woocommerce_form_field( $key, $field, $checkout->get_value( $key ) ); ?>
+					<?php endforeach; ?>
+					<div class="clear"></div>
+				</div>
+
+			<?php endif; ?>
+
+			<?php do_action( 'woocommerce_after_checkout_registration_form', $checkout ); ?>
+		</div>
+	<?php endif; ?>
+
 </div>
 
 <div class="slk-panel slk-panel--lifted slk-checkout__panel col-2" id="slk-panel-where">
@@ -115,32 +164,3 @@ $slk_billing_split  = function_exists( 'slk_checkout_billing_split' )
 	?>
 
 </div>
-
-<?php if ( ! is_user_logged_in() && $checkout->is_registration_enabled() ) : ?>
-	<div class="woocommerce-account-fields">
-		<?php if ( ! $checkout->is_registration_required() ) : ?>
-
-			<p class="form-row form-row-wide create-account">
-				<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
-					<input class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" id="createaccount" <?php checked( ( true === $checkout->get_value( 'createaccount' ) || ( true === apply_filters( 'woocommerce_create_account_default_checked', false ) ) ), true ); ?> type="checkbox" name="createaccount" value="1" /> <span><?php esc_html_e( 'Create an account?', 'woocommerce' ); ?></span>
-				</label>
-			</p>
-
-		<?php endif; ?>
-
-		<?php do_action( 'woocommerce_before_checkout_registration_form', $checkout ); ?>
-
-		<?php if ( $checkout->get_checkout_fields( 'account' ) ) : ?>
-
-			<div class="create-account">
-				<?php foreach ( $checkout->get_checkout_fields( 'account' ) as $key => $field ) : ?>
-					<?php woocommerce_form_field( $key, $field, $checkout->get_value( $key ) ); ?>
-				<?php endforeach; ?>
-				<div class="clear"></div>
-			</div>
-
-		<?php endif; ?>
-
-		<?php do_action( 'woocommerce_after_checkout_registration_form', $checkout ); ?>
-	</div>
-<?php endif; ?>

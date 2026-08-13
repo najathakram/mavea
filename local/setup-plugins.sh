@@ -44,6 +44,8 @@ install payhere-payment-gateway activate \
   "cards, eZ Cash, helaPay and LankaQR in one screen; active but left unconfigured"
 install mintpay activate \
   "instalments; Koko's own plugin is immature, this is the healthier BNPL pick; active but left unconfigured"
+install login-with-google activate \
+  "Continue with Google on checkout; active but left unconfigured"
 
 echo
 echo "    PayHere and Mintpay are installed and ACTIVE but have NO merchant"
@@ -53,6 +55,14 @@ echo "    requires a live site with published policy pages before it will"
 echo "    issue credentials. Until a merchant ID is entered under WooCommerce"
 echo "    > Settings > Payments, class-slk-payments.php keeps that gateway"
 echo "    hidden from shoppers, so being active here is safe."
+
+echo
+echo "    Login with Google is installed and ACTIVE but has NO OAuth client"
+echo "    configured. It needs a client ID and secret that only Najath can"
+echo "    create in the Google Cloud console. Until a client ID is entered"
+echo "    under Settings > Login with Google, class-slk-google.php keeps the"
+echo "    Continue with Google button off checkout, so being active here is"
+echo "    safe."
 
 echo
 echo "==> PARKED: installed, inactive until credentials exist"

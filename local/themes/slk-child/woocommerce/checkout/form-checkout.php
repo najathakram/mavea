@@ -56,17 +56,17 @@ if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_requir
 
 		<?php
 		/*
-		 * Sign in, create an account, or continue as a guest — before the
-		 * "1 · You" panel begins, so an unrecognised shopper is offered a
-		 * choice instead of dropping straight into the guest form. Guest is
-		 * the default: nothing here blocks a shopper who takes no action.
-		 * Rendered by inc/account.php, which also turns on the two
-		 * WooCommerce options this depends on. Logged-in shoppers skip it
-		 * entirely — they are already who they are.
+		 * The "Before you begin" three-card block (sign in / create account /
+		 * continue as guest) that used to render here is gone. It duplicated
+		 * controls that live elsewhere and its copy said the same thing
+		 * twice. The one account prompt this checkout shows now (a
+		 * "Continue with Google" button beside a plain sign-in link,
+		 * logged-out shoppers only) is rendered by inc/account.php's
+		 * slk_checkout_signin_row(), hooked onto
+		 * woocommerce_before_checkout_billing_form so it lands at the top of
+		 * the "1 · You" panel itself (see form-billing.php) rather than
+		 * above this template's own grid.
 		 */
-		if ( ! is_user_logged_in() && function_exists( 'slk_checkout_account_choice' ) ) {
-			slk_checkout_account_choice( $checkout );
-		}
 		?>
 
 		<div class="slk-checkout__grid" id="customer_details">

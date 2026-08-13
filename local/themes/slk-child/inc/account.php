@@ -401,24 +401,32 @@ add_action( 'woocommerce_view_order', 'slk_account_render_tracking', 20 );
  * 5. Checkout — sign in, create an account, or continue as a guest.
  *
  * A logged-out shopper used to drop straight into the guest form with no
- * choice. This turns on WooCommerce's own account creation and login
- * reminder (real, editable settings, not a hard-coded filter, so a merchant
- * can later switch either off in WooCommerce > Settings > Accounts &
- * Privacy without this file fighting back) and requires the one thing an
- * account cannot exist without: an email, only when the shopper actually
- * asks to create one. Guest checkout itself is untouched and stays enabled.
+ * choice. This turns on WooCommerce's own account creation (a real,
+ * editable setting, not a hard-coded filter, so a merchant can later switch
+ * it off in WooCommerce > Settings > Accounts & Privacy without this file
+ * fighting back) and requires the one thing an account cannot exist
+ * without: an email, only when the shopper actually asks to create one.
+ * Guest checkout itself is untouched and stays enabled.
+ *
+ * WooCommerce's own login-reminder notice ("Returning customer? Click here
+ * to login") is turned back OFF: this checkout renders its own single
+ * sign-in prompt instead (slk_checkout_signin_row() below), so WooCommerce's
+ * copy of the same prompt would be a second one. Guarded by
+ * `slk_checkout_account_options_bound_v2`, a new option key, rather than the
+ * original `_bound` key, so this seeds the corrected default once even on a
+ * store where the old (pre-fix) values were already bound.
  * ---------------------------------------------------------------------- */
 
 add_action(
 	'init',
 	static function () {
-		if ( get_option( 'slk_checkout_account_options_bound' ) ) {
+		if ( get_option( 'slk_checkout_account_options_bound_v2' ) ) {
 			return;
 		}
 
 		update_option( 'woocommerce_enable_signup_and_login_from_checkout', 'yes' );
-		update_option( 'woocommerce_enable_checkout_login_reminder', 'yes' );
-		update_option( 'slk_checkout_account_options_bound', 'yes', false );
+		update_option( 'woocommerce_enable_checkout_login_reminder', 'no' );
+		update_option( 'slk_checkout_account_options_bound_v2', 'yes', false );
 	},
 	15
 );
@@ -456,125 +464,84 @@ add_action(
 );
 
 /**
- * The "how would you like to check out" block: sign in, create an account,
- * or continue as a guest. Called from
- * woocommerce/checkout/form-checkout.php, above the "1 · You" panel, only
- * for a logged-out shopper.
+ * The one account prompt this checkout shows: a "Continue with Google"
+ * button (SLK_Google, WP3) beside a plain "Already have an account? Sign
+ * in" link, for a logged-out shopper only, at the very top of the "1 · You"
+ * step — before the mobile number field, not above the page title.
  *
- * Every control here operates on WooCommerce's own markup; nothing here is
- * a parallel sign-in or registration system:
+ * Hooked onto woocommerce_before_checkout_billing_form rather than called
+ * from form-checkout.php: that hook is fired by
+ * woocommerce/checkout/form-billing.php right after the "1 · You" panel's
+ * heading and before its field wrapper, which is the only way to land
+ * content at the top of that specific step without editing form-billing.php
+ * (a file outside this package). It fires exactly once, inside "1 · You"
+ * only — see the header note in form-billing.php.
  *
- * - "Sign in" is an <a class="showlogin">, the exact class WooCommerce's
- *   own checkout.js binds a delegated click handler to. Clicking it opens
- *   the same hidden login form woocommerce_checkout_login_form() already
- *   printed via the woocommerce_before_checkout_form hook, and scrolls the
- *   page to it, because that click handler is bound to document.body, not
- *   to one specific link.
- * - "Create an account" is a <label for="createaccount">, pointing at the
- *   real checkbox woocommerce/checkout/form-billing.php renders further
- *   down the page (that template is untouched). A label toggles a checkbox
- *   anywhere in the same document, moves focus to it (which scrolls it
- *   into view) and fires the native change event checkout.js listens for
- *   to reveal the account fields — no id collision, no duplicate markup.
- * - "Continue as a guest" needs no control at all: it is what already
- *   happens when neither of the above is used, so it is shown as the
- *   selected default rather than as a button.
+ * Every control here still operates on WooCommerce's own markup; nothing
+ * here is a parallel sign-in system:
+ *
+ * - The Google button is real markup only when SLK_Google::available()
+ *   finds the login-with-google plugin active with a client id configured;
+ *   otherwise SLK_Google::button() returns '' and only the sign-in link
+ *   shows, so a dead "Continue with Google" button never reaches a
+ *   shopper. The class is checked for existence first because a checkout
+ *   render in this codebase can happen before WP3's class file is present.
+ * - "Already have an account? Sign in" is an <a class="showlogin">, the
+ *   exact class WooCommerce's own checkout.js binds a delegated click
+ *   handler to. Clicking it opens the same hidden login form
+ *   woocommerce_checkout_login_form() already prints via the
+ *   woocommerce_before_checkout_form hook. WooCommerce's own visible
+ *   reminder notice (and its own .showlogin link) is turned off in section
+ *   5 above, so this link is now the only trigger for that form.
  *
  * @param WC_Checkout|null $checkout Current checkout instance.
  */
-function slk_checkout_account_choice( $checkout ) {
-	if ( ! $checkout instanceof WC_Checkout || ! $checkout->is_registration_enabled() ) {
+function slk_checkout_signin_row( $checkout ) {
+	if ( is_user_logged_in() || ! $checkout instanceof WC_Checkout ) {
 		return;
 	}
+
+	// Mirrors the guard WooCommerce's own checkout/form-login.php uses to
+	// decide whether a login form exists at all: if registration is
+	// required but not enabled, no form is reachable and a sign-in link
+	// here would be dead.
+	if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_required() ) {
+		return;
+	}
+
+	$google_button = '';
+	if ( class_exists( 'SLK_Google' ) && is_callable( array( 'SLK_Google', 'available' ) ) && SLK_Google::available() ) {
+		$google_button = (string) SLK_Google::button( wc_get_checkout_url() );
+	}
 	?>
-	<div class="slk-panel slk-panel--lifted slk-checkout__panel slk-account-choice">
-
-		<div class="slk-eyebrow slk-checkout__panel-label"><?php esc_html_e( 'Before you begin', 'slk' ); ?></div>
-
-		<p class="slk-account-choice__intro">
-			<?php esc_html_e( 'Sign in, create an account, or continue as a guest. Guest is already selected, so there is nothing you need to do.', 'slk' ); ?>
-		</p>
-
-		<div class="slk-account-choice__options">
-
-			<a href="#" class="slk-account-choice__option slk-account-choice__option--signin showlogin">
-				<span class="slk-account-choice__option-title"><?php esc_html_e( 'Sign in', 'slk' ); ?></span>
-				<span class="slk-account-choice__option-sub"><?php esc_html_e( 'Use your saved details to check out faster.', 'slk' ); ?></span>
-			</a>
-
-			<label for="createaccount" class="slk-account-choice__option slk-account-choice__option--create">
-				<span class="slk-account-choice__option-title"><?php esc_html_e( 'Create an account', 'slk' ); ?></span>
-				<span class="slk-account-choice__option-sub"><?php esc_html_e( 'We ask for your email so we can send your login link and order updates.', 'slk' ); ?></span>
-			</label>
-
-			<div class="slk-account-choice__option slk-account-choice__option--guest">
-				<span class="slk-account-choice__option-title">
-					<?php esc_html_e( 'Continue as a guest', 'slk' ); ?>
-					<span class="slk-account-choice__badge"><?php esc_html_e( 'Default', 'slk' ); ?></span>
-				</span>
-				<span class="slk-account-choice__option-sub"><?php esc_html_e( 'This is already selected, so you do not need to do anything.', 'slk' ); ?></span>
-			</div>
-
+	<div class="slk-checkout__signin">
+		<div class="slk-checkout__signin-row">
+			<?php if ( '' !== $google_button ) : ?>
+				<?php echo wp_kses_post( $google_button ); ?>
+			<?php endif; ?>
+			<a href="#" class="slk-checkout__signin-link showlogin"><?php esc_html_e( 'Already have an account? Sign in', 'slk' ); ?></a>
 		</div>
-
+		<div class="slk-checkout__signin-divider" aria-hidden="true"><span><?php esc_html_e( 'or', 'slk' ); ?></span></div>
 	</div>
 	<?php
 }
+add_action( 'woocommerce_before_checkout_billing_form', 'slk_checkout_signin_row' );
+
+/**
+ * The loyalty-points banner SLK_Points prints on
+ * woocommerce_before_checkout_form (plugins/slk-order-flow/includes/class-slk-points.php
+ * — out of this package's file list, so unhooked here rather than edited
+ * there) shouted above the page title and duplicated a fact that now sits
+ * once, under the account checkbox in "1 · You" (see the slk-checkout
+ * plugin's field labels). Removed from the markup entirely, not hidden:
+ * matches the exact hook, callback and (default) priority
+ * SLK_Points::init() registered with, so this removes only that one
+ * callback and nothing else on the hook.
+ */
+remove_action( 'woocommerce_before_checkout_form', array( 'SLK_Points', 'render_guest_notice' ) );
 
 /* -------------------------------------------------------------------------
- * 6. Styling — the checkout account-choice block above. Scoped to the
- * checkout page itself (section 7's style block below is scoped to the
- * account area); .slk-panel, .slk-panel--lifted, .slk-checkout__panel,
- * .slk-checkout__panel-label and .slk-eyebrow are already defined by the
- * components layer and inc/checkout-view.php, so only the new option tiles
- * need rules here.
- * ---------------------------------------------------------------------- */
-
-add_action(
-	'wp_enqueue_scripts',
-	static function () {
-		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
-			return;
-		}
-		if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
-			return;
-		}
-
-		$css = <<<'CSS'
-.slk-account-choice{margin-bottom:var(--slk-space-4)}
-.slk-account-choice__intro{margin:0 0 var(--slk-space-4);font:400 12.5px/1.6 var(--slk-font-ui);color:var(--slk-color-muted)}
-.slk-account-choice__options{display:grid;gap:var(--slk-space-3)}
-.slk-account-choice__option{
-	display:block;padding:var(--slk-space-4);border:1px solid var(--slk-field-border);
-	border-radius:var(--slk-radius-field);background:var(--slk-color-white);
-	text-decoration:none;color:inherit;cursor:pointer;
-	transition:border-color var(--slk-motion-base) var(--slk-ease),opacity var(--slk-motion-base) var(--slk-ease);
-}
-.slk-account-choice__option--signin:hover,
-.slk-account-choice__option--create:hover{border-color:var(--slk-color-ink)}
-.slk-account-choice__option--guest{cursor:default;background:var(--slk-glass-solid)}
-.slk-account-choice__option-title{
-	display:flex;align-items:center;gap:8px;
-	font:500 13.5px/1.3 var(--slk-font-ui);color:var(--slk-color-ink);
-}
-.slk-account-choice__option-sub{display:block;font:400 12px/1.5 var(--slk-font-ui);color:var(--slk-color-muted);padding-top:4px}
-.slk-account-choice__badge{
-	display:inline-flex;align-items:center;min-height:20px;padding:0 9px;
-	background:var(--slk-color-ink);color:var(--slk-color-on-ink);border-radius:var(--slk-radius-pill);
-	font:500 10px/1 var(--slk-font-ui);letter-spacing:.04em;
-}
-@media (min-width:1000px){
-	.slk-account-choice__options{grid-template-columns:repeat(3,1fr)}
-}
-CSS;
-
-		wp_add_inline_style( 'slk-child', $css );
-	},
-	31
-);
-
-/* -------------------------------------------------------------------------
- * 7. Styling — restyle the native login form, nav, dashboard, orders table
+ * 6. Styling — restyle the native login form, nav, dashboard, orders table
  * and order-view screen to the glass-panel / pill contract. Tokens only,
  * one 1000px breakpoint.
  * ---------------------------------------------------------------------- */
