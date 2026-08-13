@@ -162,31 +162,90 @@ text, a view of what is due to be sewn.
 *Check:* an order placed against a made-to-order size shows the promise and
 the reason on the admin screen.
 
-## Risks worth naming before we build
+## Decisions from Najath (2026-08-12)
 
-1. **Capacity is not modelled.** A fixed 10-day lead time is honest for the
-   first order and a lie for the twentieth in the same week. If the atelier
-   can sew N pieces a week, the estimate should lengthen as the queue fills.
-   Otherwise we will miss dates in exactly the situation we most want to get
-   right, a successful launch week.
-2. **COD plus a 10-day wait raises return-to-origin risk.** The customer has
-   paid nothing and has ten days to change their mind, on a piece cut for
-   them. Worth deciding whether made-to-order requires prepayment, or at least
-   a deposit.
-3. **Existing copy already makes a promise.** The FAQ says timings are counted
-   "from the confirmation call rather than from checkout". The engine's clock
-   must match that sentence, or the sentence changes with it.
-4. **Variation count.** 4 sizes × 3 heights × 4 colours is 48 rows per
-   product. Workable, but the admin gets heavy, and every one of them is a
-   stock number somebody has to keep true.
-5. **A retired piece with nothing left** should probably drop out of the shop
+**Making time is a per-item field the operator edits, not a computed queue.**
+If the atelier is running behind, they raise the number on that item. No
+capacity model. This is the right call for a small workshop: the person who
+knows the backlog is the person setting the number.
+
+One cheap addition so the number is set with information rather than from
+memory: show the **count of open orders waiting on that item** next to the
+field, and in the products list. The failure mode here is not a bad model, it
+is a busy week where nobody remembers to raise the number, which is exactly
+the week it matters.
+
+**The shopper is told a dispatch time, not an arrival date.** "Ships in 10
+days." This is better than a delivery date: dispatch is the part we control,
+the courier is not. It also removes the holiday and date arithmetic from the
+customer-facing promise.
+
+It does need the transit line kept next to it, or "ships in 10 days" gets read
+as "arrives in 10 days" and the courier's 2 to 3 days on top feel like a
+broken promise. The PDP already carries "Colombo in 1 to 2 days · island-wide
+in 3 to 5", so the two sit together.
+
+Making time is counted in **working days**, matching every other duration on
+the site.
+
+**Heights are Short, Regular and Tall**, by the wearer rather than the
+garment: Short is under 5'1", Regular is 5'1" to 5'6", Tall is above 5'6".
+Those ranges have to appear at the moment of choosing, not only in the size
+guide, or people guess. Show feet and centimetres, both are used here.
+
+An optional field lets a customer give a different height, and ops can confirm
+by phone on the call they already make.
+
+**Made-to-order pieces are prepay, and we do not use the words "made to
+order".** The shopper is told "ships in N days" and nothing about how the
+workshop is organised. That is normal retail and it reads better.
+
+## Consequences that need a decision
+
+**1. A mixed bag breaks payment.** Payment methods are chosen per order, not
+per line. A bag holding one in-stock hijab (cash on delivery) and one
+made-to-order abaya (prepay) cannot be both. Three options:
+
+  - a. Any prepay line makes the whole order prepay. Simplest, and the
+       shopper is told once at the bag, not discovered at checkout.
+  - b. Block the mix, with a clear message in the bag.
+  - c. Split into two orders. Most work, worst confirmation-call experience,
+       two deliveries.
+
+Recommend (a), stated in the bag as soon as the line is added.
+
+**2. Every product page currently promises cash on delivery.**
+`slk_pdp_trust_rows()` prints "Cash on delivery, with a call to confirm before
+dispatch" on all of them. On a prepay piece that is false, and it is false at
+the exact moment the shopper decides. The trust row already has `$product` in
+scope, so it can vary per item. This has to ship with the prepay switch, not
+after it.
+
+**3. A custom height is not exchangeable.** The 7-day exchange assumes we can
+sell the piece to somebody else. A garment cut to one person's measurements
+cannot be. Either custom-height orders are final sale and say so at the point
+of entry, or we accept the loss. Needs Najath's call.
+
+**4. Prepay-only will convert worse.** Cash on delivery is roughly half of
+Sri Lankan online orders. Nothing to fix here, just worth watching per item
+once real numbers exist, and worth revisiting if made-to-order pieces
+underperform in-stock ones sharply.
+
+## Remaining risks
+
+1. **The lead time is only true if someone updates it.** See the open-order
+   count above.
+2. **Variation count.** 4 sizes × 3 heights × 4 colours is 48 rows per
+   product. Workable, but every row is a stock number somebody keeps true.
+3. **A retired piece with nothing left** should probably drop out of the shop
    listing rather than sit there entirely greyed out.
+4. **Existing copy already makes a promise.** The FAQ says timings count "from
+   the confirmation call rather than from checkout". A prepay piece has no
+   confirmation call before payment, so that sentence needs to be true for
+   both paths or split.
 
 ## Open questions for Najath
 
-1. What are the height options, and are they stocked or made to measure?
-2. Does the clock start at checkout or at the confirmation call?
-3. Is cash on delivery allowed on made-to-order pieces, or prepay only?
-4. Should the estimate stretch as the sewing queue fills (risk 1), or is a
-   fixed per-design time close enough for now?
-5. When a retired piece sells out completely, hide it or leave it visible?
+1. Mixed bag: confirm option (a), whole order becomes prepay?
+2. Are custom-height orders final sale?
+3. When a retired piece sells out completely, hide it or leave it visible?
