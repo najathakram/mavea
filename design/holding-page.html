@@ -41,8 +41,10 @@ body:has(.mavea-holding) .is-layout-constrained > * {
   --ink:      #232220;
   --ink-soft: #44413c;
   --muted:    #5f5c56;
-  --faint:    #8a867e;
   --hairline: rgba(35, 34, 32, .10);
+  /* --faint (#8a867e) is deliberately unused here. brand-guidelines.md §3
+     claims every listed text pair clears 4.5:1, but faint on the porcelain
+     ground measures 3.2:1 and fails WCAG AA. The footer uses --muted (5.6:1). */
 
   position: relative;
   box-sizing: border-box;
@@ -127,7 +129,7 @@ body:has(.mavea-holding) .is-layout-constrained > * {
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--faint);
+  color: var(--muted);
   white-space: nowrap;
 }
 
