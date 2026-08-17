@@ -114,7 +114,7 @@ get_header();
 			</p>
 			<h2 class="slk-story__find-h"><?php esc_html_e( 'Where to find us', 'slk' ); ?></h2>
 			<p class="slk-story__find-p">
-				<?php esc_html_e( 'The studio is in Galle. The address and phone numbers will go here. Visits are by appointment, and it is better to see the work than to take our word for it.', 'slk' ); ?>
+				<?php esc_html_e( 'The address and phone numbers will go here. Visits are by appointment, and it is better to see the work than to take our word for it.', 'slk' ); ?>
 			</p>
 		</div>
 

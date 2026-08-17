@@ -118,7 +118,7 @@ defined( 'ABSPATH' ) || exit;
 						<span class="slk-step__line"></span>
 					</div>
 					<div>
-						<div class="slk-step__label"><?php esc_html_e( 'Your pieces are packed in Galle', 'slk' ); ?></div>
+						<div class="slk-step__label"><?php esc_html_e( 'Your pieces are packed', 'slk' ); ?></div>
 						<div class="slk-step__desc slk-muted"><?php esc_html_e( 'We press it, wrap it, and hand it to the courier.', 'slk' ); ?></div>
 					</div>
 				</div>

@@ -25,7 +25,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once ABSPATH . 'wp-admin/includes/image.php';
 
-$dir = '/var/www/html/temp/products';
+// Where the normalised frames are. Defaults to the local container's staging
+// path; on Hostinger pass the directory as the eval-file argument:
+//   wp eval-file import-product-images.php /home/uXXXXXXXXX/mavea-seed/products
+$dir = isset( $args[0] ) ? rtrim( (string) $args[0], '/' ) : '/var/www/html/temp/products';
+
+// Stop before touching anything. The loop below force-deletes each product's
+// current imagery before it looks for a replacement file, so a typo'd or stale
+// path would strip all twenty products and attach nothing in their place.
+if ( ! is_dir( $dir ) ) {
+	WP_CLI::error( sprintf( 'image directory not found: %s', $dir ) );
+}
 
 // Featured first; the rest become the gallery in this order. The label is the
 // alt text: it names the garment and the part of it in frame, never the model.
