@@ -5,3 +5,26 @@
 *.php text eol=lf
 *.yml text eol=lf
 *.ini text eol=lf
+
+# Never let the rule above near a binary. `text=auto` sniffs only the first
+# 8000 bytes for a NUL, so a photo that happens to start with none is treated
+# as text and has every CR byte stripped on commit — silent corruption that
+# cost five temp/*.jpg files ~13% of their bytes. Declare binaries explicitly.
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.gif  binary
+*.webp binary
+*.avif binary
+*.ico  binary
+*.svgz binary
+*.pdf  binary
+*.ttf  binary
+*.otf  binary
+*.woff  binary
+*.woff2 binary
+*.zip  binary
+*.gz   binary
+*.mp4  binary
+*.webm binary
+*.mov  binary
