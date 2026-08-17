@@ -7,6 +7,9 @@
  *   not in stock, active -> making_days + tolerance_days
  *   not in stock, retired -> null, meaning it cannot be bought
  *
+ * Whichever case applies, a cart line that asks for work of its own (a
+ * customization) adds its days on top through slk_line_making_days.
+ *
  * @package slk-checkout
  */
 
@@ -43,15 +46,18 @@ class SLK_Fulfilment {
 		return 'yes' === get_post_meta( $id, self::META_RETIRED, true );
 	}
 
+	/**
+	 * Working days this product needs to be made, before dispatch/tolerance
+	 * are added on top. A figure about the PRODUCT alone — what a single cart
+	 * line adds on top of it is ready_days()' business.
+	 */
 	public static function making_days( WC_Product $product ): int {
 		$id  = $product->is_type( 'variation' ) ? $product->get_parent_id() : $product->get_id();
 		$own = get_post_meta( $id, self::META_MAKING, true );
 
-		if ( '' !== $own && is_numeric( $own ) ) {
-			return max( 0, (int) $own );
-		}
-
-		return max( 0, (int) self::settings()['default_making_days'] );
+		return ( '' !== $own && is_numeric( $own ) )
+			? max( 0, (int) $own )
+			: max( 0, (int) self::settings()['default_making_days'] );
 	}
 
 	/**
@@ -76,8 +82,23 @@ class SLK_Fulfilment {
 	 * many on the shelf": it is true only when stock is managed, backorders are
 	 * allowed and the held quantity is short. A product with stock management
 	 * off and status instock reads as in stock, which is correct.
+	 *
+	 * $cart_item carries the specific cart line this figure is for, when the
+	 * caller has one — it exists purely so the slk_line_making_days filter
+	 * below can tell one line of a product from another (a customization such
+	 * as a made-to-order length adds days per LINE, not per product). The
+	 * filter runs on whichever figure the branch above chose, because work we
+	 * have to do to a piece delays it whether it sat on the shelf or not.
+	 * Callers with no cart line to hand over (the product edit screen, a plain
+	 * "how long does this product take" question) pass nothing, and behaviour
+	 * is unchanged: nothing is subscribed to the filter until a line actually
+	 * carries that kind of data.
+	 *
+	 * @param WC_Product $product   Product (or variation) being priced.
+	 * @param int        $qty       Quantity wanted on the line.
+	 * @param array|null $cart_item The cart item this figure is for, if any.
 	 */
-	public static function ready_days( WC_Product $product, int $qty ): ?int {
+	public static function ready_days( WC_Product $product, int $qty, $cart_item = null ): ?int {
 		$settings = self::settings();
 
 		if ( ! $product->is_in_stock() ) {
@@ -85,13 +106,21 @@ class SLK_Fulfilment {
 		}
 
 		if ( ! $product->is_on_backorder( $qty ) ) {
-			return max( 0, (int) $settings['dispatch_days'] );
-		}
-
-		if ( self::is_retired( $product ) ) {
+			$days = max( 0, (int) $settings['dispatch_days'] );
+		} elseif ( self::is_retired( $product ) ) {
 			return null;
+		} else {
+			$days = self::making_days( $product ) + max( 0, (int) $settings['tolerance_days'] );
 		}
 
-		return self::making_days( $product ) + max( 0, (int) $settings['tolerance_days'] );
+		/**
+		 * Extra working days a specific cart line adds on top of the figure
+		 * the product alone would give.
+		 *
+		 * @param int             $days      Ready days computed so far.
+		 * @param WC_Product      $product   Product (or variation) being priced.
+		 * @param array|null      $cart_item The cart item this figure is for, or null.
+		 */
+		return max( 0, (int) apply_filters( 'slk_line_making_days', $days, $product, $cart_item ) );
 	}
 }

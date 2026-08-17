@@ -128,7 +128,7 @@ class SLK_Shipments {
 			}
 
 			$qty  = isset( $item['quantity'] ) ? (int) $item['quantity'] : 1;
-			$days = SLK_Fulfilment::ready_days( $product, $qty );
+			$days = SLK_Fulfilment::ready_days( $product, $qty, $item );
 
 			if ( null === $days ) {
 				continue; // Cannot be supplied; WP4's validator keeps it out of the cart.
@@ -183,10 +183,19 @@ class SLK_Shipments {
 
 	/**
 	 * The date a single cart line is ready, regardless of when it travels.
+	 *
+	 * $cart_item is the line itself when the caller has it, so a customization
+	 * that adds making days to THIS line reaches SLK_Fulfilment through the
+	 * slk_line_making_days filter and the printed date matches the date the
+	 * shipment is grouped on. Callers without a line pass nothing.
+	 *
+	 * @param WC_Product $product   Product (or variation) on the line.
+	 * @param int        $qty       Quantity on the line.
+	 * @param array|null $cart_item The cart item this date is for, if any.
 	 */
-	public static function line_ready_date( WC_Product $product, int $qty ): ?DateTimeImmutable {
+	public static function line_ready_date( WC_Product $product, int $qty, $cart_item = null ): ?DateTimeImmutable {
 		$settings = SLK_Fulfilment::settings();
-		$days     = SLK_Fulfilment::ready_days( $product, $qty );
+		$days     = SLK_Fulfilment::ready_days( $product, $qty, $cart_item );
 
 		if ( null === $days ) {
 			return null;

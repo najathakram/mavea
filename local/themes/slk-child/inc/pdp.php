@@ -364,7 +364,19 @@ function slk_pdp_buy_dock() {
 		echo slk_pdp_whatsapp_markup( $wa_url, 'slk-buy-dock__wa' ); // phpcs:ignore WordPress.Security.EscapingOutput -- escaped in helper.
 	}
 
-	if ( $is_variable ) {
+	/*
+	 * A customizable piece has to go through the summary form too, for the same
+	 * reason a variable one does: only that form carries the chosen options.
+	 * The dock used to ship its own bare form (quantity + add-to-cart) for every
+	 * simple product, so on a phone — where the dock is the button she actually
+	 * reaches for — a customizable piece went into the bag with none of her
+	 * choices attached, and a required group made it fail with an error pointing
+	 * at fields she could not see from there.
+	 */
+	$needs_summary_form = $is_variable
+		|| ( class_exists( 'SLK_Customization' ) && SLK_Customization::has_any( $product ) );
+
+	if ( $needs_summary_form ) {
 		printf(
 			'<button type="button" class="slk-btn slk-btn--primary slk-buy-dock__cta" data-slk-dock-proxy hidden>%s</button>',
 			wp_kses_post( $label )
@@ -809,9 +821,10 @@ add_action(
 	});
 
 	/*
-	 * Buy dock. Simple products ship a real <form> in the dock and need no JS
-	 * at all. Variable products cannot: only the summary's own form knows the
-	 * chosen variation. So the dock button is rendered `hidden` and is only
+	 * Buy dock. A plain simple product ships a real <form> in the dock and needs
+	 * no JS at all. Variable and CUSTOMIZABLE products cannot: only the summary's
+	 * own form knows the chosen variation or the chosen options. So the dock
+	 * button is rendered `hidden` and is only
 	 * revealed here, once it has been wired to the real submit — a reader with
 	 * no JS never sees a control that would not work.
 	 */

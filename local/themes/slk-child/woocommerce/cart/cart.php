@@ -161,7 +161,7 @@ $slk_render_cart_item = function ( $cart_item_key, $cart_item ) {
 						?>
 					</div>
 					<?php
-					$slk_ready = SLK_Shipments::line_ready_date( $_product, (int) $cart_item['quantity'] );
+					$slk_ready = SLK_Shipments::line_ready_date( $_product, (int) $cart_item['quantity'], $cart_item );
 					if ( $slk_ready ) :
 						?>
 						<span class="slk-cart__ready">
