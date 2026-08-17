@@ -1,0 +1,152 @@
+<!-- MAVÉA — holding page
+     Pasted into WordPress as a single Custom HTML block on the front page
+     (Blank template). Versioned here so the markup is not trapped in the DB.
+
+     Palette and rhythm follow design/assets/design-tokens.css (Porcelain Glass).
+     Typefaces follow branding/fonts (Playfair Display + Montserrat).
+     No monogram: brand-guidelines.md §1 rules out a name-derived mark.
+     No photography: every product image is behind gate G4 (modesty check).
+-->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Montserrat:wght@300;400;500&display=swap');
+
+/* Twenty Twenty-Five offers no blank template, so its header (Cart/Checkout/
+   Shop) and footer (Blog/Patterns/Themes) would frame a pre-launch holding
+   page with links to an empty store. Scoped via :has() so these rules only
+   ever apply on a page that actually contains the holding section. */
+body:has(.mavea-holding) .wp-block-template-part { display: none !important; }
+body:has(.mavea-holding) .wp-site-blocks,
+body:has(.mavea-holding) main,
+body:has(.mavea-holding) .entry-content {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Twenty Twenty-Five wraps post content in .is-layout-constrained, which pins
+   children to --wp--style--global--content-size (~640px). Left alone that
+   renders the holding page as a narrow column with white bars either side.
+   The body background is set too, so nothing shows through behind the section. */
+body:has(.mavea-holding) { background: #f2f0ec !important; }
+body:has(.mavea-holding) .is-layout-constrained,
+body:has(.mavea-holding) .wp-block-post-content { max-width: none !important; }
+body:has(.mavea-holding) .is-layout-constrained > * {
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.mavea-holding {
+  --ground:   #f2f0ec;
+  --ink:      #232220;
+  --ink-soft: #44413c;
+  --muted:    #5f5c56;
+  --faint:    #8a867e;
+  --hairline: rgba(35, 34, 32, .10);
+
+  position: relative;
+  box-sizing: border-box;
+  min-height: 100svh;
+  margin: 0;
+  padding: clamp(32px, 8vw, 64px) clamp(16px, 6vw, 64px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(24px, 5vw, 40px);
+  text-align: center;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Montserrat", system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+/* Barely-there warmth so the ground is not a flat fill. */
+.mavea-holding::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(60% 45% at 50% 18%, rgba(255,255,255,.75), transparent 70%),
+    radial-gradient(50% 40% at 50% 92%, rgba(35,34,32,.045), transparent 70%);
+  pointer-events: none;
+}
+
+.mavea-holding > * { position: relative; }
+
+/* The wordmark is live text, not an image: brand-guidelines.md §6 defines it as
+   a typographic system. line-height 1.15 is load-bearing — at 1 the line box
+   equals the font-size and the acute on the É clips. */
+.mavea-holding__wordmark {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(34px, 12vw, 88px);
+  line-height: 1.15;
+  letter-spacing: 0.26em;
+  text-indent: 0.26em;      /* optical centring: offsets the trailing track */
+  text-transform: uppercase; /* CSS-side only — PHP strtoupper would corrupt the É */
+  color: var(--ink);
+}
+
+.mavea-holding__rule {
+  width: clamp(48px, 12vw, 96px);
+  height: 1px;
+  border: 0;
+  margin: 0;
+  background: var(--hairline);
+}
+
+.mavea-holding__line {
+  margin: 0;
+  max-width: 34ch;
+  font-size: clamp(14.5px, 2.2vw, 17px);
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.mavea-holding__status {
+  margin: 0;
+  font-size: clamp(11px, 1.6vw, 12.5px);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Centred with left/right:0 + margin auto rather than translateX(-50%):
+   the entrance animation below ends on `transform: none`, which would cancel a
+   centring translate and leave this line visibly off-axis. */
+.mavea-holding__foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(20px, 4vw, 32px);
+  margin: 0 auto;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mavea-holding > * { animation: mavea-rise 700ms cubic-bezier(.22,1,.36,1) both; }
+  .mavea-holding__rule   { animation-delay:  80ms; }
+  .mavea-holding__line   { animation-delay: 140ms; }
+  .mavea-holding__status { animation-delay: 200ms; }
+  @keyframes mavea-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+</style>
+
+<section class="mavea-holding">
+  <h1 class="mavea-holding__wordmark">Mavéa</h1>
+  <hr class="mavea-holding__rule" />
+  <p class="mavea-holding__line">Modest ready-to-wear, cut and finished in Galle.</p>
+  <p class="mavea-holding__status">Opening soon</p>
+  <p class="mavea-holding__foot">Galle &middot; Sri Lanka</p>
+</section>
