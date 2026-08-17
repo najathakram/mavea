@@ -45,13 +45,25 @@ configures everything after each account exists. Order matters — follow the se
       - `casey.ns.cloudflare.com`
       - `imani.ns.cloudflare.com`
 
-- [ ] **File the nameservers at the LK registry** — ⚠ **BLOCKED 2026-08-17 ~15:30 Colombo:
-      `rs.domains.lk` and `www.domains.lk` are both unreachable** (browser error page +
-      connection refused). Registry portal outage, not a session problem. `mavea.lk` currently
-      has no NS delegation at all (the `.lk` zone returns SOA only).
-      Retry when the portal is back. Also, while filing: **turn DNSSEC off** if it is on —
-      Cloudflare requires it off during activation and it can be re-enabled through Cloudflare
-      afterwards.
+- [x] **File the nameservers at the LK registry** — submitted 2026-08-17 ~16:05 Colombo and
+      confirmed in **Pending Records**: `casey.ns.cloudflare.com.` and `imani.ns.cloudflare.com.`,
+      both TTL 86400, Scheduled Time **None** (next batch = 22:00 Colombo the same day).
+      Name Server IP left blank — glue is not required for out-of-zone nameservers.
+
+      **Filing this needs an OTP** sent to the registrant mobile/email, valid ~32 minutes. It
+      must be entered by Najath. If it lapses, just re-submit the form to trigger a fresh code —
+      unlimited retries, nothing is lost.
+
+      ⚠ **`rs.domains.lk` fails intermittently, and it is not an outage.** The host publishes
+      two A records and one is dead: `203.189.74.167` refuses connections, `203.94.71.235`
+      serves fine. Whichever address the client picks decides success. **Just retry.** Do not
+      conclude the registry is down without testing the individual IPs
+      (`curl --resolve rs.domains.lk:443:203.94.71.235 …`).
+
+- [ ] **After the 22:00 batch:** confirm delegation (`nslookup -type=NS mavea.lk 8.8.8.8`
+      should return the Cloudflare pair), let Hostinger issue the Let's Encrypt certificate for
+      `mavea.lk`, **then switch Cloudflare SSL to Full (Strict)**, and add cache-bypass rules
+      for `/cart`, `/checkout`, `/my-account`, `/wc-api/*` on both Cloudflare and LiteSpeed.
 
 ### DNS values (read from hPanel 2026-08-17) — file at the registry, NOT as registry-hosted records
 
