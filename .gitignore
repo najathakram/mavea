@@ -14,3 +14,7 @@ Thumbs.db
 
 # Reassembly scratch (the chunk patch is regenerable)
 design/_patch820.txt
+
+# Normalised product frames: 20MB of derivatives, rebuilt from dresses/ by
+# local/prepare-product-images.py. The generator is tracked; its output is not.
+temp/products/

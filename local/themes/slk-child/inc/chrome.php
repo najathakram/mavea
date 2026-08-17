@@ -556,7 +556,7 @@ function slk_chrome_render_footer() {
 	 */
 	$blurb = (string) apply_filters(
 		'slk_footer_blurb',
-		__( 'Modest ready-to-wear, made in small runs in Galle. Address and business numbers will sit here.', 'slk' )
+		__( 'Modest ready-to-wear, made in Sri Lanka to export standard. Address and business numbers will sit here.', 'slk' )
 	);
 
 	$help = slk_chrome_help_links();

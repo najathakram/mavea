@@ -21,21 +21,27 @@ defined( 'ABSPATH' ) || exit;
 
 get_header();
 
-$slk_hero = slk_editorial_image(
+/*
+ * Portrait frame on the phone, landscape from 1000px — the same breakpoint
+ * inc/home.php flips .slk-hero__media from 4:5 to 16:9 at.
+ *
+ * The alt has to hold for both frames at once (see slk_editorial_picture), so
+ * it says the one thing both of them show and stops. The colour-by-colour
+ * descriptions the other slots use live on their attachments, where exactly one
+ * photograph can ever answer to them.
+ */
+$slk_hero = slk_editorial_picture(
+	'hero_alt',
 	'hero_group',
+	__( 'Three abayas from the collection, worn full length.', 'slk' ),
 	'full',
 	array(
-		'alt'           => __( 'Full-length linen, photographed in daylight.', 'slk' ),
 		'loading'       => 'eager',
 		'fetchpriority' => 'high',
 	)
 );
 
-$slk_atelier = slk_editorial_image(
-	'room_wide',
-	'large',
-	array( 'alt' => __( 'The workshop in Galle, in daylight.', 'slk' ) )
-);
+$slk_atelier = slk_editorial_image( 'room_wide', 'large' );
 
 $slk_total    = slk_home_product_count();
 $slk_new      = slk_home_new_count();
@@ -60,19 +66,22 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 		<div class="slk-hero__inner slk-container">
 			<div class="slk-hero__panel <?php echo $slk_hero ? 'slk-glass' : 'slk-panel slk-panel--lifted'; ?>">
 				<?php if ( $slk_new > 0 ) : ?>
-					<span class="slk-eyebrow">
-						<?php
-						printf(
-							/* translators: %s: number of pieces added in the last seven days. */
-							esc_html( _n( 'New this week · %s piece', 'New this week · %s pieces', $slk_new, 'slk' ) ),
-							esc_html( number_format_i18n( $slk_new ) )
-						);
-						?>
-					</span>
+					<?php
+					/*
+					 * The count is deliberately not printed. It is a real number
+					 * and it was accurate, but "New this week · 3 pieces" prices
+					 * the brand as a stall rather than a label — a small figure
+					 * volunteered about yourself reads as the size of the
+					 * operation, not the rarity of the piece. The condition still
+					 * uses the count, so the line only appears when there really
+					 * is something new.
+					 */
+					?>
+					<span class="slk-eyebrow"><?php esc_html_e( 'New this week', 'slk' ); ?></span>
 				<?php endif; ?>
 
 				<h1 class="slk-hero__title" id="slk-hero-title">
-					<?php esc_html_e( 'The Monsoon Linens, cut long and loose.', 'slk' ); ?>
+					<?php esc_html_e( 'Made for export. A small number stay here.', 'slk' ); ?>
 				</h1>
 
 				<div class="slk-hero__actions">
@@ -183,8 +192,8 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 		<figure class="slk-home__atelier<?php echo $slk_atelier ? ' slk-home__atelier--framed' : ''; ?>">
 			<?php echo $slk_atelier; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in slk_editorial_image(). ?>
 			<figcaption class="slk-home__caption <?php echo $slk_atelier ? 'slk-glass' : 'slk-panel'; ?>">
-				<h2><?php esc_html_e( 'Made by eight women in Galle', 'slk' ); ?></h2>
-				<p><?php esc_html_e( 'Never more than twenty of a cut · exchange within 7 days', 'slk' ); ?></p>
+				<h2><?php esc_html_e( 'Made to export standard', 'slk' ); ?></h2>
+				<p><?php esc_html_e( 'Cut and finished by hand · exchange within 7 days', 'slk' ); ?></p>
 			</figcaption>
 		</figure>
 	</section>

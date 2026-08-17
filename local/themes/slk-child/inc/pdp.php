@@ -487,12 +487,17 @@ add_action(
 /* CORRECTION (verify, D7): .woocommerce-product-gallery__image matches ZERO
    elements under Blocksy — its slides are .flexy-item > figure.ct-media-container,
    the same class-mismatch that killed the .flex-control-thumbs rule below.
-   Main slide ratio is the design\'s 4/5 (07-desktop #d-pdp-1), stated literally
-   because --slk-ratio-hero is 2/3 — a third value would be a third opinion. */
+   Main slide is 3/4, NOT the design\'s 4/5 (07-desktop #d-pdp-1). The frames
+   are normalised to 3:4 by local/prepare-product-images.py — the ratio the card
+   and the thumbnails below already use — so at 4/5 this box was the one place
+   left that still cover-cropped, and it cropped hardest: 16.75% of the height,
+   8.4% off the crown of the hijab and 8.4% off the hem, on the largest view of
+   the garment the store has. One ratio end to end costs the slide a little
+   width and buys back the whole garment. */
 .slk-pdp .woocommerce-product-gallery .flexy-item .ct-media-container{
 	border-radius:var(--slk-radius-tile);
 	overflow:hidden;
-	aspect-ratio:4/5;
+	aspect-ratio:var(--slk-ratio-portrait);
 }
 .slk-pdp .woocommerce-product-gallery .flexy-item .ct-media-container img{
 	width:100%;height:100%;object-fit:cover;display:block;

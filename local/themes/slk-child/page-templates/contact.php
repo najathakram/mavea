@@ -71,7 +71,7 @@ $sent = isset( $_GET['slk_contact'] ) ? sanitize_text_field( wp_unslash( $_GET['
 
 	<?php if ( $atelier_image ) : ?>
 		<div class="slk-atelier">
-			<span class="slk-eyebrow"><?php esc_html_e( 'The workshop', 'slk' ); ?></span>
+			<span class="slk-eyebrow"><?php esc_html_e( 'The studio', 'slk' ); ?></span>
 			<div class="slk-atelier__media"><?php echo $atelier_image; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside slk_editorial_image(). ?></div>
 			<p class="slk-atelier__copy"><?php esc_html_e( 'We are in Galle and visits are by appointment. Message us first so we know you are coming.', 'slk' ); ?></p>
 		</div>

@@ -143,16 +143,11 @@ echo "$PRODUCTS" | while IFS='|' read -r slug name price cat desc long; do
   [ -n "$gallery" ] && wp post meta update "$id" _product_image_gallery "$gallery" >/dev/null
 done
 
-echo "==> editorial stills for the pages"
-for name in hero-group hero-alt portrait-warm pair-close single-floral room-wide studio-pair; do
-  slug="editorial-${name}"
-  att=$(wp post list --post_type=attachment --name="$slug" --field=ID --posts_per_page=1 2>/dev/null | tr -d '\r')
-  if [ -z "$att" ]; then
-    att=$(wp media import "/var/www/html/temp/${slug}.jpg" \
-            --title="Editorial — $name" --porcelain 2>/dev/null | tr -d '\r')
-  fi
-  [ -n "$att" ] && wp option update "slk_img_${name//-/_}" "$att" >/dev/null && echo "    $slug -> #$att"
-done
+# The editorial stills used to be imported here. They moved to
+# local/seed-editorial.sh, which owns the slk_img_* options on its own: they are
+# page furniture rather than catalogue, they are re-cut whenever the campaign is,
+# and keeping them here meant you could not refresh a hero without also rebuilding
+# every product. Two scripts, one owner each.
 
 echo "==> flush"
 wp wc tool run regenerate_product_lookup_tables --user=1 >/dev/null 2>&1 || true

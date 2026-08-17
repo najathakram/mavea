@@ -89,10 +89,12 @@ function slk_page_url( $slug ) {
 }
 
 /**
- * An editorial image attachment id, set by local/seed-catalog.sh.
+ * An editorial image attachment id, set by local/seed-editorial.sh.
  *
- * Keys: hero_group, hero_alt, portrait_warm, pair_close, single_floral,
- * room_wide, studio_pair.
+ * Keys in use: hero_group (home hero, landscape), hero_alt (home hero on the
+ * phone, portrait), room_wide (the making frame on Home and Contact),
+ * story_wide (Our Story hero), studio_pair and portrait_warm (the Our Story
+ * pair). pair_close and single_floral are seeded but nothing renders them.
  *
  * @param string $key Image key.
  * @return int Attachment ID, 0 when the shoot has not supplied one.
@@ -123,4 +125,66 @@ function slk_editorial_image( $key, $size = 'large', $attr = array() ) {
 	$attr = wp_parse_args( $attr, array( 'loading' => 'lazy', 'decoding' => 'async' ) );
 
 	return (string) wp_get_attachment_image( $id, $size, false, $attr );
+}
+
+/**
+ * Render two editorial frames as one <picture>: the portrait one on a phone,
+ * the landscape one from $bp up.
+ *
+ * The hero box is 4:5 on a phone and 16:9 on a desktop, so a single landscape
+ * file has to be centre-cropped to 45% of its own width to fill the phone —
+ * which throws away most of what was composed. A <picture> lets the phone have
+ * a frame that was actually shot portrait, and because the browser picks ONE
+ * source she downloads one file, not both. That last part is the whole reason
+ * this is not two <img>s toggled with CSS.
+ *
+ * The <img> carries the PORTRAIT frame, so a browser too old for <picture>
+ * gets the phone crop rather than the desktop one. Its width/height describe
+ * that file and not the landscape branch, which is safe here only because the
+ * callers size the box in CSS (aspect-ratio on the wrapper, height:100% on the
+ * image) rather than letting the intrinsic ratio lay the page out.
+ *
+ * $alt IS REQUIRED, and it is required because <picture> has exactly one alt
+ * for every branch. Letting each attachment supply its own — which is what the
+ * rest of this file does — silently describes the phone photograph to everyone
+ * on a desktop, who is looking at the other one. So the caller has to write a
+ * sentence that is true of BOTH frames, and if it cannot, these two frames were
+ * never an art-direction pair to begin with.
+ *
+ * @param string $narrow_key Image key below $bp.
+ * @param string $wide_key   Image key from $bp up.
+ * @param string $alt        Alt text true of both frames.
+ * @param string $size       Registered image size, for both.
+ * @param array  $attr       Extra attributes for the <img>.
+ * @param string $bp         Breakpoint width, matching the template's CSS.
+ * @return string
+ */
+function slk_editorial_picture( $narrow_key, $wide_key, $alt, $size = 'large', $attr = array(), $bp = '1000px' ) {
+	$narrow = slk_editorial_image_id( $narrow_key );
+	$wide   = slk_editorial_image_id( $wide_key );
+	$attr   = array_merge( (array) $attr, array( 'alt' => $alt ) );
+
+	// With only one of the pair there is nothing to art-direct. Render it
+	// plainly rather than emit a <picture> that can only ever choose one way.
+	if ( ! $narrow || ! $wide ) {
+		return slk_editorial_image( $narrow ? $narrow_key : $wide_key, $size, $attr );
+	}
+
+	$img = slk_editorial_image( $narrow_key, $size, $attr );
+	$src = wp_get_attachment_image_url( $wide, $size );
+
+	if ( '' === $img || ! $src ) {
+		return $img;
+	}
+
+	$srcset = wp_get_attachment_image_srcset( $wide, $size );
+	$sizes  = wp_get_attachment_image_sizes( $wide, $size );
+
+	return sprintf(
+		'<picture><source media="(min-width:%1$s)" srcset="%2$s"%3$s>%4$s</picture>',
+		esc_attr( $bp ),
+		esc_attr( $srcset ? $srcset : $src ),
+		$sizes ? sprintf( ' sizes="%s"', esc_attr( $sizes ) ) : '',
+		$img
+	);
 }

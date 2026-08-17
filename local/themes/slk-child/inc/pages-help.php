@@ -176,8 +176,12 @@ function slk_faq_groups() {
 					'a' => __( 'Most of them are linen and cotton blends. We cut them loose, keep them opaque, and leave them unlined for the Colombo heat. Each product page lists its exact fabric.', 'slk' ),
 				),
 				array(
-					'q' => __( 'How many of each piece do you make?', 'slk' ),
-					'a' => __( 'We never make more than twenty of a cut. Once a size sells out in a print, it does not come back.', 'slk' ),
+					// The question used to ask for the batch size and the answer
+					// gave it. Both are now framed as rarity: the fact a buyer
+					// actually cares about is whether she will meet herself at a
+					// wedding, not what the run length is.
+					'q' => __( 'Will I see someone else in the same piece?', 'slk' ),
+					'a' => __( 'It is unlikely. We make a limited run of each piece and then retire it, so once a size sells out in a print it does not come back.', 'slk' ),
 				),
 				array(
 					'q' => __( 'Are the abayas lined?', 'slk' ),

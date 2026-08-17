@@ -496,10 +496,14 @@ add_action(
 @media (min-width:1000px){
 	.slk-hero__media{aspect-ratio:16/9}
 	.slk-hero__inner{bottom:var(--slk-space-12)}
-	/* Panel sits bottom-RIGHT: Najath's hero frame (DSC_3760) seats the trio
-	   hard left with the negative space on the right — the mockup's bottom-left
-	   placement assumed a figure right of centre. The panel follows the space. */
-	.slk-hero__panel{max-width:440px;padding:var(--slk-space-8);margin-inline-start:auto}
+	/* Panel sits bottom-LEFT, which is where the mockup had it and where the
+	   campaign hero puts its quiet space: the library frame walks the trio
+	   through the middle and seats the third against the marble counter on the
+	   right, so a right-hand panel lands squarely on her face and the beading
+	   down her front (measured against the 440px panel at 1440px). Left of the
+	   pink hem there is nothing but floor. The panel follows the space — it
+	   just moved back now that the photograph did. */
+	.slk-hero__panel{max-width:440px;padding:var(--slk-space-8);margin-inline-end:auto}
 	.slk-hero__title{font-size:var(--slk-display-l)}
 	.slk-hero__actions .slk-btn--primary{flex:none}
 

@@ -322,6 +322,40 @@ add_action(
 	text-decoration:none;
 }
 .slk-wordmark--initial{min-width:0}
+/* MEASURED BUG: the wordmark sat high in the header pill, 8px from the top of
+   the glass and 33px from the bottom.
+
+   Nothing in this file asked for that. style.css §2 gives every touchable
+   control a 44px minimum through `a[class*="slk-"]`, and the wordmark is an
+   anchor whose class starts with slk-, so it is caught by a rule written for
+   buttons and inputs. It gets the 44px box; being an inline-block, it then
+   lays its single 19px line at the TOP of that box and leaves 25px of dead
+   space underneath. The pill centres the anchor correctly — it is the letters
+   that are not centred inside the anchor.
+
+   Matching line-height to the touch height centres that one line on its own
+   half-leading, which keeps the 44px target intact (dropping to the height of
+   the text itself would shrink the home link below the minimum) and leaves the
+   horizontal machinery above — text-align, the text-indent that compensates
+   for trailing letter-space, min-width — completely untouched. Scoped to
+   anchors because that is exactly the set the touch rule inflates. */
+a.slk-wordmark{line-height:var(--slk-touch)}
+/* …and then the mark still read high, because centring the LINE BOX is not
+   centring the LETTERS. MAVÉA is all caps, so it paints nothing below the
+   baseline, but the line box still reserves the descender space every lowercase
+   g would need. Centre the box and you centre that empty space along with the
+   letters, which floats the word.
+
+   Measured in the live header at 17px: cap height 12.25px, font ascent 12px
+   over descent 5px, so the capitals came out 3.13px above the middle of the
+   pill. 3.13/17 is the .18em below, in em so it holds at every --md/--lg size
+   rather than only at this one.
+
+   The nudge targets CAP HEIGHT, not total ink. The acute on the E rises 3.5px
+   past the caps, and centring on that instead would drag the whole wordmark
+   down to make room for one diacritic. A accent is allowed to overhang; that
+   is what accents do. */
+a.slk-wordmark > .slk-wordmark__text{position:relative;top:.18em}
 .slk-wordmark--site{
 	display:inline-flex;
 	align-items:center;
