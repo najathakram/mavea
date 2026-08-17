@@ -34,9 +34,13 @@ add_action(
 
 		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-points.php';
 		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-points-admin.php';
+		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-finance-report.php';
+		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-studio-today.php';
 
 		SLK_Points::init();
 		SLK_Points_Admin::init();
+		SLK_Finance_Report::init();
+		SLK_Studio_Today::init();
 	},
 	10
 );

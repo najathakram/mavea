@@ -59,6 +59,14 @@ final class SLK_Exchange {
 	public const META_NOTE        = '_slk_exchange_note';
 	public const META_LOG         = '_slk_exchange_log';
 
+	/**
+	 * The send fee in force when the request was dispatched, and the moment
+	 * it was. Stamped by stamp_send_fee() — see there for why the live
+	 * setting is not enough.
+	 */
+	public const META_FEE           = '_slk_exchange_send_fee';
+	public const META_DISPATCHED_AT = '_slk_exchange_dispatched_at';
+
 	/** States (post_status values). */
 	public const STATE_REQUESTED  = 'requested';
 	public const STATE_APPROVED   = 'approved';
@@ -510,6 +518,10 @@ final class SLK_Exchange {
 			return $updated;
 		}
 
+		if ( self::STATE_DISPATCHED === $state ) {
+			self::stamp_send_fee( $id );
+		}
+
 		self::log(
 			$id,
 			sprintf(
@@ -522,6 +534,33 @@ final class SLK_Exchange {
 		);
 
 		return true;
+	}
+
+	/**
+	 * Record what the send fee actually was at the moment a request went out,
+	 * and when that was.
+	 *
+	 * The fee is collected in cash by the courier, so nothing else in the
+	 * store ever records it: every other place it appears reads the live
+	 * SLK_Fulfilment setting. That is fine for quoting a fee about to be
+	 * charged and useless afterwards — change the setting once and last
+	 * month's figure is gone for good, with no payment record anywhere to
+	 * reconstruct it from. This stamp is the only record, and it is why the
+	 * Finances screen can total the row at all.
+	 *
+	 * Written once. A request pushed back to "received" and dispatched again
+	 * keeps the fee it first went out under rather than quoting a second one
+	 * the customer was never charged.
+	 */
+	private static function stamp_send_fee( int $id ): void {
+		if ( '' !== (string) get_post_meta( $id, self::META_DISPATCHED_AT, true ) ) {
+			return;
+		}
+
+		$fee = class_exists( 'SLK_Fulfilment' ) ? SLK_Fulfilment::exchange_send_fee() : 0.0;
+
+		update_post_meta( $id, self::META_FEE, $fee );
+		update_post_meta( $id, self::META_DISPATCHED_AT, current_time( 'mysql' ) );
 	}
 
 	/**

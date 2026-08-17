@@ -481,7 +481,7 @@ final class SLK_Exchange_Admin {
 		echo '<td>' . esc_html( $reason ) . '</td>';
 		echo '<td>' . esc_html( $state );
 
-		$fee_note = self::send_fee_note( (string) ( $exchange['state'] ?? '' ) );
+		$fee_note = self::send_fee_note( (string) ( $exchange['state'] ?? '' ), (int) ( $exchange['id'] ?? 0 ) );
 		if ( '' !== $fee_note ) {
 			// send_fee_note() escapes its own copy and hands back wc_price()'s
 			// own markup for the amount.
@@ -621,21 +621,28 @@ final class SLK_Exchange_Admin {
 	/**
 	 * What the courier collects on delivery, stated on the request itself once
 	 * it is dispatched — the plan's "on dispatched, if exchange_send_fee > 0,
-	 * staff see the fee stated on the request". Since there is no online
-	 * payment for it, this line and the customer's dispatch email are the only
-	 * places the figure appears at all, so it is read live from SLK_Fulfilment
-	 * exactly as that email reads it and the two can never quote different
-	 * amounts. A fee of zero states nothing: there is nothing to collect.
+	 * staff see the fee stated on the request".
+	 *
+	 * The figure comes from SLK_Exchange::META_FEE, the fee stamped on the
+	 * request when it went out, not from the live setting: the Finances
+	 * screen totals that same stamp, and the two staff-facing screens must
+	 * never disagree about what a September dispatch was charged because the
+	 * owner raised the setting in October. The live setting is the fallback
+	 * only for requests dispatched before the stamping existed, which carry
+	 * no stamp to read. A fee of zero states nothing: there is nothing to
+	 * collect.
 	 *
 	 * @param string $state The request's current state key.
+	 * @param int    $id    The request's post id, whose stamped fee is read.
 	 * @return string Ready-to-echo HTML, empty when there is nothing to say.
 	 */
-	public static function send_fee_note( string $state ): string {
+	public static function send_fee_note( string $state, int $id ): string {
 		if ( SLK_Exchange::STATE_DISPATCHED !== $state ) {
 			return '';
 		}
 
-		$fee = SLK_Fulfilment::exchange_send_fee();
+		$stamped = $id > 0 ? get_post_meta( $id, SLK_Exchange::META_FEE, true ) : '';
+		$fee     = '' === $stamped ? SLK_Fulfilment::exchange_send_fee() : max( 0.0, (float) $stamped );
 
 		if ( $fee <= 0 ) {
 			return '';
@@ -915,7 +922,7 @@ final class SLK_Exchanges_List_Table extends WP_List_Table {
 			esc_html( $label )
 		);
 
-		$fee_note = SLK_Exchange_Admin::send_fee_note( $state );
+		$fee_note = SLK_Exchange_Admin::send_fee_note( $state, (int) ( $item['id'] ?? 0 ) );
 		if ( '' !== $fee_note ) {
 			// send_fee_note() escapes its own copy and hands back wc_price()'s
 			// own markup for the amount.
