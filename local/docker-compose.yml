@@ -2,7 +2,7 @@
 # Host-independent: everything built here (plugins, theme, catalog) exports to
 # WordPress.com or Hostinger later. No cost.
 #
-# NOTE: the three bind mounts below are RELATIVE to this file's directory, so if
+# NOTE: the bind mounts below are RELATIVE to this file's directory, so if
 # the repo folder is ever renamed the running containers keep the old absolute
 # path and the mounts silently go dead — the theme and our plugins vanish from
 # the container while it still looks healthy. Fix: `docker compose down` then
@@ -57,6 +57,7 @@ services:
       # version-controlled. These are the plan's §9 custom components.
       - ./plugins/slk-checkout:/var/www/html/wp-content/plugins/slk-checkout
       - ./plugins/slk-order-flow:/var/www/html/wp-content/plugins/slk-order-flow
+      - ./plugins/slk-exchanges:/var/www/html/wp-content/plugins/slk-exchanges
       - ./themes/slk-child:/var/www/html/wp-content/themes/slk-child
       - ./php.ini:/usr/local/etc/php/conf.d/zz-slk.ini:ro
 
@@ -77,6 +78,7 @@ services:
       - wp_data:/var/www/html
       - ./plugins/slk-checkout:/var/www/html/wp-content/plugins/slk-checkout
       - ./plugins/slk-order-flow:/var/www/html/wp-content/plugins/slk-order-flow
+      - ./plugins/slk-exchanges:/var/www/html/wp-content/plugins/slk-exchanges
       - ./themes/slk-child:/var/www/html/wp-content/themes/slk-child
     entrypoint: ["wp"]
     command: ["--info"]

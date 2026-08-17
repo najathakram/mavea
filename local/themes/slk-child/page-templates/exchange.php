@@ -62,6 +62,20 @@ $rules = array(
 			<span class="slk-eyebrow"><?php esc_html_e( 'Exchange policy', 'slk' ); ?></span>
 			<h1><?php esc_html_e( 'Exchanges', 'slk' ); ?></h1>
 			<p><?php esc_html_e( 'We exchange, we do not refund. Every piece is made to order.', 'slk' ); ?></p>
+			<?php if ( is_user_logged_in() && class_exists( 'SLK_Exchange_Account' ) && SLK_Exchange_Account::has_eligible_lines( get_current_user_id() ) ) : ?>
+				<?php
+				// SLK_Exchange_Account (slk-exchanges plugin) owns the My Account
+				// "Exchanges" endpoint this links to; guarded on class_exists so the
+				// page still renders its normal copy if that plugin is ever off, and
+				// on has_eligible_lines() so the link only appears for a shopper who
+				// actually has something to exchange — never sending someone to the
+				// endpoint to be told nothing qualifies.
+				?>
+				<p class="slk-help-hero__account">
+					<?php esc_html_e( 'Already have a delivered order?', 'slk' ); ?>
+					<a href="<?php echo esc_url( SLK_Exchange_Account::url() ); ?>"><?php esc_html_e( 'Request an exchange from My Account.', 'slk' ); ?></a>
+				</p>
+			<?php endif; ?>
 		</div>
 
 		<div class="slk-help-section">
