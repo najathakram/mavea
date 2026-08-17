@@ -60,10 +60,24 @@ configures everything after each account exists. Order matters — follow the se
       conclude the registry is down without testing the individual IPs
       (`curl --resolve rs.domains.lk:443:203.94.71.235 …`).
 
-- [ ] **After the 22:00 batch:** confirm delegation (`nslookup -type=NS mavea.lk 8.8.8.8`
-      should return the Cloudflare pair), let Hostinger issue the Let's Encrypt certificate for
-      `mavea.lk`, **then switch Cloudflare SSL to Full (Strict)**, and add cache-bypass rules
-      for `/cart`, `/checkout`, `/my-account`, `/wc-api/*` on both Cloudflare and LiteSpeed.
+- [x] **Delegation is LIVE** — confirmed 2026-08-17 ~22:15 Colombo, the same night it was filed.
+      The authoritative `.lk` server returns `casey`/`imani.ns.cloudflare.com`, and `mavea.lk`
+      resolves to Cloudflare edge IPs (`104.21.53.254`, `172.67.221.232`, + IPv6), which proves
+      both delegation and that the proxy is on. Cloudflare zone status: **Active**.
+
+- [ ] **Cloudflare edge certificate** — `*.mavea.lk, mavea.lk`, Universal, currently
+      **Pending Validation (TXT)**. HTTPS to the domain fails until this issues (TLS handshake
+      aborts). Cloudflare is authoritative for the zone so it self-validates — no action needed,
+      usually 15 min–few hours. Nothing is misconfigured; just wait.
+
+- [ ] **Then, in this order:**
+      1. Confirm `https://mavea.lk` serves (edge cert issued).
+      2. Let **Hostinger** issue its own Let's Encrypt cert for `mavea.lk` — it can only do this
+         once the domain resolves to it, which is now true.
+      3. **Only then** switch Cloudflare SSL from Full to **Full (Strict)**. Doing it earlier
+         returns 526 to every visitor.
+      4. Add cache-bypass rules for `/cart`, `/checkout`, `/my-account`, `/wc-api/*` on **both**
+         Cloudflare and LiteSpeed, or add-to-cart silently breaks on a warm cache.
 
 ### DNS values (read from hPanel 2026-08-17) — file at the registry, NOT as registry-hosted records
 
