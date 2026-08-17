@@ -31,7 +31,15 @@ Her friend with excellent taste, not a boutique assistant and not a preacher.
 
 - Say what a thing is: "Linen, unlined, falls to the ankle."
 - Modesty is the given. Never the pitch. Never "for sisters", never "cover up".
-- Sri Lanka is stated plainly and often — districts by name, rupees, Galle.
+- Sri Lanka is stated plainly and often — the country by name, rupees, districts
+  where a customer is choosing where her order goes.
+- **Never name Galle, or any town, as where the clothes are made.** Provenance is
+  "made in Sri Lanka", and that is the whole claim. No atelier location, no
+  "packed in ⟨town⟩", no branch or visit-us address. Set by Najath 2026-08-18,
+  and it overrides the earlier version of this line, which invited naming Galle.
+  Delivery districts are the one exception: a shipping-rate table and the
+  district selector must still list all 25, Galle among them, because she is
+  picking a destination, not being told an origin.
 - Numbers over adjectives: "eight women", "twenty of a cut", "7 days".
 
 Never: urgency, scarcity theatre, exclamation marks, "shop now babe", emoji.
