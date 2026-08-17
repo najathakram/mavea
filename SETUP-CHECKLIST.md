@@ -65,19 +65,28 @@ configures everything after each account exists. Order matters — follow the se
       resolves to Cloudflare edge IPs (`104.21.53.254`, `172.67.221.232`, + IPv6), which proves
       both delegation and that the proxy is on. Cloudflare zone status: **Active**.
 
-- [ ] **Cloudflare edge certificate** — `*.mavea.lk, mavea.lk`, Universal, currently
-      **Pending Validation (TXT)**. HTTPS to the domain fails until this issues (TLS handshake
-      aborts). Cloudflare is authoritative for the zone so it self-validates — no action needed,
-      usually 15 min–few hours. Nothing is misconfigured; just wait.
+- [x] **Certificates issued, both ends** — 2026-08-17, within hours of delegation.
+      - Cloudflare edge: `CN=mavea.lk` (Google Trust Services), valid to 2026-11-15.
+      - Hostinger origin: `CN=mavea.lk`, Let's Encrypt — issued automatically once the domain
+        resolved to it.
+      - Briefly served **525** in between: the edge cert issued before the origin cert existed,
+        so the Cloudflare→origin handshake had nothing to talk to. It cleared itself. A 525 in
+        this window is expected, not a misconfiguration.
 
-- [ ] **Then, in this order:**
-      1. Confirm `https://mavea.lk` serves (edge cert issued).
-      2. Let **Hostinger** issue its own Let's Encrypt cert for `mavea.lk` — it can only do this
-         once the domain resolves to it, which is now true.
-      3. **Only then** switch Cloudflare SSL from Full to **Full (Strict)**. Doing it earlier
-         returns 526 to every visitor.
-      4. Add cache-bypass rules for `/cart`, `/checkout`, `/my-account`, `/wc-api/*` on **both**
-         Cloudflare and LiteSpeed, or add-to-cart silently breaks on a warm cache.
+- [x] **Cloudflare SSL set to Full (Strict)** — done once the origin cert was verified present.
+      Post-change: `https://mavea.lk` 200, `www` and `http://` both 301 to canonical HTTPS, and
+      `wp-login.php` 200 with no redirect loop (the failure Flexible would have caused).
+
+- [x] **Cache behaviour verified — no bypass rules were needed.** Measured, not assumed:
+      `/cart/`, `/checkout/`, `/my-account/` all return `x-litespeed-cache: none`, and every path
+      is `cf-cache-status: DYNAMIC`. LiteSpeed's built-in WooCommerce awareness already excludes
+      the transactional pages, and Cloudflare does not cache HTML by default.
+      ⚠ **This silently breaks if anyone adds a Cloudflare "Cache Everything" rule** — DYNAMIC
+      becomes HIT and add-to-cart starts failing on a warm cache. Re-run the header check above
+      after any caching change.
+
+**`mavea.lk` is live end-to-end** — Colombo → Cloudflare edge → Hostinger Singapore, HTTPS
+throughout, serving the WooCommerce install. Store still held in "coming soon".
 
 ### DNS values (read from hPanel 2026-08-17) — file at the registry, NOT as registry-hosted records
 
