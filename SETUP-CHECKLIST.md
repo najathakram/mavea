@@ -39,6 +39,22 @@ configures everything after each account exists. Order matters — follow the se
       import. Not the DNS scan; the zone-creation call itself. Retry, or open a Cloudflare
       support ticket. **Until the zone exists there are no nameservers to file at the registry,
       so the 10 PM DNS window cannot be used.**
+
+### DNS values (read from hPanel 2026-08-17) — file at the registry, NOT as registry-hosted records
+
+**Delegate nameservers. Do not use the registry's own A-record hosting.** If DNS lives at the
+registry, every later record change is stuck in the once-daily 10 PM batch — and PayHere domain
+verification, Brevo SPF/DKIM/DMARC, and the COD null-MX subdomain all still have to be added.
+Delegating means only the one NS change is batched; everything after it is instant.
+
+| Path | Values |
+|---|---|
+| **Cloudflare** (preferred) | the two NS Cloudflare issues once the zone exists — then in CF: `A @ → 46.17.172.250` proxied, `CNAME www → mavea.lk` proxied, SSL **Full (Strict)** |
+| **Hostinger** (fallback) | `lunar.dns-parking.com` · `solar.dns-parking.com` |
+| ~~Registry A record~~ | ~~`A @ → 46.17.172.250`, `CNAME www → mavea.lk`~~ — avoid, see above |
+
+Hostinger allows **30 days** from 2026-08-17 to connect the domain, so there is room to wait for
+Cloudflare rather than double-file.
 - [ ] **Koombiyo Delivery** merchant account (https://koombiyodelivery.lk) — ask for: rate
       card, COD remittance cycle, API credentials, pickup from Galle arrangements
 - [ ] **Notify.lk** account — buy a starter SMS package, request **MAVEA** as sender ID
