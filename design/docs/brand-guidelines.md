@@ -1,8 +1,9 @@
-# SL Dress — brand guidelines (working draft)
+# MAVÉA — brand guidelines (working draft)
 
-The name is not chosen. Everything here is built to survive that decision: the
-wordmark is a typographic system, not a mark, and no motif is derived from a
-name. Swapping the name touches `--slk-wordmark-font` and `/assets/wordmark.svg`.
+The name is **MAVÉA**, settled at gate G1 on 2026-08-15. Everything here was
+built to survive that decision before it was taken, and that still holds: the
+wordmark is a typographic system, not a mark, and no motif is derived from the
+name. Swapping it touches `--slk-wordmark-font` and `/assets/wordmark.svg`.
 
 ---
 
@@ -81,7 +82,8 @@ declared, everything below the fold lazy-loaded. CLS target under 0.1.
 
 ## 6. Wordmark system
 
-The name will be 4–8 letters. The system holds regardless.
+The name is MAVÉA — 5 letters, inside the 4–8 this system was designed for, so
+nothing below changed at G1 except the accent rule in the last bullet.
 
 - Set in `--slk-wordmark-font` (Newsreader), weight 300, letter-spacing
   `--slk-wordmark-tracking` (0.26em), all caps, optical centre corrected by
@@ -92,6 +94,12 @@ The name will be 4–8 letters. The system holds regardless.
   never on a photograph without a solid plate behind it.
 - Ships as a single SVG at `/assets/wordmark.svg`, referenced once in the
   header partial and once in the footer.
+- **The accent is load-bearing.** É sits above cap height, so the wordmark sets
+  `line-height: 1.15`; at `1` the line box equals the font-size and the acute
+  clips wherever no min-height floor exists. Uppercasing is CSS-side only —
+  PHP's `strtoupper()` is byte-based and would corrupt the UTF-8 to `MAVÃ‰A`.
+  Where the accent cannot travel (domains, handles, slugs, filenames) the form
+  is the bare ASCII `mavea`.
 
 ## 7. Commerce rules
 
@@ -115,12 +123,22 @@ The name will be 4–8 letters. The system holds regardless.
 
 Two corrections applied when porting this to WordPress:
 
-1. **The mockups set the wordmark as `AESHAL` in 40 places.** That is the
+1. **The mockups set the wordmark as `AESHAL` in 40 places.** That was the
    designer's 6-letter placeholder for the tracking demo (the wordmark screen
-   shows NILA / AESHAL / SERENDIB as length tests). It is also the one name
+   showed NILA / AESHAL / SERENDIB as length tests). It is also the one name
    this brand may never carry — Aeshal is the US sister label, and the founding
    constraint is that this store carries a different name. The implementation
-   uses a neutral placeholder driven by one filter, exactly as §6 requires.
+   used a neutral placeholder driven by one filter, exactly as §6 requires.
+
+   **Resolved 2026-08-15 (gate G1): the brand is MAVÉA**, and all 40 rendered
+   occurrences now read `MAVÉA`. The length ladder is NILA / MAVÉA / SERENDIB
+   at 4 / 5 / 8 letters. Two consequences of the accent, both live in the code:
+   the É must be preserved as UTF-8 (two bytes, `C3 89`) and never passed
+   through PHP's byte-based `strtoupper()` — uppercasing is CSS-side, where it
+   is Unicode-aware; and `.slk-wordmark` now sets `line-height: 1.15` rather
+   than `1`, because at `1` the line box equals the font-size and the acute
+   accent overflows it, which clipped in the footer and in the 26px specimen.
+   §6's system is otherwise unchanged — it always held for 4–8 letters.
 2. **§3 and §8 originally referenced a teal focus ring and `--slk-color-on-teal`.**
    No teal token exists in this palette — a leftover from the rejected Island
    Modern direction. Resolved in favour of the shipped token set: focus rings

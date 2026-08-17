@@ -199,8 +199,8 @@ Hard rules, each already learned the hard way here:
 ## Verification commands
 
 ```
-cd /c/ClaudeCode/sldress/local && export MSYS_NO_PATHCONV=1 && fail=0; for f in plugins/slk-checkout/includes/class-slk-checkout-fields.php plugins/slk-checkout/includes/class-slk-google.php plugins/slk-checkout/slk-checkout.php themes/slk-child/woocommerce/checkout/form-checkout.php themes/slk-child/inc/account.php themes/slk-child/inc/checkout-view.php; do out=$(docker compose exec -T wordpress php -l "/var/www/html/wp-content/$f" 2>&1 | tail -1); case "$out" in "No syntax errors"*) ;; *) echo "LINT FAIL $f: $out"; fail=1;; esac; done; exit $fail
-cd /c/ClaudeCode/sldress/local && bash -n setup-plugins.sh
+cd /c/ClaudeCode/mavea/local && export MSYS_NO_PATHCONV=1 && fail=0; for f in plugins/slk-checkout/includes/class-slk-checkout-fields.php plugins/slk-checkout/includes/class-slk-google.php plugins/slk-checkout/slk-checkout.php themes/slk-child/woocommerce/checkout/form-checkout.php themes/slk-child/inc/account.php themes/slk-child/inc/checkout-view.php; do out=$(docker compose exec -T wordpress php -l "/var/www/html/wp-content/$f" 2>&1 | tail -1); case "$out" in "No syntax errors"*) ;; *) echo "LINT FAIL $f: $out"; fail=1;; esac; done; exit $fail
+cd /c/ClaudeCode/mavea/local && bash -n setup-plugins.sh
 ```
 
 `MSYS_NO_PATHCONV=1` is required before any `docker compose exec` here. wp-cli

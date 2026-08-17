@@ -1,6 +1,13 @@
-# Local WordPress + WooCommerce dev stack for the SL sister store.
+# Local WordPress + WooCommerce dev stack for MAVÉA (the SL sister store).
 # Host-independent: everything built here (plugins, theme, catalog) exports to
-# WordPress.com or Hostinger later. No cost, no brand name needed.
+# WordPress.com or Hostinger later. No cost.
+#
+# NOTE: the three bind mounts below are RELATIVE to this file's directory, so if
+# the repo folder is ever renamed the running containers keep the old absolute
+# path and the mounts silently go dead — the theme and our plugins vanish from
+# the container while it still looks healthy. Fix: `docker compose down` then
+# `up -d` (never `-v`) to re-resolve them. This happened at the sldress → mavea
+# rename on 2026-08-15.
 #
 #   docker compose up -d      → http://localhost:8088
 #   docker compose down       → stop (data survives in named volumes)

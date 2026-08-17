@@ -51,7 +51,12 @@ the stack explicitly as `html-css` (its docs warn never to let it assume a stack
 
 ## 2. Hard constraints the design must respect
 
-**The brand name is not chosen yet.** This is the single biggest constraint.
+**The brand name was not chosen when this brief was written.** It was the single biggest
+constraint, and it is the reason the design is a wordmark *system* rather than a logo.
+✅ **Resolved at gate G1 on 2026-08-15: the name is MAVÉA.** The constraints below still stand
+as shipped — the system was built to absorb a name late, and it did, in one line. The only
+addition the real name forced was an accent rule: see §6 of
+[design/docs/brand-guidelines.md](design/docs/brand-guidelines.md).
 - Do **not** deliver a finished logo. Deliver a **wordmark system**: a typographic treatment,
   lockup rules and clear-space spec that works for any name of 4–8 letters.
 - Use a neutral placeholder in all mockups. Keep the logo a single swappable asset/token so
@@ -157,7 +162,7 @@ Generate and persist the design system. Run from the repo root:
 ```bash
 python "${CLAUDE_PLUGIN_ROOT}/.claude/skills/ui-ux-pro-max/scripts/search.py" \
   "ecommerce modest fashion boutique women apparel mobile-first warm trustworthy" \
-  --design-system --persist -p "SL Dress" --output-dir "C:/ClaudeCode/sldress"
+  --design-system --persist -p "MAVÉA" --output-dir "C:/ClaudeCode/mavea"
 ```
 
 Ask it for: pattern + style recommendation, colour palette, font pairing, effects, and the
@@ -181,7 +186,7 @@ Build high-fidelity, reviewable HTML mockups before touching WordPress. Two desi
 available: **Modernist** (better fit for a contemporary fashion brand) and **Classical** (the
 default; more editorial). Recommend starting from Modernist unless Quiet Luxe is chosen.
 
-Create a project named `SL Dress — Storefront`, then produce, in this order:
+Create a project named `MAVÉA — Storefront`, then produce, in this order:
 `home.html`, `product.html`, `shop.html`, `checkout.html`, and a `components.html` sheet.
 Mobile viewport first (390px), then the desktop layout. Use real Sri Lankan content — real
 district names, `Rs. 12,500` pricing, real garment names — never lorem ipsum, because fake

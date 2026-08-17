@@ -9,7 +9,7 @@
  *
  * The COD confirmation lifecycle (custom order statuses, stock reservation at
  * order creation, SMS hooks, WhatsApp confirm actions, ops role) described in
- * sister-lk/00-PLAN.md §6 is still scaffold only and is built later through
+ * 00-PLAN.md §6 is still scaffold only and is built later through
  * the dev-pipeline skill. Loyalty points, below, are real.
  */
 

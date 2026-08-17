@@ -2,7 +2,7 @@
 # One-shot bring-up for the local SL store dev site.
 # Prereq: Docker engine running (Docker Desktop must be started as Administrator once).
 #
-#   bash sister-lk/local/bootstrap.sh
+#   bash local/bootstrap.sh
 #
 # Idempotent: safe to re-run. Destroy with `docker compose down -v`.
 set -euo pipefail
@@ -34,7 +34,7 @@ else
   ADMIN_PASS="$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 18)"
   wp core install \
     --url="$SITE_URL" \
-    --title="Sister LK (working title)" \
+    --title="MAVÉA" \
     --admin_user="$ADMIN_USER" \
     --admin_password="$ADMIN_PASS" \
     --admin_email="$ADMIN_EMAIL" \

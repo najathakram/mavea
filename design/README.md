@@ -35,9 +35,15 @@ photography spec and share card.
 
 ## Two things to know before touching it
 
-1. **The wordmark reads `AESHAL` in 40 places — it is a placeholder, not the brand.** The
-   wordmark screen uses NILA / AESHAL / SERENDIB purely as 4/6/8-letter tracking tests. Aeshal
-   is the US sister label and is the one name this store may never carry. The implementation
-   drives the wordmark from a single `slk_wordmark` filter; renaming is a one-line change.
+1. **The wordmark reads `MAVÉA` — the real brand, settled at gate G1 on 2026-08-15.** It was
+   `AESHAL` in 40 places until then; that was the designer's 6-letter tracking placeholder and
+   it is the one name this store may never carry, because Aeshal is the US sister label. The
+   only surviving `AESHAL` strings are deliberate and must not be "fixed": the forbidden-name
+   guard in `_tools/crawl_site.py`, the historical finding in `_reports/02-brand-compliance.md`,
+   and the sister label's own photo path in `_tools/prepare_images.py`.
+   The wordmark screen keeps NILA / MAVÉA / SERENDIB as 4/5/8-letter tracking tests. The
+   implementation drives the wordmark from a single `slk_wordmark` filter; renaming is still a
+   one-line change. Note the É: files carrying it must stay UTF-8, and PHP's byte-based
+   `strtoupper()` must never touch it — see `local/themes/slk-child/inc/wordmark.php`.
 2. **67 image slots, zero real images.** Imagery is deferred to the shoot. The photography
    spec in `docs/brand-guidelines.md` §5 is a hard constraint list, not a mood board.

@@ -2,12 +2,12 @@
 
 No occurrence of `AESHAL`/`Aeshal` reaches any rendered string, class name, attribute or CSS selector. The single hit is a PHP comment:
 
-- `C:/ClaudeCode/sldress/local/themes/slk-child/inc/wordmark.php:7` — explanatory comment only, never output. **Not a violation.**
+- `C:/ClaudeCode/mavea/local/themes/slk-child/inc/wordmark.php:7` — explanatory comment only, never output. **Not a violation.**
 
 The wordmark genuinely comes from one filter (`slk_wordmark`, `wordmark.php:42`), and `get_custom_logo` (:168) + `bloginfo` (:190) both route through `slk_wordmark_text()`.
 
 **VIOLATION — the rename is not actually one line.**
-`C:/ClaudeCode/sldress/local/themes/slk-child/inc/wordmark.php:190-201`
+`C:/ClaudeCode/mavea/local/themes/slk-child/inc/wordmark.php:190-201`
 The `bloginfo` filter only covers `get_bloginfo()`. `WC_Email::get_from_name()`, the `{site_title}` placeholder in every order email subject/heading, and the email footer all read `wp_specialchars_decode( get_option( 'blogname' ) )` **directly**, bypassing the filter. After G1, `add_filter( 'slk_wordmark', … )` renames the header and `<title>` but leaves the old name on every transactional email, invoice and packing slip. The `is_admin()` early return (:171, :193) means wp-admin also keeps the stale name.
 
 Fix — add to `wordmark.php` beside the existing filters:
@@ -23,7 +23,7 @@ and delete the `is_admin()` guards, or the rename is a two-place change and the 
 Confirmed working: `functions.php:145-154` removes both `sale_flash` actions and empties the `woocommerce_sale_flash` filter; `shop.php:272-283` collapses `<del>/<ins>` at `woocommerce_get_price_html`; `style.css:1277-1291` hides `.onsale` and `del`. No countdown, no "only N left", no percentage badge exists anywhere.
 
 **VIOLATION — `del` suppression is scoped to `.woocommerce`, `.onsale` is not.**
-`C:/ClaudeCode/sldress/local/themes/slk-child/style.css:1285-1291`
+`C:/ClaudeCode/mavea/local/themes/slk-child/style.css:1285-1291`
 `span.onsale` is written unscoped (:1277) precisely so it wins everywhere, but the struck-price block underneath requires a `.woocommerce` ancestor. WooCommerce block markup (Product Collection / Product Price block) on the home page or any non-Woo page carries **no** `.woocommerce` wrapper and no `body.woocommerce` class, so `<del>` renders. The PHP filter is currently the only thing standing between the brand and a strikethrough there.
 
 Fix — drop the prefix, matching how `.onsale` is handled two rules above:
@@ -34,7 +34,7 @@ del,
 ```
 
 **VIOLATION — the sale filter corrupts variable-product prices.**
-`C:/ClaudeCode/sldress/local/themes/slk-child/inc/shop.php:279`
+`C:/ClaudeCode/mavea/local/themes/slk-child/inc/shop.php:279`
 ```php
 return wc_price( wc_get_price_to_display( $product ) );
 ```
@@ -51,7 +51,7 @@ return wc_price( wc_get_price_to_display( $product ) );
 ```
 
 **VIOLATION — the promised PHP half of the stock suppression was never written.**
-`C:/ClaudeCode/sldress/local/themes/slk-child/style.css:1299-1306` states *"The text itself should be filtered out in PHP (`woocommerce_get_stock_html`)"*. Grep of the whole tree: no `woocommerce_get_stock_html`, no `woocommerce_stock_format`, no `get_availability` filter exists. `"Only 2 left in stock"` is generated and shipped in the HTML on every PDP, hidden by a CSS rule scoped to `.woocommerce div.product`. One parent-theme wrapper change and scarcity copy is on screen.
+`C:/ClaudeCode/mavea/local/themes/slk-child/style.css:1299-1306` states *"The text itself should be filtered out in PHP (`woocommerce_get_stock_html`)"*. Grep of the whole tree: no `woocommerce_get_stock_html`, no `woocommerce_stock_format`, no `get_availability` filter exists. `"Only 2 left in stock"` is generated and shipped in the HTML on every PDP, hidden by a CSS rule scoped to `.woocommerce div.product`. One parent-theme wrapper change and scarcity copy is on screen.
 
 Fix — add to `functions.php` §5:
 ```php
@@ -67,7 +67,7 @@ add_filter( 'woocommerce_get_stock_html', static function ( $html, $product ) {
 No hardcoded symbol reaches customer output. `Rs.` appears exactly once as behaviour — `slk-checkout.php:33`, the `woocommerce_currency_symbol` filter, which is the correct single place and feeds `wc_price()`. Everything else is docblocks. `wc_price()` is used correctly at `shop.php:279`; every other amount comes from `WC()->cart->get_product_price()`, `get_price_html()` or `get_formatted_order_total()`.
 
 **VIOLATION — nothing in the shipped code guarantees zero decimals.**
-`C:/ClaudeCode/sldress/local/plugins/slk-checkout/includes/class-slk-money.php:10-14` deliberately refuses to filter `wc_get_price_decimals()` and defers to a manual WooCommerce setting. The only thing that sets it is `C:/ClaudeCode/sldress/local/bootstrap.sh:64` (`woocommerce_price_num_decimals 0`), which is the **local Docker dev bootstrap** and never runs on the production install. On a fresh host, every price on the site renders `Rs. 12,500.00`, breaking §7 outright. The plugin's own reasoning (line-rounding, gateway hashing) is sound but the mitigation is missing.
+`C:/ClaudeCode/mavea/local/plugins/slk-checkout/includes/class-slk-money.php:10-14` deliberately refuses to filter `wc_get_price_decimals()` and defers to a manual WooCommerce setting. The only thing that sets it is `C:/ClaudeCode/mavea/local/bootstrap.sh:64` (`woocommerce_price_num_decimals 0`), which is the **local Docker dev bootstrap** and never runs on the production install. On a fresh host, every price on the site renders `Rs. 12,500.00`, breaking §7 outright. The plugin's own reasoning (line-rounding, gateway hashing) is sound but the mitigation is missing.
 
 Fix — either enforce the option on plugin activation (safe, one-time, does not change runtime maths):
 ```php
@@ -122,7 +122,7 @@ Especially damning: `class-slk-checkout-fields.php:325-334` goes to real trouble
 
 ### 4b. Field hints render as errors
 
-`C:/ClaudeCode/sldress/local/themes/slk-child/inc/checkout-view.php:172-173`
+`C:/ClaudeCode/mavea/local/themes/slk-child/inc/checkout-view.php:172-173`
 ```css
 .slk-checkout .form-row .woocommerce-input-wrapper .description,
 .slk-checkout .form-row .woocommerce-invalid-message{ … color:var(--slk-color-error) }
@@ -181,7 +181,7 @@ Fix: use `aria-disabled="true"` + `pointer-events:none` instead of `disabled`, s
 ## 5. VOICE
 
 **VIOLATION — exclamation mark.**
-`C:/ClaudeCode/sldress/local/themes/slk-child/inc/cart.php:175`
+`C:/ClaudeCode/mavea/local/themes/slk-child/inc/cart.php:175`
 ```php
 $whatsapp_url = slk_whatsapp_url( __( "Hi! I'm looking for something specific.", 'slk' ) );
 ```
@@ -197,4 +197,4 @@ No emoji (checked against the pictographic ranges), no "shop now"/"buy now", no 
 
 ## One non-category defect worth surfacing
 
-`C:/ClaudeCode/sldress/local/themes/slk-child/woocommerce/checkout/thankyou.php:182` renders the primary "Track this order on WhatsApp" button unconditionally, and `slk_whatsapp_track_url()` (`inc/checkout-view.php:60`) returns `'#'` when no number is configured — which is the current state. Every completed order currently ends on a dead primary CTA. `inc/cart.php:177` and `inc/pdp.php:181` both correctly suppress the button when the number is empty; this file does not. Fix: wrap the anchor in `if ( '#' !== $slk_whatsapp_url )`.
+`C:/ClaudeCode/mavea/local/themes/slk-child/woocommerce/checkout/thankyou.php:182` renders the primary "Track this order on WhatsApp" button unconditionally, and `slk_whatsapp_track_url()` (`inc/checkout-view.php:60`) returns `'#'` when no number is configured — which is the current state. Every completed order currently ends on a dead primary CTA. `inc/cart.php:177` and `inc/pdp.php:181` both correctly suppress the button when the number is empty; this file does not. Fix: wrap the anchor in `if ( '#' !== $slk_whatsapp_url )`.

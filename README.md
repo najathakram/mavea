@@ -1,20 +1,23 @@
-# sldress — Sri Lanka modest-fashion store (WordPress / WooCommerce)
+# MAVÉA — Sri Lanka modest-fashion store (WordPress / WooCommerce)
 
 Sister brand to Aeshal (US, Shopify), operating entirely in Sri Lanka: LKR pricing, COD-first
 checkout, small-batch ready-to-wear from the Galle atelier, aimed at modern-yet-modest Sri
 Lankan Muslim women at a lower price point than Aeshal.
 
-**The brand name is not chosen yet.** `sldress` and the `slk-` code prefix are placeholders
-picked so nothing needs renaming later — when the name lands, only display strings change.
+**The brand name is MAVÉA**, settled at gate G1 on 2026-08-15, on the domain `mavea.lk`.
+The accent is part of the name but travels only in display strings; anything that must be
+ASCII — domain, handles, slugs, file names, this repo — uses `mavea`. The `slk-` code prefix
+is **not** a brand marker: it stands for Sri Lanka, and it stays as it is.
 
 ## Start here
 
 | File | What it is |
 |---|---|
+| [HANDOFF.md](HANDOFF.md) | **Read first.** Living status: what is done, what is open, and what bit us |
 | [00-PLAN.md](00-PLAN.md) | The approved build plan — architecture, payments, order flow, gates G1–G5 |
 | [HOSTING-DECISION.md](HOSTING-DECISION.md) | WordPress.com vs Hostinger, with verified 2026 pricing; why we build local and buy later |
 | [SETUP-CHECKLIST.md](SETUP-CHECKLIST.md) | The accounts only Najath can create (PayHere, Koko, Koombiyo, domains) |
-| [NAMING.md](NAMING.md) | 26 candidate names with live domain/Instagram/collision evidence — gate G1 is deferred, not closed |
+| [NAMING.md](NAMING.md) | 26 candidate names with live domain/Instagram/collision evidence — gate G1 closed on MAVÉA, 2026-08-15 |
 | [reference/](reference/) | Verified market data (the 25 districts, etc.) |
 
 ## Run the site locally
@@ -52,8 +55,13 @@ third-party plugins live in a Docker volume and are **not** committed.
 `slk-checkout` and `slk-child` are implemented; `slk-order-flow` is still a scaffold. Further
 implementation goes through the `dev-pipeline` skill.
 
-The brand name is still at gate G1. Nothing hardcodes it: the wordmark is text supplied by the
-`slk_wordmark` filter, the code prefix is `slk-`, and the placeholder reads "SL DRESS".
+Gate G1 is closed and the brand is MAVÉA. Nothing hardcodes it: the wordmark is text supplied
+by the `slk_wordmark` filter, whose default is the single source of truth in
+[inc/wordmark.php](local/themes/slk-child/inc/wordmark.php). Renaming remains a one-line
+change. The `slk-` prefix on plugins, classes, functions and CSS is a Sri Lanka marker, not a
+brand one, so it was deliberately left alone — renaming it would churn every PHP file, the
+`_slk_*` order meta already written to live orders, and the activated theme/plugin paths in
+the local database, for no gain.
 
 ## Conventions carried over from Aeshal
 

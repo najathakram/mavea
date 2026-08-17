@@ -27,7 +27,7 @@ Text Domain: slk
    1. TOKENS — design/assets/design-tokens.css, verbatim
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* SL Dress — design tokens
+/* MAVÉA — design tokens
    Direction: Porcelain Glass (3a) — warm neutrals, frosted glass, soft depth.
    Paste into local/themes/slk-child/style.css. Nothing outside this token set
    should be hand-styled.
@@ -116,7 +116,7 @@ Text Domain: slk
    2. COMPONENTS — design/assets/components.css, verbatim
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* SL Dress — component layer
+/* MAVÉA — component layer
    Porcelain Glass. Depends on assets/design-tokens.css (load it first).
    Paste both into local/themes/slk-child/style.css. Nothing outside this
    file should be hand-styled; extend here, not in the template.
@@ -612,9 +612,19 @@ img, svg, video { max-width: 100%; height: auto; }
 }
 
 /* The wordmark is TEXT. Never an image of a name, never a hardcoded string:
-   the partial echoes apply_filters('slk_wordmark', 'SL DRESS'). All this file
+   the partial echoes apply_filters('slk_wordmark', 'MAVÉA'). All this file
    does is set the face, the tracking, and the optical-centre indent that
-   compensates for the trailing letter-space (guidelines §6). */
+   compensates for the trailing letter-space (guidelines §6).
+
+   line-height is 1.15, not 1. MAVÉA's É carries an acute accent that sits
+   above cap height; at line-height:1 the line box is exactly the font-size
+   and the accent overflows it. In the header that is invisible (the rule is
+   inline-flex at min-height 44px, so there is slack either side), but the
+   footer and the 26px specimen in design/sections/01-gaps.html have no such
+   floor, and the accent clipped there. 1.15 gives the diacritic room in the
+   line box itself, so every context is safe regardless of its container.
+   text-transform:uppercase is Unicode-aware and maps é→É correctly; the PHP
+   side must never use strtoupper(), which is byte-based — see inc/wordmark.php. */
 /* `.site-title` is included because Blocksy does NOT route the site identity
    through core's get_custom_logo() when no logo image is set — it prints its
    own `span.site-title > a`, so the PHP filter on get_custom_logo never fires

@@ -2,17 +2,27 @@
 /**
  * The wordmark system.
  *
- * ============================ PLACEHOLDER NAME ============================
- * "SL DRESS" is a PLACEHOLDER. The brand name is not chosen — it is pending
- * gate G1. The mockups in design/sections/*.html carry "AESHAL" as the
- * designer's 6-letter tracking demo; that name belongs to the US sister label
- * and this store must never carry it. It is therefore never written into any
- * template, string or class name in this theme.
+ * =============================== THE NAME =================================
+ * The brand is "MAVÉA". Gate G1 closed on 2026-08-15; this is no longer a
+ * placeholder. "AESHAL" still appears in design/_tools/crawl_site.py as a
+ * FORBIDDEN-name guard — it belongs to the US sister label and this store must
+ * never carry it, so that check stays exactly as it is.
  *
- * The name lives in exactly ONE place: the 'slk_wordmark' filter. Renaming the
- * brand after G1 is a one-line change, in a plugin or in a single inc/ file:
+ * ⚠ The É is not decorative. Two rules follow from it:
+ *   1. This file — and any file that writes the name — must stay UTF-8. The
+ *      É is two bytes (C3 89); a CP1252 save silently corrupts it to "MAVÃ‰A".
+ *   2. Never apply PHP's strtoupper() to the wordmark. It is byte-based and
+ *      would mangle the É. Uppercasing is done in CSS (text-transform), which
+ *      is Unicode-aware — see the .slk-wordmark rule in style.css. The theme
+ *      currently contains no strtoupper() at all; keep it that way.
+ * The ASCII fallback for domains, slugs, handles and file names is "mavea"
+ * (mavea.lk) — the accent lives in the wordmark and in prose, nowhere else.
  *
- *     add_filter( 'slk_wordmark', fn() => 'NILARA' );
+ * The name lives in exactly ONE place: the 'slk_wordmark' filter default
+ * below. Changing it is still a one-line change, in a plugin or a single inc/
+ * file, should it ever move again:
+ *
+ *     add_filter( 'slk_wordmark', fn() => 'MAVÉA' );
  *
  * That one line is genuinely everything, because the filter is bound to the
  * `blogname` OPTION (not just to get_bloginfo()), which is what every other
@@ -26,7 +36,9 @@
  * blogname() below for the one narrow context that still sees the raw value.
  *
  * Nothing else needs to move: the brief's §6 system (Newsreader 300, all caps,
- * 0.26em tracking, trailing indent) holds for any name of 4-8 letters.
+ * 0.26em tracking, trailing indent) holds for any name of 4-8 letters, and
+ * MAVÉA is 5. The one setting change the accent forced is line-height on
+ * .slk-wordmark — see the note on that rule in style.css.
  * ==========================================================================
  *
  * Spec: design/docs/brand-guidelines.md §6 and the "Wordmark system" screen in
@@ -46,11 +58,12 @@ function slk_wordmark_text() {
 	/**
 	 * Filters the wordmark text.
 	 *
-	 * PLACEHOLDER default pending gate G1 — see the file header.
+	 * The brand name, settled at gate G1 — see the file header. Already in
+	 * caps; the É must survive byte-for-byte, so never strtoupper() this.
 	 *
 	 * @param string $text The wordmark, set in caps.
 	 */
-	return (string) apply_filters( 'slk_wordmark', 'SL DRESS' );
+	return (string) apply_filters( 'slk_wordmark', 'MAVÉA' );
 }
 
 /**
@@ -256,7 +269,7 @@ add_filter(
  * ...and the option itself. This is the filter that makes the rename one line.
  *
  * Measured, not assumed: with only the `bloginfo` filter above, the document
- * <title> read "SL DRESS" while Blocksy's header still painted the raw stored
+ * <title> read the wordmark while Blocksy's header still painted the raw stored
  * blogname. Blocksy reaches the site name by a path that does not run through
  * get_bloginfo(), so the display filter never saw it. Filtering the option
  * covers every reader — core, parent theme, WooCommerce mail and plugins alike,

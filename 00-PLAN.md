@@ -38,6 +38,7 @@ Shortlist (all avoid collisions with existing Aeshal SKU names — Noor, Zahra, 
 | **Tahira** | طاهرة — pure | Familiar SL name, clear meaning |
 
 - Execution step 1: verify `.lk` + `.com` + Instagram handle + obvious trademark collisions for all six → present to Najath with evidence → **GATE G1: name pick**. Register `.lk` (Standard bundle Rs. 8,000/yr) + `.com`.
+  - ✅ **G1 RESOLVED 2026-08-15 — the name is MAVÉA**, on `mavea.lk`. Najath chose a name from outside the six shortlisted here; the table above is kept as the record of what was considered. The handle check and the NIPO trademark search were **not** done before the pick and remain outstanding — see [SETUP-CHECKLIST.md](SETUP-CHECKLIST.md).
 - Brand system: new logo/wordmark, typography and palette **deliberately distinct from Aeshal's Bone/Cormorant+Jost world** (the two must not look like clones). Voice: companion register carries over as DNA, but this brand **inverts Aeshal's geography ban — proudly Sri Lankan** ("made on our island" energy; final lines written at execution, Fable-only). New `config/brand-voice-sl.json` so agents never cross-contaminate the two brands. **GATE G2: brand look.**
 - Positioning: her trusted friend who makes dressing modestly easy and affordable in LKR — never framed as "cheap Aeshal". No public cross-linking between the brands.
 

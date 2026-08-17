@@ -1,6 +1,9 @@
-# Sister SL brand — GATE G1 naming dossier
+# MAVÉA — GATE G1 naming dossier (closed)
 
-**Status: awaiting Najath's pick.** Six candidates were developed (no "Aeshal" anywhere; none
+**Status: CLOSED 2026-08-15 — the name is MAVÉA, on `mavea.lk`.** The dossier below is kept as
+the record of what was considered; see the resolution section further down for what carried
+into the build and what is still outstanding. Six candidates were developed (no "Aeshal"
+anywhere; none
 collide with existing Aeshal SKU names — Noor, Zahra, Amara, Inaya, Layla, Hana, Farah etc. are
 dress names and were excluded up front).
 
@@ -123,6 +126,24 @@ cleared it.**
 
 **Real-name-track alternative: Zeenath** (`zeenath.lk` free, means "adornment", deeply local —
 but bare @zeenath is a taken personal account, so IG would be `@zeenath.lk`).
+
+## ✅ RESOLVED — G1 closed 2026-08-15: the brand is **MAVÉA**
+
+Najath chose **MAVÉA**, on **`mavea.lk`**. The name is not one of the 26 candidates dossiered
+below; those are kept as the record of what was considered and why, not as live options.
+
+Carried into the build:
+- Wordmark default set to `MAVÉA` in `local/themes/slk-child/inc/wordmark.php` — the one line
+  the whole rename rides on. All 40 rendered `AESHAL` placeholders in `design/` now read MAVÉA.
+- The É is display-only. Domain, Instagram/TikTok handles, slugs, file names and this repo all
+  use the bare ASCII `mavea`.
+
+Still open from the G1 checklist below — **none of these are done yet**:
+- [ ] Claim the Instagram and TikTok handles (do this the same day; free handles get sniped)
+- [ ] NIPO trademark search at nipo.lk.wipo.net — note that **MAVEA is an existing brand
+      elsewhere** (Brita's water-filtration line). Different goods class from apparel, so
+      probably clear, but check before committing to a 10-year `.lk` registration
+- [ ] Register `mavea.lk`, and decide the `.com` variant
 
 ## What happens at G1
 

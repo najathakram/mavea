@@ -194,16 +194,39 @@ final class SLK_Checkout_Fields {
 			$billing['billing_state']['priority']    = 70;
 			$billing['billing_state']['class']       = array( 'form-row-last', 'slk-field' );
 			$billing['billing_state']['input_class'] = array( 'slk-select' );
-			// We own district validation entirely (see self::validate), the same
-			// way we own phone validation above. WooCommerce's own 'state' rule
-			// has to go: WC_Checkout::validate_posted_data() UPPERCASES a state
-			// value before any validation runs, and our district keys are the
-			// district names rather than codes (see the header of
-			// class-slk-districts.php). 'Galle' therefore arrived as 'GALLE',
-			// which no district check matches, so every order was rejected — and
-			// had one got through, 'GALLE' is what the packing slip and the
-			// courier handoff would have carried.
 			$billing['billing_state']['validate']    = array();
+		}
+		// THE SAME RULE HAS TO COME OFF shipping_state, AND FOR THE SAME REASON.
+		//
+		// We own district validation entirely (see self::validate), the way we
+		// own phone validation above, because WooCommerce's own 'state' rule
+		// destroys the value it validates. WC_Checkout::validate_posted_data()
+		// does, for any field whose 'validate' list contains 'state':
+		//
+		//     $valid_state_values = array_map( 'wc_strtoupper', array_flip( … ) );
+		//     $data[ $key ]       = wc_strtoupper( $data[ $key ] );
+		//
+		// That round trip recovers a mixed-case state KEY from an uppercase
+		// match, which is right for code-keyed lists ('CA' => 'California') and
+		// wrong for ours: our districts are keyed by name, so key and value are
+		// the same string and the flip leaves both sides uppercase (see the
+		// header of class-slk-districts.php). 'Galle' passes the check as
+		// 'GALLE' and stays 'GALLE' for good.
+		//
+		// Uppercasing is NOT gated on whether the fieldset is being validated —
+		// only the error is. So shipping_state was mangled on every single
+		// order even though delivery is billing-only here and the field is
+		// never posted: get_posted_data() copies billing_* into shipping_* for
+		// billing-only stores, and validate_posted_data() then uppercased the
+		// copy. Measured on order 115 before this change: billing_state
+		// 'Colombo' (correct, this rule already lifted) but shipping_state
+		// 'COLOMBO', which SLK_Districts::tier() reads as no district at all and
+		// so prices at the island band, Rs. 450 against the metro Rs. 350 — the
+		// number an admin "Recalculate" would have written back to the order.
+		// It is also the district printed on the shipping address block of the
+		// packing slip.
+		if ( isset( $fields['shipping']['shipping_state'] ) ) {
+			$fields['shipping']['shipping_state']['validate'] = array();
 		}
 		// Couriers navigate by landmark and delivery is priced by district;
 		// postal code is a field nobody reads. Removed outright, not merely
@@ -331,6 +354,26 @@ final class SLK_Checkout_Fields {
 				__( 'Please choose your district from the list.', 'slk' ),
 				array( 'id' => 'billing_state' )
 			);
+		}
+
+		// Core's state rule is off for shipping_state too (see self::fields),
+		// so the same guard has to stand behind it whenever a separate delivery
+		// address is genuinely in play. Today it never is: the theme forces
+		// woocommerce_ship_to_destination to 'billing_only' on the front end,
+		// which makes wc_ship_to_billing_address_only() true and pins
+		// ship_to_different_address to false, so shipping_* is always a copy of
+		// an already-validated billing_*. This branch is what stops that from
+		// being load-bearing — switch delivery addresses back on and the
+		// district is still checked rather than silently unguarded.
+		if ( ! empty( $data['ship_to_different_address'] ) ) {
+			$ship_district = $data['shipping_state'] ?? '';
+			if ( SLK_Districts::COUNTRY === ( $data['shipping_country'] ?? '' ) && ! SLK_Districts::is_district( $ship_district ) ) {
+				$errors->add(
+					'shipping_state',
+					__( 'Please choose your delivery district from the list.', 'slk' ),
+					array( 'id' => 'shipping_state' )
+				);
+			}
 		}
 	}
 

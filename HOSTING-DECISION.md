@@ -47,8 +47,9 @@ will not touch for years, and upgrading later is trivial. Unlimited already carr
 object cache, CDN and daily backups.
 
 Two practical notes for checkout:
-- **Do not claim the free domain yet.** The brand name is not picked (gate G1 deferred). Burning
-  the free year on a placeholder wastes it — claim it from hPanel once the name is decided.
+- **Claim the free domain as `mavea.com`.** Gate G1 closed on 2026-08-15 (MAVÉA), so the free
+  year is now safe to spend from hPanel. It will **not** cover `mavea.lk` — ccTLDs are outside
+  Hostinger's free-domain list, so the `.lk` is bought separately at domains.lk.
 - Decline the upsell add-ons at checkout; nothing in this build needs them.
 
 Also spotted: **Hostinger Connector**, a first-party integration that exposes hosting, domains
@@ -76,7 +77,7 @@ is never necessary; Business runs WooCommerce fine.
 ## Build now, buy later — sanctioned, and it is the default
 
 Najath asked whether the site can be built without buying hosting yet. Yes, and it is the
-better sequence: the whole store is built locally (`sister-lk/local/`), then moved to Hostinger
+better sequence: the whole store is built locally (`local/`), then moved to Hostinger
 when launch is actually close. WordPress is fully portable — a database dump plus `wp-content`
 *is* the site — and Hostinger additionally offers free migration, so nothing built locally is
 throwaway.
@@ -86,7 +87,9 @@ Why waiting is better than buying today:
   4-year term on a site nobody can visit.
 - The sale price is a recurring promotion, not a one-time event — waiting is unlikely to cost
   more than a few dollars.
-- The brand name is still undecided; the free domain year should not be burned on a placeholder.
+- ~~The brand name is still undecided; the free domain year should not be burned on a
+  placeholder.~~ **Resolved 2026-08-15 — the name is MAVÉA, so this reason no longer applies.**
+  The other two reasons still stand, and the build is still local-first.
 
 What genuinely **cannot** be finished until hosting exists (all of it already sits late in the
 build sequence, so nothing is blocked meanwhile):
@@ -101,6 +104,6 @@ custom statuses, SMS/WhatsApp wiring, theme and design — is built and tested l
 ## Consequence for the build
 
 No decision is blocked by this. The whole store is being built **locally first**
-(`sister-lk/local/`, Docker), which costs nothing, needs no brand name, and exports to
+(`local/`, Docker), which costs nothing, needs no brand name, and exports to
 whichever host wins. Hosting only has to be settled before the PayHere application, because
 PayHere requires a live site on the final domain.
