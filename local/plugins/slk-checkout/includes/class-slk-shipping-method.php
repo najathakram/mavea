@@ -55,6 +55,13 @@ class SLK_Shipping_Method extends WC_Shipping_Method {
 					'step' => '1',
 				),
 			),
+			'days_metro'    => array(
+				'title'       => __( 'Colombo & Gampaha (expected days)', 'slk' ),
+				'type'        => 'text',
+				'default'     => SLK_Shipping::DAYS_METRO,
+				'desc_tip'    => true,
+				'description' => __( 'Printed at checkout and on the Delivery page.', 'slk' ),
+			),
 			'fee_regional'  => array(
 				'title'             => __( 'Kandy, Galle, Kalutara, Kurunegala (Rs.)', 'slk' ),
 				'type'              => 'number',
@@ -64,6 +71,13 @@ class SLK_Shipping_Method extends WC_Shipping_Method {
 					'step' => '1',
 				),
 			),
+			'days_regional' => array(
+				'title'       => __( 'Kandy, Galle, Kalutara, Kurunegala (expected days)', 'slk' ),
+				'type'        => 'text',
+				'default'     => SLK_Shipping::DAYS_REGIONAL,
+				'desc_tip'    => true,
+				'description' => __( 'Printed at checkout and on the Delivery page.', 'slk' ),
+			),
 			'fee_island'    => array(
 				'title'             => __( 'All other districts (Rs.)', 'slk' ),
 				'type'              => 'number',
@@ -72,6 +86,13 @@ class SLK_Shipping_Method extends WC_Shipping_Method {
 					'min'  => '0',
 					'step' => '1',
 				),
+			),
+			'days_island'   => array(
+				'title'       => __( 'All other districts (expected days)', 'slk' ),
+				'type'        => 'text',
+				'default'     => SLK_Shipping::DAYS_ISLAND,
+				'desc_tip'    => true,
+				'description' => __( 'Printed at checkout and on the Delivery page.', 'slk' ),
 			),
 			'free_over'     => array(
 				'title'             => __( 'Free delivery over (Rs.)', 'slk' ),

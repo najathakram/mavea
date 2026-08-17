@@ -16,12 +16,21 @@ final class SLK_Payments {
 	/** Koko / pay-in-3 appears from Rs. 10,000. */
 	public const KOKO_MIN = 10000;
 
+	/**
+	 * Field key the fee lives under inside the COD gateway's own settings
+	 * array (`woocommerce_cod_settings`) — kept next to the payment method
+	 * it belongs to instead of a new settings screen.
+	 */
+	private const COD_FEE_OPTION_KEY = 'slk_handling_fee';
+
 	public static function init(): void {
 		add_action( 'woocommerce_cart_calculate_fees', array( __CLASS__, 'cod_handling_fee' ), 20 );
 		add_filter( 'woocommerce_available_payment_gateways', array( __CLASS__, 'sort_and_gate' ), 20 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
 		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'record_cod_fee' ), 30, 2 );
 		add_action( 'wp_loaded', array( __CLASS__, 'silence_gateway_advertising' ) );
+		add_filter( 'woocommerce_settings_api_form_fields_cod', array( __CLASS__, 'add_cod_fee_field' ) );
+		add_filter( 'slk_cod_handling_fee', array( __CLASS__, 'cod_fee_from_gateway_option' ) );
 	}
 
 	/**
@@ -134,6 +143,67 @@ final class SLK_Payments {
 		}
 
 		$order->update_meta_data( '_slk_cod_fee', (string) SLK_Money::rupees( apply_filters( 'slk_cod_handling_fee', self::COD_FEE ) ) );
+	}
+
+	/**
+	 * Adds the handling fee to Cash on delivery's own settings screen
+	 * (WooCommerce → Settings → Payments → Cash on delivery), so staff can
+	 * change it there without a deploy. Lives on the gateway that charges
+	 * it rather than a new settings page.
+	 *
+	 * Default matches self::COD_FEE, so a fresh install — where this field
+	 * has never been saved — renders exactly the total it does today.
+	 *
+	 * @param array $fields COD gateway's form fields, keyed by field id.
+	 */
+	public static function add_cod_fee_field( $fields ) {
+		if ( ! is_array( $fields ) ) {
+			return $fields;
+		}
+
+		$fields[ self::COD_FEE_OPTION_KEY ] = array(
+			'title'             => __( 'COD handling fee (Rs.)', 'slk' ),
+			'type'              => 'number',
+			'default'           => (string) self::COD_FEE,
+			'desc_tip'          => true,
+			'description'       => __( 'Added to the total when cash on delivery is chosen. Whole rupees.', 'slk' ),
+			'custom_attributes' => array(
+				'min'  => '0',
+				'step' => '1',
+			),
+		);
+
+		return $fields;
+	}
+
+	/**
+	 * Reads the dashboard value back through the same slk_cod_handling_fee
+	 * filter both cod_handling_fee() and record_cod_fee() already call, so
+	 * neither needed to change — this is the only thing that has to know
+	 * where the number now lives.
+	 *
+	 * Falls back to the incoming value (self::COD_FEE) whenever the field
+	 * has never been saved, which is what a fresh install passes in.
+	 *
+	 * @param mixed $fee Value passed into the slk_cod_handling_fee filter.
+	 */
+	public static function cod_fee_from_gateway_option( $fee ) {
+		$settings = get_option( 'woocommerce_cod_settings', array() );
+
+		if ( is_array( $settings ) && isset( $settings[ self::COD_FEE_OPTION_KEY ] ) && '' !== $settings[ self::COD_FEE_OPTION_KEY ] ) {
+			return $settings[ self::COD_FEE_OPTION_KEY ];
+		}
+
+		return $fee;
+	}
+
+	/**
+	 * Live COD handling fee, in rupees. For anything outside this class
+	 * that needs the number — the theme's slk_delivery_cod_fee() proxies
+	 * this instead of keeping its own copy.
+	 */
+	public static function cod_fee(): float {
+		return SLK_Money::rupees( apply_filters( 'slk_cod_handling_fee', self::COD_FEE ) );
 	}
 
 	/* ------------------------------------------------------------------ */

@@ -57,6 +57,8 @@ defined( 'ABSPATH' ) || exit;
 			$slk_is_cod         = 'cod' === $order->get_payment_method();
 			$slk_phone          = function_exists( 'slk_mask_phone' ) ? slk_mask_phone( $order->get_billing_phone() ) : $order->get_billing_phone();
 			$slk_shipping_label = $order->get_shipping_method();
+			$slk_days_metro     = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 0 ) : '';
+			$slk_days_island    = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2 ) : '';
 			?>
 
 			<div class="slk-order-received__hero">
@@ -137,8 +139,17 @@ defined( 'ABSPATH' ) || exit;
 								/* translators: %s: formatted order total. */
 								printf( wp_kses_post( __( 'Pay the courier %s in cash.', 'slk' ) ), wp_kses_post( $slk_total ) );
 								?>
+							<?php elseif ( $slk_days_metro && $slk_days_island ) : ?>
+								<?php
+								printf(
+									/* translators: 1: Colombo & Gampaha day range. 2: rest-of-island day range. */
+									esc_html__( 'Delivery takes %1$s in Colombo and %2$s island-wide.', 'slk' ),
+									esc_html( $slk_days_metro ),
+									esc_html( $slk_days_island )
+								);
+								?>
 							<?php else : ?>
-								<?php esc_html_e( 'Delivery takes 1 to 2 working days in Colombo and 3 to 5 island-wide.', 'slk' ); ?>
+								<?php esc_html_e( 'We deliver to all 25 districts through one courier partner.', 'slk' ); ?>
 							<?php endif; ?>
 						</div>
 					</div>

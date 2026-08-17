@@ -29,16 +29,28 @@ add_action(
 );
 
 /* -------------------------------------------------------------------------
- * 2. Delivery zones, free-delivery threshold, COD handling fee.
+ * 2. Delivery zones, free-delivery threshold, COD handling fee, exchange
+ * window/fee.
  *
- * design/assets/sri-lanka-commerce.json: delivery.zones / free_over /
- * cod_handling_fee. Kept consistent by hand — see the file header.
+ * Thin proxies over the plugin, which is the checkout's source of truth for
+ * every one of these numbers (SLK_Shipping, SLK_Payments, SLK_Fulfilment —
+ * dashboard-editable). Each falls back to the literal the store shows today
+ * when the plugin is off or a given accessor has not shipped yet, so the
+ * theme never fatals and a fresh install renders unchanged.
  * ---------------------------------------------------------------------- */
 
 /**
  * @return array<int,array{label:string,days:string,fee:int}>
  */
 function slk_delivery_zones() {
+	if ( class_exists( 'SLK_Shipping' ) && method_exists( 'SLK_Shipping', 'zones_public' ) ) {
+		$zones = SLK_Shipping::zones_public();
+
+		if ( is_array( $zones ) && ! empty( $zones ) ) {
+			return $zones;
+		}
+	}
+
 	return array(
 		array(
 			'label' => __( 'Colombo & Gampaha', 'slk' ),
@@ -58,19 +70,67 @@ function slk_delivery_zones() {
 	);
 }
 
+/**
+ * One zone row's live day range, for the sentences that name the districts
+ * themselves instead of printing the zone table. Tier 0 is Colombo &
+ * Gampaha, 1 the regional towns, 2 the rest of the island — the order
+ * slk_delivery_zones() returns.
+ *
+ * @param int $tier Row index.
+ * @return string Empty when that row is absent.
+ */
+function slk_delivery_days( $tier ) {
+	$zones = array_values( (array) slk_delivery_zones() );
+
+	return isset( $zones[ $tier ]['days'] ) ? (string) $zones[ $tier ]['days'] : '';
+}
+
+/**
+ * The same row's fee, formatted for prose ("Rs. 350").
+ *
+ * @param int $tier Row index.
+ * @return string Empty when that row is absent.
+ */
+function slk_delivery_fee_text( $tier ) {
+	$zones = array_values( (array) slk_delivery_zones() );
+
+	return isset( $zones[ $tier ]['fee'] ) ? wp_strip_all_tags( wc_price( $zones[ $tier ]['fee'] ) ) : '';
+}
+
 /** @return int Rupees. */
 function slk_delivery_free_over() {
+	if ( class_exists( 'SLK_Shipping' ) && method_exists( 'SLK_Shipping', 'free_over' ) ) {
+		return (int) SLK_Shipping::free_over();
+	}
+
 	return 15000;
 }
 
 /** @return int Rupees. */
 function slk_delivery_cod_fee() {
+	if ( class_exists( 'SLK_Payments' ) && method_exists( 'SLK_Payments', 'cod_fee' ) ) {
+		return (int) SLK_Payments::cod_fee();
+	}
+
 	return 150;
 }
 
 /** @return int Rupees. Exchange courier's contribution toward the new size going out. */
 function slk_exchange_send_fee() {
+	if ( class_exists( 'SLK_Fulfilment' ) && method_exists( 'SLK_Fulfilment', 'exchange_send_fee' ) ) {
+		return (int) SLK_Fulfilment::exchange_send_fee();
+	}
+
 	return 350;
+}
+
+/** @return int Working days a shopper has, from delivery, to start an exchange. */
+function slk_exchange_window_days() {
+	if ( class_exists( 'SLK_Fulfilment' ) && method_exists( 'SLK_Fulfilment', 'exchange_window_days' ) ) {
+		return (int) SLK_Fulfilment::exchange_window_days();
+	}
+
+	return 7;
 }
 
 /* -------------------------------------------------------------------------
@@ -88,10 +148,48 @@ function slk_exchange_send_fee() {
  * @return array<string,array{label:string,items:array<int,array{q:string,a:string}>}>
  */
 function slk_faq_groups() {
-	$cod_fee = wp_strip_all_tags( wc_price( slk_delivery_cod_fee() ) );
+	$cod_fee   = slk_delivery_cod_fee();
+	$free_over = slk_delivery_free_over();
 
 	$size_guide_url = slk_page_id( 'size-guide' ) ? slk_page_url( 'size-guide' ) : '';
 	$exchanges_url  = slk_page_url( 'exchanges' );
+
+	// Composed from the live settings, never restated: a zero handling fee is
+	// not charged at checkout, so the sentence that names one is dropped
+	// rather than printed as "Rs. 0".
+	$paying_answer = $cod_fee > 0
+		? sprintf(
+			/* translators: %s: COD handling fee, e.g. "Rs. 150". */
+			__( 'You pay nothing when you order. With cash on delivery you pay the courier at your door, in cash. The %s handling fee is added to your total, and you see it before you order.', 'slk' ),
+			wp_strip_all_tags( wc_price( $cod_fee ) )
+		)
+		: __( 'You pay nothing when you order. With cash on delivery you pay the courier at your door, in cash. There is no handling fee to add.', 'slk' );
+
+	$delivery_cost = sprintf(
+		/* translators: 1: Colombo & Gampaha fee. 2: regional-town fee. 3: rest-of-island fee. */
+		__( 'Delivery costs %1$s to Colombo and Gampaha, %2$s to Kandy, Galle, Kalutara and Kurunegala, and %3$s everywhere else.', 'slk' ),
+		slk_delivery_fee_text( 0 ),
+		slk_delivery_fee_text( 1 ),
+		slk_delivery_fee_text( 2 )
+	);
+
+	// Free delivery can be switched off from the dashboard (threshold 0), and
+	// then there is no promise to make.
+	if ( $free_over > 0 ) {
+		$delivery_cost .= ' ' . sprintf(
+			/* translators: %s: free-delivery threshold, e.g. "Rs. 15,000". */
+			__( 'Orders over %s ship free.', 'slk' ),
+			wp_strip_all_tags( wc_price( $free_over ) )
+		);
+	}
+
+	$delivery_time = sprintf(
+		/* translators: 1: Colombo & Gampaha day range. 2: regional-town day range. 3: rest-of-island day range. */
+		__( 'Colombo and Gampaha take %1$s. Kandy, Galle, Kalutara and Kurunegala take %2$s, and every other district takes %3$s. We count from the confirmation call rather than from checkout.', 'slk' ),
+		slk_delivery_days( 0 ),
+		slk_delivery_days( 1 ),
+		slk_delivery_days( 2 )
+	);
 
 	return array(
 		'paying'   => array(
@@ -99,11 +197,7 @@ function slk_faq_groups() {
 			'items' => array(
 				array(
 					'q' => __( 'Do I pay anything before it arrives?', 'slk' ),
-					/* translators: %s: COD handling fee, e.g. "Rs. 150". */
-					'a' => sprintf(
-						__( 'You pay nothing when you order. With cash on delivery you pay the courier at your door, in cash. The %s handling fee is added to your total, and you see it before you order.', 'slk' ),
-						$cod_fee
-					),
+					'a' => $paying_answer,
 				),
 				array(
 					'q' => __( 'Why do you call before shipping?', 'slk' ),
@@ -128,7 +222,7 @@ function slk_faq_groups() {
 			'items' => array(
 				array(
 					'q' => __( 'How much does delivery cost?', 'slk' ),
-					'a' => __( 'Delivery costs Rs. 350 to Colombo and Gampaha, Rs. 400 to Kandy, Galle, Kalutara and Kurunegala, and Rs. 450 everywhere else. Orders over Rs. 15,000 ship free.', 'slk' ),
+					'a' => $delivery_cost,
 				),
 				array(
 					'q' => __( 'Which areas do you deliver to?', 'slk' ),
@@ -136,7 +230,7 @@ function slk_faq_groups() {
 				),
 				array(
 					'q' => __( 'How long will my order take?', 'slk' ),
-					'a' => __( 'Colombo and Gampaha take 1 to 2 working days. Kandy, Galle, Kalutara and Kurunegala take 2 to 3, and every other district takes 3 to 5. We count from the confirmation call rather than from checkout.', 'slk' ),
+					'a' => $delivery_time,
 				),
 				array(
 					'q' => __( 'Can I change my delivery address after ordering?', 'slk' ),
@@ -153,9 +247,10 @@ function slk_faq_groups() {
 				),
 				array(
 					'q' => __( 'What if it doesn\'t fit?', 'slk' ),
-					/* translators: %s: URL of the exchanges page. */
+					/* translators: 1: number of days to start an exchange, 2: URL of the exchanges page. */
 					'a' => sprintf(
-						__( 'You can exchange it within 7 days, and the courier collects from your door. The full policy is on our <a href="%s">exchanges page</a>.', 'slk' ),
+						__( 'You can exchange it within %1$d days, and the courier collects from your door. The full policy is on our <a href="%2$s">exchanges page</a>.', 'slk' ),
+						slk_exchange_window_days(),
 						esc_url( $exchanges_url )
 					),
 				),

@@ -26,11 +26,17 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 			<h1><?php esc_html_e( 'Delivery', 'slk' ); ?></h1>
 			<p>
 				<?php
-				/* translators: %s: free-delivery threshold, e.g. "Rs. 15,000". */
-				printf(
-					esc_html__( 'One courier, all 25 districts. Delivery is free over %s.', 'slk' ),
-					wp_kses_post( wc_price( $free_over ) )
-				);
+				// Free delivery can be switched off from the dashboard (threshold
+				// 0); the promise goes with it rather than reading "free over Rs. 0".
+				if ( $free_over > 0 ) {
+					/* translators: %s: free-delivery threshold, e.g. "Rs. 15,000". */
+					printf(
+						esc_html__( 'One courier, all 25 districts. Delivery is free over %s.', 'slk' ),
+						wp_kses_post( wc_price( $free_over ) )
+					);
+				} else {
+					esc_html_e( 'One courier, all 25 districts. Delivery is charged on every order, by district.', 'slk' );
+				}
 				?>
 			</p>
 		</div>
@@ -79,11 +85,15 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 					<span class="slk-help-step__num" aria-hidden="true">3</span>
 					<p>
 						<?php
-						/* translators: %s: COD handling fee, e.g. "Rs. 150". */
-						printf(
-							esc_html__( 'The courier comes and you pay in cash at your door. Cash on delivery adds %s, and you see it before you order.', 'slk' ),
-							wp_kses_post( wc_price( $cod_fee ) )
-						);
+						if ( $cod_fee > 0 ) {
+							/* translators: %s: COD handling fee, e.g. "Rs. 150". */
+							printf(
+								esc_html__( 'The courier comes and you pay in cash at your door. Cash on delivery adds %s, and you see it before you order.', 'slk' ),
+								wp_kses_post( wc_price( $cod_fee ) )
+							);
+						} else {
+							esc_html_e( 'The courier comes and you pay in cash at your door. Cash on delivery adds no handling fee.', 'slk' );
+						}
 						?>
 					</p>
 				</li>

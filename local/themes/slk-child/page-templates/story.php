@@ -81,7 +81,8 @@ get_header();
 				<div class="slk-story__stat-l"><?php esc_html_e( 'districts we deliver to', 'slk' ); ?></div>
 			</div>
 			<div class="slk-panel slk-story__stat">
-				<div class="slk-story__stat-n">7</div>
+				<?php // The window is a policy number, so it prints from the setting the checkout reads — never a literal. ?>
+				<div class="slk-story__stat-n"><?php echo (int) ( function_exists( 'slk_exchange_window_days' ) ? slk_exchange_window_days() : 7 ); ?></div>
 				<div class="slk-story__stat-l"><?php esc_html_e( 'days to exchange', 'slk' ); ?></div>
 			</div>
 		</div>

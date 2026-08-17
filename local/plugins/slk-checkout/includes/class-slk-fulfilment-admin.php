@@ -229,11 +229,49 @@ final class SLK_Fulfilment_Admin {
 				'type' => 'sectionend',
 				'id'   => 'slk_fulfilment_options',
 			),
+
+			array(
+				'title' => __( 'Exchanges', 'slk' ),
+				'type'  => 'title',
+				'desc'  => __( 'How long after an order a shopper can request an exchange, and what it costs to send the replacement back out.', 'slk' ),
+				'id'    => 'slk_fulfilment_exchanges',
+			),
+
+			array(
+				'title'             => __( 'Exchange window (days)', 'slk' ),
+				'desc'              => __( 'Days after an order is complete that a shopper can still request an exchange.', 'slk' ),
+				'id'                => self::field_id( 'exchange_window_days' ),
+				'type'              => 'number',
+				'value'             => (string) (int) $settings['exchange_window_days'],
+				'custom_attributes' => array(
+					'min'  => '0',
+					'step' => '1',
+				),
+				'desc_tip'          => true,
+			),
+
+			array(
+				'title'             => __( 'Exchange send fee (Rs.)', 'slk' ),
+				'desc'              => __( 'Rupees charged to send the replacement piece back out. Leave at 0 to send it free.', 'slk' ),
+				'id'                => self::field_id( 'exchange_send_fee' ),
+				'type'              => 'number',
+				'value'             => (string) SLK_Money::rupees( $settings['exchange_send_fee'] ),
+				'custom_attributes' => array(
+					'min'  => '0',
+					'step' => '1',
+				),
+				'desc_tip'          => true,
+			),
+
+			array(
+				'type' => 'sectionend',
+				'id'   => 'slk_fulfilment_exchanges',
+			),
 		);
 	}
 
 	/**
-	 * Three of the nine settings need a shape the generic handling in
+	 * Three of the eleven settings need a shape the generic handling in
 	 * WC_Admin_Settings::save_fields() does not produce on its own:
 	 * "holidays" is a list, not a blob of text; "split_enabled" is read
 	 * elsewhere with a plain truthy check, so it has to land as a real

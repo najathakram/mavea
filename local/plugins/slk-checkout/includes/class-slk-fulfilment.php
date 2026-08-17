@@ -20,14 +20,16 @@ class SLK_Fulfilment {
 
 	public static function defaults(): array {
 		return array(
-			'dispatch_days'       => 1,
-			'default_making_days' => 7,
-			'tolerance_days'      => 0,
-			'cutoff_hour'         => 15,
-			'working_days'        => array( 1, 2, 3, 4, 5, 6 ), // Monday to Saturday.
-			'holidays'            => array(),
-			'extra_shipment_fee'  => 0, // 0 means charge the normal district fee.
-			'split_enabled'       => true,
+			'dispatch_days'        => 1,
+			'default_making_days'  => 7,
+			'tolerance_days'       => 0,
+			'cutoff_hour'          => 15,
+			'working_days'         => array( 1, 2, 3, 4, 5, 6 ), // Monday to Saturday.
+			'holidays'             => array(),
+			'extra_shipment_fee'   => 0, // 0 means charge the normal district fee.
+			'split_enabled'        => true,
+			'exchange_window_days' => 7,
+			'exchange_send_fee'    => 350,
 		);
 	}
 
@@ -50,6 +52,20 @@ class SLK_Fulfilment {
 		}
 
 		return max( 0, (int) self::settings()['default_making_days'] );
+	}
+
+	/**
+	 * Days after an order is complete that a shopper can request an exchange.
+	 */
+	public static function exchange_window_days(): int {
+		return max( 0, (int) self::settings()['exchange_window_days'] );
+	}
+
+	/**
+	 * Rupees charged to send a replacement piece back out on an exchange.
+	 */
+	public static function exchange_send_fee(): float {
+		return max( 0.0, SLK_Money::rupees( self::settings()['exchange_send_fee'] ) );
 	}
 
 	/**

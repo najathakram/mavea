@@ -399,10 +399,30 @@ function slk_pdp_trust_rows() {
 		return;
 	}
 
+	$days_metro  = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 0 ) : '';
+	$days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2 ) : '';
+
 	$rows = array(
 		array( '✓', __( 'Cash on delivery, with a call to confirm before dispatch', 'slk' ) ),
-		array( '⇄', __( 'Exchange within 7 days, courier collects', 'slk' ) ),
-		array( '◷', __( 'Colombo in 1 to 2 days · island-wide in 3 to 5', 'slk' ) ),
+		array(
+			'⇄',
+			sprintf(
+				/* translators: %d: number of days to start an exchange. */
+				__( 'Exchange within %d days, courier collects', 'slk' ),
+				function_exists( 'slk_exchange_window_days' ) ? slk_exchange_window_days() : 7
+			),
+		),
+		array(
+			'◷',
+			$days_metro && $days_island
+				? sprintf(
+					/* translators: 1: Colombo & Gampaha day range. 2: rest-of-island day range. */
+					__( 'Colombo in %1$s · island-wide in %2$s', 'slk' ),
+					$days_metro,
+					$days_island
+				)
+				: __( 'One courier, all 25 districts', 'slk' ),
+		),
 	);
 
 	echo '<div class="slk-pdp__trust">';

@@ -51,7 +51,17 @@ $slk_delivery = slk_home_page_link( 'delivery' );
 $slk_garments = slk_home_new_in_products( 4 );
 $slk_hijabs   = slk_home_hijab_products( 6 );
 $slk_from     = slk_home_from_price( $slk_hijabs );
-$slk_cod_fee  = slk_home_cod_fee_text();
+
+/*
+ * Two separate questions, two separate sentences below: is there a fee at all
+ * (the amount, as /delivery/ and /faq/ ask it), and can we print it (the text,
+ * which is '' when wc_price() is unavailable).
+ */
+$slk_cod_amount = slk_delivery_cod_fee();
+$slk_cod_fee    = slk_home_cod_fee_text();
+
+$slk_days_metro  = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 0 ) : '';
+$slk_days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2 ) : '';
 ?>
 
 <div class="slk-home">
@@ -171,7 +181,9 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 			<h2 id="slk-paying"><?php esc_html_e( 'Pay when it reaches your door.', 'slk' ); ?></h2>
 			<p>
 				<?php
-				if ( $slk_cod_fee ) {
+				if ( $slk_cod_amount <= 0 ) {
+					esc_html_e( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and there is no handling fee to add. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' );
+				} elseif ( $slk_cod_fee ) {
 					printf(
 						/* translators: %s: cash-on-delivery handling fee, e.g. "Rs. 150". */
 						esc_html__( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and the %s handling fee is shown before you order. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' ),
@@ -193,7 +205,15 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 			<?php echo $slk_atelier; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in slk_editorial_image(). ?>
 			<figcaption class="slk-home__caption <?php echo $slk_atelier ? 'slk-glass' : 'slk-panel'; ?>">
 				<h2><?php esc_html_e( 'Made to export standard', 'slk' ); ?></h2>
-				<p><?php esc_html_e( 'Cut and finished by hand · exchange within 7 days', 'slk' ); ?></p>
+				<p>
+					<?php
+					printf(
+						/* translators: %d: number of days to start an exchange. */
+						esc_html__( 'Cut and finished by hand · exchange within %d days', 'slk' ),
+						function_exists( 'slk_exchange_window_days' ) ? (int) slk_exchange_window_days() : 7
+					);
+					?>
+				</p>
 			</figcaption>
 		</figure>
 	</section>
@@ -221,11 +241,32 @@ $slk_cod_fee  = slk_home_cod_fee_text();
 			</li>
 			<li class="slk-assurance">
 				<span aria-hidden="true">⇄</span>
-				<span><?php esc_html_e( 'Exchange within 7 days, courier collects', 'slk' ); ?></span>
+				<span>
+					<?php
+					printf(
+						/* translators: %d: number of days to start an exchange. */
+						esc_html__( 'Exchange within %d days, courier collects', 'slk' ),
+						function_exists( 'slk_exchange_window_days' ) ? (int) slk_exchange_window_days() : 7
+					);
+					?>
+				</span>
 			</li>
 			<li class="slk-assurance">
 				<span aria-hidden="true">◷</span>
-				<span><?php esc_html_e( 'Colombo in 1 to 2 days · island-wide in 3 to 5', 'slk' ); ?></span>
+				<span>
+					<?php
+					if ( $slk_days_metro && $slk_days_island ) {
+						printf(
+							/* translators: 1: Colombo & Gampaha day range. 2: rest-of-island day range. */
+							esc_html__( 'Colombo in %1$s · island-wide in %2$s', 'slk' ),
+							esc_html( $slk_days_metro ),
+							esc_html( $slk_days_island )
+						);
+					} else {
+						esc_html_e( 'One courier, all 25 districts', 'slk' );
+					}
+					?>
+				</span>
 			</li>
 		</ul>
 	</section>

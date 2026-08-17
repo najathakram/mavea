@@ -820,7 +820,10 @@ function slk_moments_delivery_from() {
 	}
 
 	$fees = wp_list_pluck( (array) slk_delivery_zones(), 'fee' );
-	$fees = array_filter( array_map( 'floatval', (array) $fees ) );
+
+	// Keep a zero fee: free metro delivery is a real dashboard setting, and
+	// truthiness would drop it and advertise the next zone's price instead.
+	$fees = array_filter( array_map( 'floatval', (array) $fees ), static fn( $f ) => $f >= 0 );
 
 	return $fees ? wp_strip_all_tags( wc_price( min( $fees ) ) ) : '';
 }

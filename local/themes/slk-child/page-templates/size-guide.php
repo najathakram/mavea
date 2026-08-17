@@ -134,7 +134,13 @@ $slk_sizeguide_wa = function_exists( 'slk_whatsapp_url' )
 				<div class="slk-sizeguide__wa-card">
 					<div class="slk-sizeguide__wa-h"><?php esc_html_e( 'Between two sizes?', 'slk' ); ?></div>
 					<p class="slk-sizeguide__wa-p">
-						<?php esc_html_e( 'Send us your bust and height on WhatsApp and we will measure the actual piece before it ships. If it is still wrong, you can exchange it within 7 days.', 'slk' ); ?>
+						<?php
+						printf(
+							/* translators: %d: number of days to start an exchange. */
+							esc_html__( 'Send us your bust and height on WhatsApp and we will measure the actual piece before it ships. If it is still wrong, you can exchange it within %d days.', 'slk' ),
+							function_exists( 'slk_exchange_window_days' ) ? (int) slk_exchange_window_days() : 7
+						);
+						?>
 					</p>
 					<?php if ( $slk_sizeguide_wa ) : ?>
 						<a class="slk-btn slk-btn--secondary slk-sizeguide__wa-btn" href="<?php echo esc_url( $slk_sizeguide_wa ); ?>">

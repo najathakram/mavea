@@ -32,6 +32,12 @@ final class SLK_Shipping {
 	public const FEE_ISLAND   = 450;
 	public const FREE_OVER    = 15000;
 
+	/** Expected working-day ranges. Defaults only: the live strings are the
+	 * instance settings of the method in the shipping zone. */
+	public const DAYS_METRO    = '1 to 2 working days';
+	public const DAYS_REGIONAL = '2 to 3 working days';
+	public const DAYS_ISLAND   = '3 to 5 working days';
+
 	/** The instance rating the current package, set by the method itself. */
 	private static $rating_method = null;
 
@@ -164,12 +170,39 @@ final class SLK_Shipping {
 	public static function tier_label( $district ): string {
 		switch ( SLK_Districts::tier( $district ) ) {
 			case SLK_Districts::TIER_METRO:
-				return __( '1 to 2 working days', 'slk' );
+				return self::setting( 'days_metro', self::DAYS_METRO );
 			case SLK_Districts::TIER_REGIONAL:
-				return __( '2 to 3 working days', 'slk' );
+				return self::setting( 'days_regional', self::DAYS_REGIONAL );
 			default:
-				return __( '3 to 5 working days', 'slk' );
+				return self::setting( 'days_island', self::DAYS_ISLAND );
 		}
+	}
+
+	/**
+	 * The three delivery tiers as the storefront prints them: label wording
+	 * matches the copy the Delivery page has always used, days and fee read
+	 * from the live settings so editing the zone UI moves every page at once.
+	 *
+	 * @return array<int,array{label:string,days:string,fee:float}>
+	 */
+	public static function zones_public(): array {
+		return array(
+			array(
+				'label' => __( 'Colombo & Gampaha', 'slk' ),
+				'days'  => self::setting( 'days_metro', self::DAYS_METRO ),
+				'fee'   => max( 0.0, SLK_Money::rupees( self::setting( 'fee_metro', self::FEE_METRO ) ) ),
+			),
+			array(
+				'label' => __( 'Kandy · Galle · Kalutara · Kurunegala', 'slk' ),
+				'days'  => self::setting( 'days_regional', self::DAYS_REGIONAL ),
+				'fee'   => max( 0.0, SLK_Money::rupees( self::setting( 'fee_regional', self::FEE_REGIONAL ) ) ),
+			),
+			array(
+				'label' => __( 'All other districts', 'slk' ),
+				'days'  => self::setting( 'days_island', self::DAYS_ISLAND ),
+				'fee'   => max( 0.0, SLK_Money::rupees( self::setting( 'fee_island', self::FEE_ISLAND ) ) ),
+			),
+		);
 	}
 
 	/**

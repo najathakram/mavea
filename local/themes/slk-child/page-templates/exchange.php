@@ -11,21 +11,27 @@ defined( 'ABSPATH' ) || exit;
 
 get_header();
 
-$send_fee = slk_exchange_send_fee();
-$wa_url   = slk_whatsapp_url( __( 'Hi! Before I order, could you check my size against a piece?', 'slk' ) );
+$send_fee    = slk_exchange_send_fee();
+$window_days = slk_exchange_window_days();
+$wa_url      = slk_whatsapp_url( __( 'Hi! Before I order, could you check my size against a piece?', 'slk' ) );
 
 $rules = array(
 	array(
-		'title' => __( 'You have 7 days', 'slk' ),
+		/* translators: %d: number of days to start an exchange. */
+		'title' => sprintf( __( 'You have %d days', 'slk' ), $window_days ),
 		'body'  => __( 'We count from the day it reaches you. Message us on WhatsApp and we start it there. There are no forms.', 'slk' ),
 	),
 	array(
 		'title' => __( 'The courier collects', 'slk' ),
-		/* translators: %s: exchange send fee, e.g. "Rs. 350". */
-		'body'  => sprintf(
-			__( 'From your door, at a time you choose. We pay to collect it. You pay %s to send the new size.', 'slk' ),
-			wp_strip_all_tags( wc_price( $send_fee ) )
-		),
+		// The send fee can be set to 0 from the dashboard ("Leave at 0 to send
+		// it free"), and then nothing is charged to state.
+		'body'  => $send_fee > 0
+			? sprintf(
+				/* translators: %s: exchange send fee, e.g. "Rs. 350". */
+				__( 'From your door, at a time you choose. We pay to collect it. You pay %s to send the new size.', 'slk' ),
+				wp_strip_all_tags( wc_price( $send_fee ) )
+			)
+			: __( 'From your door, at a time you choose. We pay to collect it, and we send the new size free.', 'slk' ),
 	),
 	array(
 		'title' => __( 'Unworn, with the tag on', 'slk' ),

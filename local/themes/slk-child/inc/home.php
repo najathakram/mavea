@@ -294,7 +294,10 @@ function slk_home_from_price( $products ) {
 }
 
 /**
- * The COD handling fee as display text ("Rs. 150"), or '' when unavailable.
+ * The COD handling fee as display text ("Rs. 150"), or '' when unavailable or
+ * set to zero — a fee of zero is never charged at checkout, so no sentence may
+ * name "Rs. 0". Whether there IS a fee is a separate question: ask
+ * slk_delivery_cod_fee() for that, because '' here also means "cannot print".
  *
  * wc_price() returns markup with a non-breaking space entity; it is stripped
  * and decoded here so the template can esc_html() the sentence it lands in
@@ -307,7 +310,13 @@ function slk_home_cod_fee_text() {
 		return '';
 	}
 
-	$html = wp_strip_all_tags( wc_price( slk_delivery_cod_fee() ) );
+	$fee = slk_delivery_cod_fee();
+
+	if ( $fee <= 0 ) {
+		return '';
+	}
+
+	$html = wp_strip_all_tags( wc_price( $fee ) );
 
 	return trim( html_entity_decode( $html, ENT_QUOTES, 'UTF-8' ) );
 }
