@@ -88,6 +88,32 @@ configures everything after each account exists. Order matters — follow the se
 **`mavea.lk` is live end-to-end** — Colombo → Cloudflare edge → Hostinger Singapore, HTTPS
 throughout, serving the WooCommerce install. Store still held in "coming soon".
 
+## Store configuration (2026-08-18)
+
+Done:
+- **Store address**: 140/A Godawatta, Gintota, Sri Lanka, 80280 (Galle district).
+- **Currency LKR**, symbol left, comma thousands, **0 decimals** (was 2).
+- **Selling location restricted to Sri Lanka** (was "sell to all countries" — which let anyone
+  order into a zone with no matching shipping and dead-ends them at checkout).
+- **Taxes off** — correct, VAT not required below LKR 60M/yr.
+- **Shipping zone "Sri Lanka"** → region Sri Lanka, with **both**:
+  - *Island-wide delivery* — flat **Rs. 350**
+  - *Free shipping* — minimum **Rs. 15,000**, applied before coupon discount
+  ⚠ The zone briefly had **only** Free shipping with a minimum. That configuration gives carts
+  below the threshold **no shipping method at all** and they cannot check out — which would have
+  hit most single-hijab orders (Rs. 1,900–3,900). Never leave a zone with only a gated method.
+- **WordPress**: Site Title `MAVÉA`; site + home URL already `https://mavea.lk`;
+  **timezone Asia/Colombo** (was UTC+0 — would have thrown the 48h COD auto-cancel and every
+  order timestamp out by 5½ hours); date format `d/m/Y` so Galle staff cannot misread order dates.
+
+Still open:
+- **Currency symbol shows `රු`, not `Rs.`** as §3 of the plan specifies. This is not a setting —
+  WooCommerce has no field for it. It needs a `woocommerce_currency_symbol` filter in the child
+  theme or the `mavea-checkout` plugin.
+- **WP admin password** is still Hostinger's generated one — rotate at
+  `https://mavea.lk/wp-admin/profile.php`.
+- Site tagline empty, deliberately — brand voice is gate G2, not something to improvise.
+
 ### DNS values (read from hPanel 2026-08-17) — file at the registry, NOT as registry-hosted records
 
 **Delegate nameservers. Do not use the registry's own A-record hosting.** If DNS lives at the
