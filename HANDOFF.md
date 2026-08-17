@@ -300,8 +300,43 @@ Summarised from the commit log, **not re-verified this session** — treat as a 
 
 ---
 
+## Operations run from the dashboard (2026-08-17)
+
+Delivery rates AND day ranges, the COD handling fee, the exchange window and the exchange send
+fee are all settings now, and the storefront reads them through guarded proxies in
+`inc/pages-help.php` — so the Delivery page, the FAQ, the PDP, the homepage and the thank-you
+page can no longer advertise a number the checkout will not charge. Verified by moving the
+settings and re-reading every page.
+
+- **Customization** — a product tab takes option groups (fee + extra making days per choice) and
+  an optional custom length. `SLK_Customization::resolve()` is the only place a selection is
+  validated and priced. Extra days feed the existing ready-date and split-shipment machinery
+  through the `slk_line_making_days` filter, not a second copy of it.
+- **Exchanges** — new `slk-exchanges` plugin: a private post type with an explicit
+  allowed-transitions map and a timestamped audit trail, a My Account endpoint, an admin board,
+  an order meta box, and a manual log form for the WhatsApp requests that are the common case
+  here. Each state is a real `WC_Email`, so it is editable in WooCommerce → Settings → Emails.
+- **Finances** — WooCommerce → Finances, with a period picker and CSV. The COD panel separates
+  outstanding from collected, because cash on delivery is money that exists only once the courier
+  hands it over.
+- **In the studio today** — dashboard widget: lines due or overdue, orders awaiting the
+  confirmation call, open exchanges, low stock.
+
+Known gap, deliberate: "exchange fees charged" on Finances is an em dash. Nothing records the fee
+actually collected, so any figure would be today's rate applied retroactively. Stamp it onto the
+request at dispatch in `slk-exchanges` to close this.
+
+---
+
 ## Standing rules learned the hard way
 
+- **An unregistered class is a feature that does not exist.** Three times in one build a package
+  shipped a complete, correct class that nothing ever `require_once`d — the admin UI saved
+  configuration the storefront could not read, and the gate stayed green because the code parsed
+  fine. Grep for the class name across the repo before believing a feature is done.
+- **A passing lint gate says nothing about whether the feature works.** Every phase here passed
+  `php -l` while carrying blockers. What caught them was moving a setting and re-reading the page,
+  or building an order shaped like the failure and checking the arithmetic.
 - **A comment claiming a bug is fixed is not evidence the bug is fixed.** `35fe132` carried an
   accurate, detailed comment describing the mangling and fixed exactly half of it. The half it
   missed was the half nobody had placed an order to check.
