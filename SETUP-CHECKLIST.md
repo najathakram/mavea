@@ -155,3 +155,51 @@ Cloudflare rather than double-file.
   `.aeshal/logs/actions.log` (alias `WPSL::`), same as Aeshal.
 - The two brands never cross-link publicly; separate voice config
   (`config/brand-voice-sl.json`, to be written at G2).
+
+## Migration executed (2026-08-18)
+
+Code is fully migrated and live on Hostinger. **Content is not** — seeding is
+the one remaining step and it waits on two sign-offs (below).
+
+Done, each verified with a cache-busted homepage check immediately after:
+- SSH enabled, ed25519 key auth (`~/.ssh/mavea_hostinger`, private key local
+  only). WP-CLI 2.12.0. Docroot `domains/mavea.lk/public_html`.
+- **Pre-launch guard mu-plugin deployed FIRST**, before any theme code existed
+  on the server. `mavea_prelaunch = 1`.
+- slk-child theme + slk-checkout, slk-order-flow, slk-exchanges uploaded.
+- Blocksy **2.1.52** installed (pinned to the version the child theme was built
+  against). Blocksy Companion deliberately NOT installed.
+- Nine wordpress.org plugins installed; the five active locally activated
+  (PDF invoices, Rank Math, PayHere, Mintpay, Login with Google). Notify.lk,
+  WP Mail SMTP, PixelYourSite and Koko installed but parked.
+- All three slk plugins activated one at a time.
+- **slk-child activated — the dangerous step. The guard held**: homepage stayed
+  byte-identical at 3,033 bytes with zero `ct-container`, zero `slk-hero`, zero
+  header/footer elements. Every other URL (our-story, delivery, contact,
+  size-guide, exchange, faq, shop, cart, checkout, my-account) 302s home.
+- Catalogue exported and staged at `local/deploy/catalog.json` — 20 products,
+  no `_thumbnail_id` / `_product_image_gallery` / `_sale_price`.
+
+⚠ **A live pricing bug was found and fixed during the baseline.**
+`woocommerce_price_num_decimals` was **40**, not 0 — an earlier hPanel edit
+where the field was appended to rather than replaced. Prices were rendering
+`රු12,500.0000000000000000000000000000000000000000`. Now 0, with
+`woocommerce_currency_pos = left_space`, and with slk-checkout's filter live a
+price renders **`Rs. 16,900`**.
+
+⚠ **Two shipping zones now both named "Sri Lanka"**, both at order 0: zone 1 is
+the hand-built one (flat Rs. 350 + free ≥ Rs. 15,000, verified intact), zone 2
+is slk-checkout's district-tiered `slk_delivery`. Zone order decides which
+charges. Harmless while checkout is unreachable; **must be resolved before
+launch.**
+
+### Still blocked on Najath
+- **G4 imagery** — seeding writes photography into `wp-content/uploads/`, which
+  is publicly addressable even with every page 302'd.
+- **G3 prices** — the exported catalogue carries dev placeholders
+  (e.g. Rs. 16,900) which would land in the live database.
+- **Shipping zone** decision above.
+- **Copy**: `inc/pages-help.php:204` "before anything leaves Galle" (a rendered
+  FAQ answer a customer reads) and `page-templates/story.php:9` "eight women,
+  twenty of a cut". Both need Najath's words.
+- A fresh `mavea.lk/wp-admin` login for any dashboard work.

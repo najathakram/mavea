@@ -1,0 +1,1346 @@
+{
+    "generated": "2026-08-18T03:08:34+00:00",
+    "terms": {
+        "product_cat": [
+            {
+                "slug": "abayas",
+                "name": "Abayas",
+                "description": ""
+            },
+            {
+                "slug": "dresses",
+                "name": "Dresses",
+                "description": ""
+            },
+            {
+                "slug": "hand-beaded",
+                "name": "Hand-beaded",
+                "description": "Every piece here carries ornament set by hand, bead by bead. Slow work you can see up close: lattice cuffs, paisley medallions, a single gold vine. It is why these sit above the plain pieces in price."
+            },
+            {
+                "slug": "hijabs",
+                "name": "Hijabs",
+                "description": ""
+            },
+            {
+                "slug": "uncategorized",
+                "name": "Uncategorized",
+                "description": ""
+            }
+        ],
+        "product_tag": [
+            {
+                "slug": "set",
+                "name": "set",
+                "description": ""
+            }
+        ],
+        "pa_colour": [
+            {
+                "slug": "black",
+                "name": "Black",
+                "description": ""
+            },
+            {
+                "slug": "blue",
+                "name": "Blue",
+                "description": ""
+            },
+            {
+                "slug": "blush",
+                "name": "Blush",
+                "description": ""
+            },
+            {
+                "slug": "camel",
+                "name": "Camel",
+                "description": ""
+            },
+            {
+                "slug": "grey",
+                "name": "Grey",
+                "description": ""
+            },
+            {
+                "slug": "lilac",
+                "name": "Lilac",
+                "description": ""
+            },
+            {
+                "slug": "mocha",
+                "name": "Mocha",
+                "description": ""
+            },
+            {
+                "slug": "rose",
+                "name": "Rose",
+                "description": ""
+            },
+            {
+                "slug": "sage",
+                "name": "Sage",
+                "description": ""
+            },
+            {
+                "slug": "taupe",
+                "name": "Taupe",
+                "description": ""
+            }
+        ],
+        "pa_detail": [
+            {
+                "slug": "applique",
+                "name": "Appliqué",
+                "description": ""
+            },
+            {
+                "slug": "embroidery",
+                "name": "Embroidery",
+                "description": ""
+            },
+            {
+                "slug": "hand-beaded",
+                "name": "Hand-beaded",
+                "description": ""
+            },
+            {
+                "slug": "lace",
+                "name": "Lace",
+                "description": ""
+            },
+            {
+                "slug": "plain",
+                "name": "Plain",
+                "description": ""
+            },
+            {
+                "slug": "ruffles",
+                "name": "Ruffles",
+                "description": ""
+            }
+        ],
+        "pa_occasion": [
+            {
+                "slug": "eid-ramadan",
+                "name": "Eid &amp; Ramadan",
+                "description": ""
+            },
+            {
+                "slug": "everyday",
+                "name": "Everyday",
+                "description": ""
+            },
+            {
+                "slug": "weddings-functions",
+                "name": "Weddings &amp; functions",
+                "description": ""
+            },
+            {
+                "slug": "work",
+                "name": "Work",
+                "description": ""
+            }
+        ]
+    },
+    "products": [
+        {
+            "slug": "aleena",
+            "title": "Aleena Abaya Set",
+            "status": "publish",
+            "excerpt": "Lilac two-piece · crinkle-shimmer layer over a plain slip · falls to the ankle",
+            "content": "<p>A two-piece set in lilac: a floor-length open layer in a crinkled shimmer, worn over a plain slip in the same colour. The layer's sleeves gather into smocked cuffs that end in a small ruffle. The slip underneath is deliberately plain, so the shimmer has something calm to sit on.</p>\n<p>This is the set for a walima or a wedding evening. The layer moves; the slip keeps it grounded.</p>\n<h3>Details</h3>\n<ul><li>Two pieces, worn together</li><li>Open-front layer with a crinkle-shimmer finish</li><li>Smocked cuffs with a ruffle edge</li><li>Plain matching slip</li></ul>\n<h3>Fabric</h3>\n<p>Shimmer-finish cloth over a plain slip.</p>",
+            "meta": {
+                "_regular_price": "16900",
+                "_price": "16900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [
+                    "set"
+                ],
+                "pa_colour": [
+                    "lilac"
+                ],
+                "pa_detail": [
+                    "ruffles"
+                ],
+                "pa_occasion": [
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "anisa",
+            "title": "Anisa Abaya",
+            "status": "publish",
+            "excerpt": "Blush crinkle shimmer · hand-beaded organza cuffs · falls to the ankle",
+            "content": "<p>Blush pink in a crinkled, light-catching finish, plain through the body, with wide sheer organza cuffs hand-beaded in pastel confetti: pearl, silver, gold, rose. The cuffs are the celebration. The crinkle keeps everything else soft.</p>\n<p>Daytime occasions: an aqeeqah, a birthday lunch, the second day of Eid when you still want colour but the big dress has had its turn.</p>\n<h3>Details</h3>\n<ul><li>V neckline with a fine pin closure</li><li>Plain crinkle-finish body</li><li>Wide organza cuffs with pastel beadwork, set by hand</li><li>Full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Crinkle shimmer cloth with organza cuffs.</p>",
+            "meta": {
+                "_regular_price": "17900",
+                "_price": "17900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "blush"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "eid-ramadan",
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "fizza",
+            "title": "Fizza Abaya",
+            "status": "publish",
+            "excerpt": "Silver-grey shimmer · chevron cuff bands · falls to the ankle",
+            "content": "<p>Silver-grey with a fine metallic shimmer running through the weave, a neat V inset at the collar and a narrow chevron band embroidered at each cuff. It is the least decorated of the shine pieces, which makes it the easiest one to wear often.</p>\n<p>Ramadan evenings, iftar invitations, prayer halls with white light. The shimmer earns its keep there.</p>\n<h3>Details</h3>\n<ul><li>V inset at the collar</li><li>Narrow embroidered chevron band at each cuff</li><li>Plain body, full skirt</li><li>Metallic-thread shimmer through the cloth</li></ul>\n<h3>Fabric</h3>\n<p>Shimmer weave with a metallic thread.</p>",
+            "meta": {
+                "_regular_price": "9900",
+                "_price": "9900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "grey"
+                ],
+                "pa_detail": [
+                    "embroidery"
+                ],
+                "pa_occasion": [
+                    "eid-ramadan"
+                ]
+            }
+        },
+        {
+            "slug": "hafsa",
+            "title": "Hafsa Linen Coat Dress",
+            "status": "publish",
+            "excerpt": "Heather linen · notched lapels, seamed waist · falls to the ankle",
+            "content": "<p>The one tailored piece in the collection: a coat dress with notched lapels, a seamed waist and a flared skirt, in a heather linen weave. Eight self-covered buttons close the bodice, and the cuffs finish with buttoned tabs. It reads as workwear because it is built like workwear.</p>\n<p>Interviews, the office, teaching days, any morning that needs you to look decided. It sits loose through the body and still holds its line at the shoulders.</p>\n<h3>Details</h3>\n<ul><li>Notched lapels over a buttoned bodice</li><li>Eight self-covered buttons</li><li>Seamed waist, flared skirt</li><li>Buttoned cuff tabs</li></ul>\n<h3>Fabric</h3>\n<p>Linen.</p>",
+            "meta": {
+                "_regular_price": "16900",
+                "_price": "16900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "dresses"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "grey"
+                ],
+                "pa_detail": [
+                    "plain"
+                ],
+                "pa_occasion": [
+                    "work"
+                ]
+            }
+        },
+        {
+            "slug": "latheefa",
+            "title": "Latheefa Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Black crepe · a hand-beaded bow at each cuff · falls to the ankle",
+            "content": "<p>A plain black abaya finished with one small hand-beaded bow and a fine trailing bead line at each cuff, edged with a narrow sheer band. You could miss the detail across a room. Up close, it is the whole story.</p>\n<p>A first abaya, a daily abaya, a travel abaya. It asks for nothing and goes everywhere.</p>\n<h3>Details</h3>\n<ul><li>Round neckline with a single button</li><li>Small bow and trailing bead line at each cuff, set by hand</li><li>Narrow sheer band at the cuff edge</li><li>Plain body, full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Matte black crepe.</p>",
+            "meta": {
+                "_regular_price": "13900",
+                "_price": "13900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "everyday"
+                ]
+            }
+        },
+        {
+            "slug": "maryam",
+            "title": "Maryam Satin Abaya",
+            "status": "publish",
+            "excerpt": "Camel satin · scalloped lace cuffs · falls to the ankle",
+            "content": "<p>Camel satin with an unmistakable sheen, closed with a single button at the V. The cuffs are deep scalloped bands of lace, beaded in black, brown and cream, ending in a lace edge that falls over the hand.</p>\n<p>Formal daytime: a nikah, an engagement, the kind of lunch where the photographs are planned in advance. It pairs with brown or black without arguing.</p>\n<h3>Details</h3>\n<ul><li>V neckline with a single button</li><li>Deep scalloped lace cuff bands, beaded in three colours</li><li>Lace edge falling past the wrist</li><li>Plain satin body, full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Satin shell, lace cuffs.</p>",
+            "meta": {
+                "_regular_price": "14900",
+                "_price": "14900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "camel"
+                ],
+                "pa_detail": [
+                    "lace"
+                ],
+                "pa_occasion": [
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "muneera",
+            "title": "Muneera Satin Abaya",
+            "status": "publish",
+            "excerpt": "Black satin · pintucked, no beadwork · falls to the ankle",
+            "content": "<p>Black satin worked in vertical pintucks: panels of them run the length of the front and are echoed on the back, with stacked pintuck bands at the cuffs. There is no beadwork anywhere on it. The light moves along the folds instead.</p>\n<p>The office black, the formal black, the black for days that ask for restraint. It holds formality without a single ornament, which is exactly the point.</p>\n<h3>Details</h3>\n<ul><li>V neckline with a small ring closure</li><li>Vertical pintuck panels, front and back</li><li>Stacked pintuck bands at the cuffs</li><li>No applied ornament</li></ul>\n<h3>Fabric</h3>\n<p>Satin, pintucked.</p>",
+            "meta": {
+                "_regular_price": "12500",
+                "_price": "12500",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "plain"
+                ],
+                "pa_occasion": [
+                    "weddings-functions",
+                    "work"
+                ]
+            }
+        },
+        {
+            "slug": "nadira",
+            "title": "Nadira Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Black crepe · hand-beaded lattice cuffs, teardrop fringe · falls to the ankle",
+            "content": "<p>Nadira is plain black to the elbow. Then each sleeve ends in a broad band of hand-set black lattice beadwork finished with a fringe of beaded teardrops that swing when your hands move. Everything the dress has to say, it says there.</p>\n<p>The body is a clean A-line with a concealed placket, which is why the cuffs work at a dinner table: nothing competes with them. Reach for it for evening functions and the kind of family dinner where the photographs outlive the food.</p>\n<h3>Details</h3>\n<ul><li>Round neckline, concealed placket</li><li>Wide sleeves ending in beaded lattice cuffs</li><li>Hanging beaded teardrop fringe at each cuff, set by hand</li><li>Plain body, full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Matte black crepe.</p>",
+            "meta": {
+                "_regular_price": "17900",
+                "_price": "17900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "naila",
+            "title": "Naila Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Black crepe · ruffle collar, tiered tie sleeves · falls to the ankle",
+            "content": "<p>The romantic one. A ruffled collar stands at the neck above a small keyhole, and each sleeve is drawn in twice on fine ties before releasing into a tiered ruffle at the wrist. All of it in one black, so the shape does the work.</p>\n<p>Dinners, mehndi nights, photographs. The ties let you decide how full the sleeve sits.</p>\n<h3>Details</h3>\n<ul><li>Ruffled stand collar with keyhole and bead button</li><li>Sleeves gathered twice on drawstring ties</li><li>Tiered ruffle at each wrist</li><li>Plain body, full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Matte black crepe.</p>",
+            "meta": {
+                "_regular_price": "12500",
+                "_price": "12500",
+                "_manage_stock": "yes",
+                "_stock": "-15",
+                "_backorders": "no",
+                "_stock_status": "outofstock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "ruffles"
+                ],
+                "pa_occasion": [
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "nasreen",
+            "title": "Nasreen Lace Abaya",
+            "status": "publish",
+            "excerpt": "Mocha open layer over cream · lace at hem and cuffs · falls to the ankle",
+            "content": "<p>An open-front layer in mocha over a cream slip, with blush embroidered lace set into the lower side panels and flaring from the cuffs, each join edged in a fine line of beads. The lace sits where the garment moves: at the hem and the wrist.</p>\n<p>A wedding-guest set for walimahs and evening functions. The cream underneath keeps the lace legible; the mocha keeps the whole thing grown up.</p>\n<h3>Details</h3>\n<ul><li>Open-front layer with a clasp at the V</li><li>Blush embroidered lace in the lower side panels</li><li>Lace-flared cuffs with beaded joins</li><li>Cream slip worn underneath</li></ul>\n<h3>Fabric</h3>\n<p>Crepe shell with embroidered lace panels.</p>",
+            "meta": {
+                "_regular_price": "16900",
+                "_price": "16900",
+                "_manage_stock": "yes",
+                "_stock": "13",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [
+                    "set"
+                ],
+                "pa_colour": [
+                    "mocha"
+                ],
+                "pa_detail": [
+                    "lace"
+                ],
+                "pa_occasion": [
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "rahma",
+            "title": "Rahma Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Taupe crepe · one hand-beaded gold vine at each cuff · falls to the ankle",
+            "content": "<p>Taupe, a concealed placket, and one slim hand-beaded gold vine circling each cuff. That is the entire ornament. It looks the same on the thirtieth wearing as on the first.</p>\n<p>The workhorse: office, errands, travel, visits. If you buy one dress from this collection to live in, make it this one.</p>\n<h3>Details</h3>\n<ul><li>V neckline with a single button</li><li>Concealed front placket</li><li>One gold vine at each cuff, beaded by hand</li><li>Plain body, full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Matte crepe.</p>",
+            "meta": {
+                "_regular_price": "13900",
+                "_price": "13900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "taupe"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "everyday",
+                    "work"
+                ]
+            }
+        },
+        {
+            "slug": "raihana",
+            "title": "Raihana Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Black crepe · hand-beaded silver, shoulder to hem · falls to the ankle",
+            "content": "<p>Two columns of hand-beaded silver leaf sprigs run the full height of the front, one on either side of the placket, and the same sprigs band each cuff. That is the whole design, and it is enough: the beads catch light every time you move.</p>\n<p>Wear it for Eid prayers and the day of visiting that follows, or for any evening where black should not mean invisible.</p>\n<h3>Details</h3>\n<ul><li>V neckline with a small ring stud</li><li>Concealed front placket</li><li>Beaded leaf-sprig columns, shoulder to hem, repeated at the cuffs</li><li>Full skirt with a clean fall</li><li>Beadwork set by hand</li></ul>\n<h3>Fabric</h3>\n<p>Matte black crepe.</p>",
+            "meta": {
+                "_regular_price": "15900",
+                "_price": "15900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "eid-ramadan"
+                ]
+            }
+        },
+        {
+            "slug": "safiya",
+            "title": "Safiya Abaya",
+            "status": "publish",
+            "excerpt": "Powder blue · one button, nothing else · falls to the ankle",
+            "content": "<p>Powder blue, one button at the neck, and nothing else. The placket is concealed, the body is a clean A-line, and the cloth has a soft, low sheen that keeps the plainness from going flat.</p>\n<p>This is the everyday one: work, errands, the school gate, visits. If you are building a small rotation, this is the colour that goes with everything you already own.</p>\n<h3>Details</h3>\n<ul><li>Single button at the neckline</li><li>Concealed front placket</li><li>Clean A-line, no ornament</li><li>Soft low-sheen finish</li></ul>\n<h3>Fabric</h3>\n<p>Smooth cloth with a soft, low sheen.</p>",
+            "meta": {
+                "_regular_price": "9900",
+                "_price": "9900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "blue"
+                ],
+                "pa_detail": [
+                    "plain"
+                ],
+                "pa_occasion": [
+                    "everyday"
+                ]
+            }
+        },
+        {
+            "slug": "salma",
+            "title": "Salma Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Warm grey crepe · hand-beaded reeds at the cuffs · falls to the ankle",
+            "content": "<p>Warm grey, plain through the body, with a spray of hand-beaded reeds rising from each cuff: fine stems in black, white, gold and lilac, as if drawn on with a thin pen. It sits exactly between plain and dressed.</p>\n<p>Work, then dinner, without going home in between. If Rahma is the quietest of the twenty, Salma is one step up.</p>\n<h3>Details</h3>\n<ul><li>V neckline with a ring closure</li><li>Reed sprays rising from each cuff, beaded by hand</li><li>Plain body, concealed placket</li><li>Full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Matte crepe.</p>",
+            "meta": {
+                "_regular_price": "15900",
+                "_price": "15900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "grey"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "weddings-functions",
+                    "work"
+                ]
+            }
+        },
+        {
+            "slug": "shazna",
+            "title": "Shazna Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Black crepe · hand-beaded paisley along each sleeve · falls to the ankle",
+            "content": "<p>Plain from collar to hem, with dense hand-set pewter beadwork running down the outside of each sleeve: paisley medallions stacked shoulder to cuff. Face on, it is a quiet black abaya. The moment you turn or raise a hand, it is not.</p>\n<p>Jummah, dinners, evenings where you would rather the detail be discovered than announced.</p>\n<h3>Details</h3>\n<ul><li>Round neckline with a small keyhole</li><li>Pewter paisley columns on the outer sleeves, beaded by hand</li><li>Plain body with a centre seam</li><li>Full A-line skirt</li></ul>\n<h3>Fabric</h3>\n<p>Matte black crepe.</p>",
+            "meta": {
+                "_regular_price": "15900",
+                "_price": "15900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "suhana",
+            "title": "Suhana Satin Abaya",
+            "status": "publish",
+            "excerpt": "Black satin · velvet appliqué in four colours · falls to the ankle",
+            "content": "<p>The one loud garment in a quiet collection. Suhana is black satin scattered with hand-cut velvet leaves in teal, rust, berry and ivory, each motif edged in black beading, over a plain zip front and wide sleeves with deep turned cuffs. Everything else about the dress stays out of the way, so the colour reads as festive rather than busy.</p>\n<p>Wear it where the occasion asks for something: Eid lunch, a walima, the dinner after a nikah. It needs no jewellery to carry it.</p>\n<h3>Details</h3>\n<ul><li>Concealed zip front</li><li>Wide sleeves with deep turned cuffs</li><li>Velvet appliqué across the front and sleeves, edged in black beadwork</li><li>Full A-line through the body</li></ul>\n<h3>Fabric</h3>\n<p>Satin shell with velvet and lace appliqué.</p>",
+            "meta": {
+                "_regular_price": "16900",
+                "_price": "16900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "applique"
+                ],
+                "pa_occasion": [
+                    "eid-ramadan",
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "warda",
+            "title": "Warda Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Dusty rose crepe · ivory piping, embroidered sleeves · falls to the ankle",
+            "content": "<p>Dusty rose with fine ivory piping traced down the zip and again at the cuff slits, so the lines of the dress are quietly drawn on. Tonal rope embroidery climbs the outside of each sleeve from cuff to shoulder.</p>\n<p>The zip makes it practical and the colour makes it daytime: campus, engagement visits, an aqeeqah, the long afternoon functions where you arrive in daylight and leave after the lights come on.</p>\n<h3>Details</h3>\n<ul><li>Full-length zip behind ivory piping</li><li>V neckline with keyhole</li><li>Tone-on-tone rope embroidery on the outer sleeves</li><li>Slit cuffs finished with piping</li></ul>\n<h3>Fabric</h3>\n<p>Matte crepe in dusty rose.</p>",
+            "meta": {
+                "_regular_price": "12500",
+                "_price": "12500",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "rose"
+                ],
+                "pa_detail": [
+                    "embroidery"
+                ],
+                "pa_occasion": [
+                    "everyday",
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "yasmeen",
+            "title": "Yasmeen Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Sage crinkle crepe · hand-beaded tonal flowers · falls to the ankle",
+            "content": "<p>Sage green in a crinkle finish, closed with a zip, carrying large flower sprays drawn by hand in tonal pin-beads: one on each sleeve, one low on the front of the skirt, one on the back. Because the flowers match the dress, they surface as texture first and pattern second.</p>\n<p>Daytime and outdoors: garden functions, campus, long afternoons. The green photographs kindly in Sri Lankan light.</p>\n<h3>Details</h3>\n<ul><li>V inset neckline, concealed zip</li><li>Pin-bead flower sprays on sleeves, front and back, set by hand</li><li>Crinkle-finish cloth</li><li>Full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Crinkle crepe.</p>",
+            "meta": {
+                "_regular_price": "13900",
+                "_price": "13900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "sage"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "everyday"
+                ]
+            }
+        },
+        {
+            "slug": "zaheera",
+            "title": "Zaheera Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Black crepe · hand-beaded gold rosettes, keyhole back · falls to the ankle",
+            "content": "<p>Wide bell sleeves carry rows of small gold and bronze rosettes, each hand-beaded around a pearl centre, so the deep cuffs read as jewellery. The body stays plain, and the back closes with a keyhole.</p>\n<p>An evening abaya for receptions and wedding season. Bangles are optional; the sleeves have that covered.</p>\n<h3>Details</h3>\n<ul><li>Wide bell sleeves with deep ornamented cuffs</li><li>Rosettes on pearl centres, in rows, beaded by hand</li><li>Keyhole back closure</li><li>Plain body, full skirt</li></ul>\n<h3>Fabric</h3>\n<p>Matte black crepe.</p>",
+            "meta": {
+                "_regular_price": "17900",
+                "_price": "17900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas",
+                    "hand-beaded"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "hand-beaded"
+                ],
+                "pa_occasion": [
+                    "weddings-functions"
+                ]
+            }
+        },
+        {
+            "slug": "zarina",
+            "title": "Zarina Crepe Abaya",
+            "status": "publish",
+            "excerpt": "Black crepe · velvet leaves on organza, hem and cuffs · falls to the ankle",
+            "content": "<p>Black to the knee, and then the hem turns into a ring of champagne velvet leaves set on sheer organza, with a single matching leaf floating in each sheer cuff. Against the light the leaves hold their shape and the organza disappears.</p>\n<p>An occasion abaya for the evening: receptions, walimahs, a milestone birthday. It does its best work standing up.</p>\n<h3>Details</h3>\n<ul><li>Soft collar with keyhole and button</li><li>Sheer organza cuff sections, one velvet leaf in each</li><li>Organza hem flounce ringed with velvet leaves</li><li>Plain body above the knee</li></ul>\n<h3>Fabric</h3>\n<p>Crepe body with organza and velvet trim.</p>",
+            "meta": {
+                "_regular_price": "14900",
+                "_price": "14900",
+                "_manage_stock": "yes",
+                "_stock": "20",
+                "_backorders": "no",
+                "_stock_status": "instock",
+                "_sold_individually": "no",
+                "_tax_status": "taxable",
+                "_tax_class": "",
+                "_product_attributes": {
+                    "pa_colour": {
+                        "name": "pa_colour",
+                        "value": "",
+                        "position": 0,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_detail": {
+                        "name": "pa_detail",
+                        "value": "",
+                        "position": 1,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    },
+                    "pa_occasion": {
+                        "name": "pa_occasion",
+                        "value": "",
+                        "position": 2,
+                        "is_visible": 1,
+                        "is_variation": 0,
+                        "is_taxonomy": 1
+                    }
+                }
+            },
+            "terms": {
+                "product_cat": [
+                    "abayas"
+                ],
+                "product_tag": [],
+                "pa_colour": [
+                    "black"
+                ],
+                "pa_detail": [
+                    "applique"
+                ],
+                "pa_occasion": [
+                    "weddings-functions"
+                ]
+            }
+        }
+    ]
+}
