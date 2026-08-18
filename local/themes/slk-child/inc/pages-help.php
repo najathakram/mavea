@@ -201,7 +201,7 @@ function slk_faq_groups() {
 				),
 				array(
 					'q' => __( 'Why do you call before shipping?', 'slk' ),
-					'a' => __( 'We want the piece, the size and the address to be right before anything leaves Galle. A real person calls you, or sends a WhatsApp message if that suits you better, and nothing ships until you say yes.', 'slk' ),
+					'a' => __( 'We want the piece, the size and the address to be right before we dispatch anything. A real person calls you, or sends a WhatsApp message if that suits you better, and nothing ships until you say yes.', 'slk' ),
 				),
 				array(
 					'q' => __( 'Can I pay by card or eZ Cash?', 'slk' ),
