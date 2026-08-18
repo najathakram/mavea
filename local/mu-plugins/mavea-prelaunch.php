@@ -25,6 +25,16 @@ function mavea_prelaunch_on(): bool {
 }
 
 /**
+ * Staff bypass. Anyone who can edit posts is reviewing the build, not shopping
+ * it, so they get the real site — the storefront front page included. Without
+ * this the front-page override below outranks even an administrator, and the
+ * only way to see the home template is to disable the guard for everybody.
+ */
+function mavea_prelaunch_is_staff(): bool {
+	return is_user_logged_in() && current_user_can( 'edit_posts' );
+}
+
+/**
  * Is this request the site's front page? is_front_page() alone is not enough:
  * it returns false when page_on_front is unset (0) and when the front page is
  * trashed — exactly the cases the holding template's emergency fallback was
@@ -53,7 +63,7 @@ function mavea_prelaunch_is_home_request(): bool {
  * later filterer can put a theme template back).
  */
 function mavea_prelaunch_template( $template ) {
-	if ( mavea_prelaunch_on() && mavea_prelaunch_is_home_request() ) {
+	if ( mavea_prelaunch_on() && ! mavea_prelaunch_is_staff() && mavea_prelaunch_is_home_request() ) {
 		return __DIR__ . '/mavea/holding-template.php';
 	}
 
@@ -83,7 +93,7 @@ function mavea_prelaunch_redirect(): void {
 		return;
 	}
 
-	if ( is_user_logged_in() && current_user_can( 'edit_posts' ) ) {
+	if ( mavea_prelaunch_is_staff() ) {
 		return;
 	}
 
