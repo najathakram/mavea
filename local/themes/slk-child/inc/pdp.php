@@ -16,8 +16,8 @@
  *     inside wc_dropdown_variation_attribute_options(), called from
  *     single-product/add-to-cart/variable.php line 41-47 — confirmed real,
  *     not invented)
- *   - woocommerce_single_product_summary                     (31, 45 — the
- *     WhatsApp button and trust rows slot between the documented core
+ *   - woocommerce_single_product_summary                     (35, 45 — the
+ *     size-guide link and trust rows slot between the documented core
  *     callbacks at 30/40, exactly as content-single-product.php's docblock
  *     states)
  *   - woocommerce_product_single_add_to_cart_text             (core filter,
@@ -55,6 +55,26 @@ add_filter(
 	static function () {
 		return __( 'Add to bag', 'slk' );
 	}
+);
+
+/* -------------------------------------------------------------------------
+ * Stock count — never surfaced, in stock or out.
+ *
+ * WooCommerce always prints woocommerce_get_stock_html() into the DOM even
+ * though style.css hides the in-stock line with display:none — CSS removes
+ * it from sight, not from assistive tech or a scraper. Publishing an exact
+ * inventory count also runs against the premium positioning. The out-of-
+ * stock case still has to render (it pairs with the sold-out card marker in
+ * the shop grid), so only the in-stock string is stripped.
+ * ---------------------------------------------------------------------- */
+
+add_filter(
+	'woocommerce_get_stock_html',
+	static function ( $html, $product ) {
+		return $product->is_in_stock() ? '' : $html;
+	},
+	10,
+	2
 );
 
 /* -------------------------------------------------------------------------
@@ -312,12 +332,17 @@ function slk_pdp_whatsapp_button() {
  *
  * The real add-to-cart button in the summary is left exactly where core put
  * it (moving it would break WooCommerce's variation JS, which binds to it by
- * position inside form.cart). Instead:
- *   - simple products get a genuine second add-to-cart FORM in the dock, so
- *     it works with JS off;
- *   - variable products get a proxy button that is `hidden` in the markup and
- *     only revealed by the script that wires it, so a JS-off reader never
- *     sees a dead control.
+ * position inside form.cart). Every product type — simple included — gets a
+ * proxy button that is `hidden` in the markup and only revealed by the
+ * script that wires it to that real submit, so a JS-off reader never sees a
+ * dead control (she still has the always-visible submit in the summary card
+ * itself). This used to branch: simple products got their own second
+ * add-to-cart FORM in the dock, with quantity hardcoded to 1 — so a shopper
+ * who set 3 in the visible stepper and tapped the dock (the control she
+ * actually reaches for on a phone) added 1 with no indication anything was
+ * discarded. The proxy path is now the only path: the summary form is the
+ * single source of truth for quantity, variation and any customisation
+ * field.
  * ---------------------------------------------------------------------- */
 
 add_action(
@@ -342,8 +367,6 @@ function slk_pdp_buy_dock() {
 		return;
 	}
 
-	$is_variable = $product->is_type( 'variable' );
-
 	/* LAW 2: the figure comes from wc_price(), never a hand-written symbol.
 	   For a variable product get_price() is the lowest variation price; the
 	   dock script rewrites the label from the live variation price once a
@@ -358,39 +381,92 @@ function slk_pdp_buy_dock() {
 
 	$wa_url = slk_pdp_whatsapp_url( $product );
 
-	echo '<div class="slk-buy-dock" data-slk-buy-dock><div class="slk-buy-dock__inner">';
+	/*
+	 * The dock ships `hidden` and the script below reveals it once the proxy
+	 * is wired. Its only content today is that proxy — the WhatsApp circle
+	 * prints only when a number is filtered in — so without the attribute a
+	 * reader with no JS got a sticky glass pill wrapped around nothing,
+	 * covering the foot of the page and reading as a control that failed to
+	 * load. She still has the summary card's own submit.
+	 */
+	echo '<div class="slk-buy-dock" data-slk-buy-dock hidden><div class="slk-buy-dock__inner">';
 
 	if ( '' !== $wa_url ) {
 		echo slk_pdp_whatsapp_markup( $wa_url, 'slk-buy-dock__wa' ); // phpcs:ignore WordPress.Security.EscapingOutput -- escaped in helper.
 	}
 
 	/*
-	 * A customizable piece has to go through the summary form too, for the same
-	 * reason a variable one does: only that form carries the chosen options.
-	 * The dock used to ship its own bare form (quantity + add-to-cart) for every
-	 * simple product, so on a phone — where the dock is the button she actually
-	 * reaches for — a customizable piece went into the bag with none of her
-	 * choices attached, and a required group made it fail with an error pointing
-	 * at fields she could not see from there.
+	 * Every product type — simple included — goes through the summary form's
+	 * real submit via this proxy button, never a second form of its own. The
+	 * dock used to ship a bare form (quantity hardcoded to 1 + add-to-cart)
+	 * for simple products, so on a phone — where the dock is the button she
+	 * actually reaches for — setting quantity 3 in the visible stepper and
+	 * tapping the dock silently added 1, with no indication anything was
+	 * ignored. The same duplicate-form shape also swallowed any
+	 * customisation fields for a customizable piece. The summary form is now
+	 * the single source of truth for quantity, variation and customisation
+	 * alike; the button stays hidden until the script below has wired it to
+	 * that form's real submit.
 	 */
-	$needs_summary_form = $is_variable
-		|| ( class_exists( 'SLK_Customization' ) && SLK_Customization::has_any( $product ) );
-
-	if ( $needs_summary_form ) {
-		printf(
-			'<button type="button" class="slk-btn slk-btn--primary slk-buy-dock__cta" data-slk-dock-proxy hidden>%s</button>',
-			wp_kses_post( $label )
-		);
-	} else {
-		printf(
-			'<form class="slk-buy-dock__form" method="post" action="%1$s"><input type="hidden" name="quantity" value="1" /><button type="submit" name="add-to-cart" value="%2$s" class="slk-btn slk-btn--primary slk-buy-dock__cta">%3$s</button></form>',
-			esc_url( $product->get_permalink() ),
-			esc_attr( $product->get_id() ),
-			wp_kses_post( $label )
-		);
-	}
+	printf(
+		'<button type="button" class="slk-btn slk-btn--primary slk-buy-dock__cta" data-slk-dock-proxy hidden>%s</button>',
+		wp_kses_post( $label )
+	);
 
 	echo '</div></div>';
+}
+
+/* -------------------------------------------------------------------------
+ * Size-guide link — woocommerce_single_product_summary, priority 35 (after
+ * the core add-to-cart block at 30, before the trust rows at 45).
+ *
+ * The link used to be created only by the PDP script, inside a variation
+ * row's label — so a simple product, which never renders a variations table
+ * at all, shipped no route to the size guide, and the href itself was the
+ * unregistered filter default '#slk-size-guide', an anchor to nothing. It is
+ * printed here instead: a direct child of .slk-summary-card, so every product
+ * type gets it, and exactly one link exists (the script no longer makes its
+ * own). functions.php registers the filter against
+ * slk_chrome_page_url( 'size-guide' ).
+ *
+ * Nothing is printed when the URL is empty — page missing or unpublished —
+ * the same never-a-dead-link discipline the chrome help links already apply.
+ * ---------------------------------------------------------------------- */
+
+add_action(
+	'woocommerce_single_product_summary',
+	'slk_pdp_size_guide_link',
+	35
+);
+
+/**
+ * The size-guide destination, or '' when no page is published.
+ *
+ * @return string URL, or empty string when the link should not render.
+ */
+function slk_pdp_size_guide_url() {
+	/**
+	 * Filters the size-guide link target on the PDP.
+	 *
+	 * Return an empty string to suppress the link entirely.
+	 *
+	 * @param string $url
+	 */
+	return (string) apply_filters( 'slk_pdp_size_guide_url', '' );
+}
+
+function slk_pdp_size_guide_link() {
+	$url = slk_pdp_size_guide_url();
+
+	if ( '' === $url ) {
+		return;
+	}
+
+	printf(
+		'<a class="slk-pdp__size-guide" href="%1$s">%2$s</a>',
+		esc_url( $url ),
+		esc_html__( 'Size guide · cm', 'slk' )
+	);
 }
 
 /* -------------------------------------------------------------------------
@@ -414,10 +490,12 @@ function slk_pdp_trust_rows() {
 	$days_metro  = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 0 ) : '';
 	$days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2 ) : '';
 
+	// Column 0 is an slk_chrome_icon() name, not a glyph — style.css:711,
+	// "Drawn icons, not glyphs".
 	$rows = array(
-		array( '✓', __( 'Cash on delivery, with a call to confirm before dispatch', 'slk' ) ),
+		array( 'check', __( 'Cash on delivery, with a call to confirm before dispatch', 'slk' ) ),
 		array(
-			'⇄',
+			'exchange',
 			sprintf(
 				/* translators: %d: number of days to start an exchange. */
 				__( 'Exchange within %d days, courier collects', 'slk' ),
@@ -425,7 +503,7 @@ function slk_pdp_trust_rows() {
 			),
 		),
 		array(
-			'◷',
+			'clock',
 			$days_metro && $days_island
 				? sprintf(
 					/* translators: 1: Colombo & Gampaha day range. 2: rest-of-island day range. */
@@ -440,8 +518,8 @@ function slk_pdp_trust_rows() {
 	echo '<div class="slk-pdp__trust">';
 	foreach ( $rows as $row ) {
 		printf(
-			'<div class="slk-pdp__trust-row"><span aria-hidden="true">%1$s</span><span>%2$s</span></div>',
-			esc_html( $row[0] ),
+			'<div class="slk-pdp__trust-row">%1$s<span>%2$s</span></div>',
+			slk_chrome_icon( $row[0], 16 ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup.
 			esc_html( $row[1] )
 		);
 	}
@@ -488,17 +566,15 @@ add_action(
 	.slk-pdp.slk-pdp .product-entry-wrapper > .woocommerce-product-gallery{
 		width:auto;margin:0;
 	}
-	/* The summary element is a TRANSPARENT sticky column now — its old panel
-	   skin moved onto .slk-summary-card, so the two cards inside it (main +
-	   About) are the only painted surfaces. */
+	/* The summary element is a TRANSPARENT sticky column — its old panel skin
+	   moved onto .slk-summary-card, so the two cards inside it (main + About)
+	   are the only painted surfaces. Nothing to strip here any more: the
+	   slk-panel/slk-panel--lifted classes came off the div in
+	   content-single-product.php, which is what was painting a third glass
+	   surface around both cards on every phone and tablet. */
 	.slk-pdp.slk-pdp .product-entry-wrapper > .summary.entry-summary{
 		width:auto;margin-inline-start:0;
 		padding:0;
-		background:none;
-		border:0;
-		box-shadow:none;
-		backdrop-filter:none;
-		-webkit-backdrop-filter:none;
 		position:sticky;
 		top:var(--slk-space-6);
 		align-self:start;
@@ -548,6 +624,18 @@ add_action(
    navigation, not a summary. Three columns kills the orphan-row problem the
    old first-child hide was papering over. */
 
+/* Blocksy\'s flexy-arrow-prev/next ship as bare spans: not focusable, no
+   role, no name, sized 40x40 (below --slk-touch), and their opacity/
+   visibility rules live inside @media(any-hover:hover) — so they are
+   invisible on desktop and render as unlabelled plain circles over the
+   photograph on touch. The thumbnail pills above already give full,
+   keyboard-reachable navigation between all three shots, so the arrows are
+   removed outright rather than half-fixed with an aria-label a sighted
+   touch shopper still cannot operate without a pointer. */
+.slk-pdp .woocommerce-product-gallery .flexy-arrow-prev,
+.slk-pdp .woocommerce-product-gallery .flexy-arrow-next{
+	display:none;
+}
 
 /* The stepper, owned outright. Blocksy\'s type-2 quantity positions its empty
    +/− spans with fractional inset math; every partial override so far produced
@@ -575,6 +663,14 @@ add_action(
 .slk-pdp form.cart .quantity .ct-increase{right:2px}
 .slk-pdp form.cart .quantity .ct-decrease:hover,
 .slk-pdp form.cart .quantity .ct-increase:hover{background:var(--slk-color-white)}
+/* These are plain spans, not buttons (Blocksy\'s markup) — the PDP script
+   below gives them role="button", tabindex and an aria-label, so they also
+   need a visible keyboard-focus ring; nothing supplies one by default on a
+   non-interactive element. */
+.slk-pdp form.cart .quantity .ct-decrease:focus-visible,
+.slk-pdp form.cart .quantity .ct-increase:focus-visible{
+	outline:2px solid var(--slk-color-ink);outline-offset:2px;
+}
 .slk-pdp form.cart .quantity .ct-decrease::before{content:"\2212"}
 .slk-pdp form.cart .quantity .ct-increase::before{content:"\002B"}
 .slk-pdp form.cart .quantity input.qty{
@@ -612,14 +708,20 @@ add_action(
 
 /* Related products: Blocksy stamps ct-hidden-sm/ct-hidden-md on its wrapper,
    hiding the rail from every phone and tablet — the shoppers who need it
-   most. The doubled classes out-rank the utility\'s media rules. */
-.slk-pdp .related.products.ct-hidden-sm.ct-hidden-md{display:block}
-.slk-pdp .related.products{
+   most.
+   CORRECTION: these rules were written under a .slk-pdp ancestor, which never
+   matches — section.related.products lives inside article.post-N, a SIBLING of
+   div#product-N.slk-pdp, so the rail was unhidden nowhere and unstyled even on
+   desktop. Drop the ancestor; the width/heading rules re-point at the article
+   the section really sits in. Blocksy\'s utility is display:none !important, so
+   the un-hide has to match it. */
+.related.products.ct-hidden-sm.ct-hidden-md{display:block !important}
+.single-product article > .related.products{
 	max-width:var(--slk-container);
 	margin:var(--slk-space-12) auto 0;
 	padding-inline:var(--slk-gutter);
 }
-.slk-pdp .related.products > h2{
+.single-product article > .related.products > h2{
 	font-family:var(--slk-font-display);font-weight:300;font-size:27px;margin:0 0 var(--slk-space-4);
 }
 .slk-pdp .woocommerce-product-gallery .flexy-pills[data-type="thumbs"] ol{
@@ -661,6 +763,7 @@ add_action(
 		"title price"
 		"desc  desc"
 		"cart  cart"
+		"guide guide"
 		"trust trust";
 }
 /* Blocksy gives every entry-summary layer a 35px margin-bottom of its own.
@@ -682,11 +785,28 @@ add_action(
 .slk-summary-card > .ct-product-divider{ display:none; }
 .slk-summary-card > .ct-product-add-to-cart{ grid-area:cart;margin:0; }
 .slk-summary-card > .ct-product-add-to-cart > form.cart{ margin:0; }
-.slk-summary-card > h1.product_title{
+/* Prefixed with .slk-pdp.product (0,4,1) so this beats style.css\'s
+   `.woocommerce div.product .product_title.entry-title{margin:0 0 6px}`
+   (0,4,2 — wins on margin alone) and, on the price rule below, its
+   `.woocommerce div.product p.price{font:500 16px/1 …}` (0,3,2), which
+   otherwise outranks the un-prefixed (0,2,1) version of this selector
+   regardless of load order and keeps the price at 16px instead of the
+   intended var(--slk-text-xl). PDP summary typography has one owner — this
+   file — so the fix raises specificity here rather than editing style.css. */
+.slk-pdp.product .slk-summary-card > h1.product_title{
 	grid-area:title;margin:0;font-size:var(--slk-display-s);font-weight:400;
 }
-.slk-summary-card > p.price{
+.slk-pdp.product .slk-summary-card > p.price{
 	grid-area:price;margin:0;font:500 var(--slk-text-xl)/1 var(--slk-font-ui);white-space:nowrap;
+}
+/* Raising the h1 to (0,4,1) above also lifted it past style.css\'s desktop
+   step — @media (min-width:1000px){ .woocommerce div.product
+   .product_title.entry-title{font-size:28px} } — which scores the same
+   (0,4,1) and now loses the tie, because this block prints after style.css.
+   The title silently stayed 24px at every width. Whichever file owns the
+   selector owns its breakpoint too. */
+@media (min-width: 1000px){
+	.slk-pdp.product .slk-summary-card > h1.product_title{ font-size:28px; }
 }
 .slk-summary-card > .woocommerce-product-details__short-description{
 	grid-area:desc;font:400 var(--slk-text-sm)/1.6 var(--slk-font-ui);color:var(--slk-color-muted);
@@ -721,6 +841,12 @@ add_action(
 	font:500 var(--slk-text-xs)/1 var(--slk-font-ui);text-decoration:underline;text-underline-offset:3px;
 	color:var(--slk-color-ink);min-height:var(--slk-touch);display:inline-flex;align-items:center;
 }
+/* The link is a direct child of the card now (printed on
+   woocommerce_single_product_summary/35), so it needs a named row: an unnamed
+   child auto-places into an implicit row BELOW the trust list, away from the
+   sizes it explains. justify-self keeps the rule the width of the words
+   rather than the width of the card. */
+.slk-pdp .slk-summary-card > .slk-pdp__size-guide{ grid-area:guide;justify-self:start; }
 .slk-pdp__summary .reset_variations{ font:400 12px/1 var(--slk-font-ui);color:var(--slk-color-muted); }
 .slk-pdp__summary .slk-pdp__fit-hint{
 	font:400 12px/1.6 var(--slk-font-ui);color:var(--slk-color-muted);padding-top:var(--slk-space-2);
@@ -797,6 +923,17 @@ add_action(
 	flex:1 1 auto;width:100%;min-height:48px;border:0;border-radius:24px;
 	font:500 13.5px/1 var(--slk-font-ui);
 }
+/* The dock and its proxy both ship `hidden` and are revealed only once the
+   script has wired the button to the summary form. The user agent implements
+   that attribute as [hidden]{display:none}, which style.css\'s
+   .slk-btn{display:inline-flex} overrides outright — author origin beats UA
+   origin whatever the specificity — so with JS off the dock painted a
+   live-looking "Add to bag" that did nothing. The wrapper carries the same
+   override so a JS-off reader gets no dock at all rather than an empty glass
+   pill. Same [hidden] override every other hideable component in the theme
+   carries. */
+.slk-buy-dock[hidden]{ display:none; }
+.slk-buy-dock__cta[hidden]{ display:none; }
 .slk-buy-dock__cta .woocommerce-Price-amount{ font:inherit;color:inherit; }
 .slk-buy-dock__wa{ width:48px;height:48px;flex:none; }
 @media (min-width: 1000px){
@@ -818,27 +955,77 @@ add_action(
 	ready(function(){
 		document.querySelectorAll('.variations_form').forEach(initForm);
 		initDock();
+		initQuantitySteppers();
 	});
 
 	/*
-	 * Buy dock. A plain simple product ships a real <form> in the dock and needs
-	 * no JS at all. Variable and CUSTOMIZABLE products cannot: only the summary's
-	 * own form knows the chosen variation or the chosen options. So the dock
-	 * button is rendered `hidden` and is only
-	 * revealed here, once it has been wired to the real submit — a reader with
-	 * no JS never sees a control that would not work.
+	 * Blocksy's quantity +/- controls ship as bare <span class="ct-increase">
+	 * / <span class="ct-decrease">, with their glyphs supplied purely by CSS
+	 * ::before content (see the stepper block above) — no role, no name, not
+	 * in the tab order. Their DOM order also runs backwards from the CSS
+	 * above, which pins decrease to the left edge of the pill and increase to
+	 * the right: a keyboard/AT user tabbing through hits "increase" before
+	 * "decrease", reversed from what she sees painted. Fixed in place rather
+	 * than replaced with real <button> elements, so whatever click handling
+	 * Blocksy itself binds to these specific nodes keeps working — only the
+	 * DOM order and the accessibility surface change.
+	 */
+	function initQuantitySteppers(){
+		document.querySelectorAll('.slk-pdp form.cart .quantity[data-type]').forEach(function(quantity){
+			var decrease = quantity.querySelector('.ct-decrease');
+			var increase = quantity.querySelector('.ct-increase');
+			var input = quantity.querySelector('input.qty');
+			if(!decrease || !increase || !input) return;
+
+			// Reorder to decrease, input, increase — matching the painted
+			// order — regardless of what Blocksy originally shipped.
+			quantity.appendChild(decrease);
+			quantity.appendChild(input);
+			quantity.appendChild(increase);
+
+			var labels = (window.slkPdp && window.slkPdp.qtyLabels) || {};
+
+			[
+				[ decrease, labels.decrease || 'Decrease quantity' ],
+				[ increase, labels.increase || 'Increase quantity' ]
+			].forEach(function(pair){
+				var el = pair[0], label = pair[1];
+				el.setAttribute('role', 'button');
+				el.setAttribute('tabindex', '0');
+				el.setAttribute('aria-label', label);
+				el.addEventListener('keydown', function(e){
+					if(e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){
+						e.preventDefault();
+						el.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
+					}
+				});
+			});
+		});
+	}
+
+	/*
+	 * Buy dock. Every product type ships the same hidden proxy button — only
+	 * the summary's own form knows the chosen quantity, variation or
+	 * customisation options, so the dock defers to it rather than keeping a
+	 * second, disconnected form of its own. The button is rendered `hidden`
+	 * inside a dock that is `hidden` too, and both are revealed here only
+	 * once the button has been wired to the real submit — a reader with no
+	 * JS never sees a control that would not work, nor an empty pill where
+	 * one would have been; she still has the always-visible submit in the
+	 * summary card itself.
 	 */
 	function initDock(){
 		var dock = document.querySelector('[data-slk-buy-dock]');
 		if(!dock) return;
 
 		var proxy = dock.querySelector('[data-slk-dock-proxy]');
-		if(!proxy) return; // simple product — the dock form is already live.
+		if(!proxy) return; // nothing to wire — the dock stays hidden.
 
 		var form = document.querySelector('.slk-pdp__summary form.cart');
 		var realBtn = form ? form.querySelector('.single_add_to_cart_button') : null;
 		if(!realBtn){ dock.parentNode.removeChild(dock); return; }
 
+		dock.hidden = false;
 		proxy.hidden = false;
 
 		proxy.addEventListener('click', function(){
@@ -953,13 +1140,11 @@ add_action(
 			sync();
 
 			if(!isColour){
-				if(labelEl){
-					var guide = document.createElement('a');
-					guide.href = (window.slkPdp && window.slkPdp.sizeGuideUrl) || '#slk-size-guide';
-					guide.className = 'slk-pdp__size-guide';
-					guide.textContent = (window.slkPdp && window.slkPdp.sizeGuideLabel) || 'Size guide · cm';
-					labelEl.appendChild(guide);
-				}
+				/* The size-guide link used to be created here, in the size
+				   row's label — which meant a simple product got none at
+				   all. slk_pdp_size_guide_link() prints it from PHP for every
+				   product type now; a second one here would only duplicate
+				   it. */
 				if(fitHint){
 					var hint = document.createElement('p');
 					hint.className = 'slk-pdp__fit-hint';
@@ -978,15 +1163,10 @@ JS;
 			'slk-pdp',
 			'slkPdp',
 			array(
-				/**
-				 * Filters the size-guide link target on the PDP.
-				 *
-				 * PLACEHOLDER anchor pending a real size-guide page/modal.
-				 *
-				 * @param string $url
-				 */
-				'sizeGuideUrl'   => apply_filters( 'slk_pdp_size_guide_url', '#slk-size-guide' ),
-				'sizeGuideLabel' => __( 'Size guide · cm', 'slk' ),
+				'qtyLabels' => array(
+					'decrease' => __( 'Decrease quantity', 'slk' ),
+					'increase' => __( 'Increase quantity', 'slk' ),
+				),
 			)
 		);
 	},

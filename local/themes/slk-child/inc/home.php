@@ -419,7 +419,12 @@ add_action(
 .slk-hero__media img{display:block;width:100%;height:100%;object-fit:cover}
 .slk-hero__inner{position:absolute;inset-inline:0;bottom:var(--slk-space-3)}
 .slk-hero__panel{padding:var(--slk-space-6)}
-.slk-hero__panel .slk-eyebrow{display:block;margin-bottom:var(--slk-space-3)}
+/* Over a photograph the glass composite drops the eyebrow's inherited muted
+   to 3.67-4.04:1 across a large share of both hero crops, and it moves again
+   whenever the photo is swapped. ink-soft holds 6.6-7.0:1 on the same
+   composite. Scoped to the eyebrow deliberately — raising --slk-glass alpha
+   would repaint every glass surface in the store. */
+.slk-hero__panel .slk-eyebrow{display:block;margin-bottom:var(--slk-space-3);color:var(--slk-color-ink-soft)}
 .slk-hero__title{margin:0 0 var(--slk-space-4);font-size:var(--slk-display-m)}
 .slk-hero__actions{display:flex;gap:var(--slk-space-2)}
 .slk-hero__actions .slk-btn--primary{flex:1}

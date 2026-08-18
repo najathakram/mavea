@@ -196,9 +196,12 @@ function slk_chrome_primary_links() {
 /**
  * The footer "Help" column fallback.
  *
- * Editorial pages (size guide, delivery, exchanges) do not exist on a fresh
- * install, so they are included only once someone publishes them. My account
- * always exists under WooCommerce, so the column is never empty.
+ * Editorial pages (size guide, delivery, exchanges, privacy policy, terms,
+ * returns) do not exist on a fresh install, so they are included only once
+ * someone publishes them — slk_chrome_page_url() drops any slug with no
+ * published page, the same discipline slk_chrome_product_cat_url() applies
+ * to an empty category. My account always exists under WooCommerce, so the
+ * column is never empty.
  *
  * @return array<int,array{label:string,url:string}>
  */
@@ -230,7 +233,19 @@ function slk_chrome_help_links() {
 			'url'   => slk_chrome_page_url( 'faq' ),
 		),
 		array(
-			'label' => __( 'Sign in / My account', 'slk' ),
+			'label' => __( 'Privacy policy', 'slk' ),
+			'url'   => slk_chrome_page_url( 'privacy-policy' ),
+		),
+		array(
+			'label' => __( 'Terms', 'slk' ),
+			'url'   => slk_chrome_page_url( 'terms' ),
+		),
+		array(
+			'label' => __( 'Returns', 'slk' ),
+			'url'   => slk_chrome_page_url( 'returns' ),
+		),
+		array(
+			'label' => __( 'Sign in or create an account', 'slk' ),
 			'url'   => $account,
 		),
 	);
@@ -296,19 +311,34 @@ function slk_chrome_link_list( $links, $class = '' ) {
  * Drawn paths give the same thin-stroke language as the wordmark, stay crisp
  * at any size, and inherit currentColor.
  *
- * @param string $name search|bag|menu|close.
+ * The set is not header-only: `check`, `exchange` (the two-way arrow) and
+ * `clock` are the three trust glyphs the home assurances and the PDP trust
+ * rows used to print as literal ✓ / ⇄ / ◷. U+25F7 in particular is carried by
+ * neither Archivo nor Newsreader, so it substituted or tofu'd; drawn at the
+ * same 1.35 stroke as their neighbours they finally match. Those rows set
+ * 12.5px text, hence the $size argument — 19px beside it reads as a badge.
+ *
+ * @param string $name  search|bag|menu|close|check|exchange|clock.
+ * @param int    $size  Rendered px, both axes. Default 19 (the header buttons).
  * @return string SVG markup, or '' for an unknown name.
  */
-function slk_chrome_icon( $name ) {
-	$open = '<svg class="slk-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">';
+function slk_chrome_icon( $name, $size = 19 ) {
+	$open = sprintf(
+		'<svg class="slk-icon" viewBox="0 0 24 24" width="%1$d" height="%1$d" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">',
+		(int) $size
+	);
 
 	$paths = array(
-		'search' => '<circle cx="11" cy="11" r="6.25"/><path d="M15.6 15.6 20 20"/>',
+		'search'   => '<circle cx="11" cy="11" r="6.25"/><path d="M15.6 15.6 20 20"/>',
 		// A tote: two handles over a soft-shouldered body — closer to a garment
 		// bag than a supermarket basket.
-		'bag'    => '<path d="M5.4 8.2h13.2l-1 11.1a1.6 1.6 0 0 1-1.6 1.45H8a1.6 1.6 0 0 1-1.6-1.45Z"/><path d="M9 10.4V7.3a3 3 0 0 1 6 0v3.1"/>',
-		'menu'   => '<path d="M4 8h16M4 16h16"/>',
-		'close'  => '<path d="M6 6l12 12M18 6 6 18"/>',
+		'bag'      => '<path d="M5.4 8.2h13.2l-1 11.1a1.6 1.6 0 0 1-1.6 1.45H8a1.6 1.6 0 0 1-1.6-1.45Z"/><path d="M9 10.4V7.3a3 3 0 0 1 6 0v3.1"/>',
+		'menu'     => '<path d="M4 8h16M4 16h16"/>',
+		'close'    => '<path d="M6 6l12 12M18 6 6 18"/>',
+		'check'    => '<path d="M4.75 12.5 9.6 17.35 19.25 6.9"/>',
+		// The two-way arrow: out on the top rail, back on the bottom one.
+		'exchange' => '<path d="M4 9h15M15.5 5.5 19 9l-3.5 3.5"/><path d="M20 15H5M8.5 11.5 5 15l3.5 3.5"/>',
+		'clock'    => '<circle cx="12" cy="12" r="7.6"/><path d="M12 7.5V12l3.1 1.9"/>',
 	);
 
 	if ( ! isset( $paths[ $name ] ) ) {
@@ -556,7 +586,7 @@ function slk_chrome_render_footer() {
 	 */
 	$blurb = (string) apply_filters(
 		'slk_footer_blurb',
-		__( 'Modest ready-to-wear, made in Sri Lanka to export standard. Address and business numbers will sit here.', 'slk' )
+		__( 'Modest ready-to-wear, made in Sri Lanka to export standard.', 'slk' )
 	);
 
 	$help = slk_chrome_help_links();
@@ -619,8 +649,6 @@ function slk_chrome_render_footer() {
 						</span>
 						<span class="slk-footer__wa-mark" aria-hidden="true">W</span>
 					</a>
-				<?php else : ?>
-					<p class="slk-footer__blurb"><?php esc_html_e( 'A WhatsApp line opens with the relaunch.', 'slk' ); ?></p>
 				<?php endif; ?>
 				<?php $slk_contact = slk_chrome_page_url( 'contact' ); ?>
 				<?php if ( $slk_contact ) : ?>
@@ -630,6 +658,27 @@ function slk_chrome_render_footer() {
 				<?php endif; ?>
 			</div>
 		</div>
+
+		<?php
+		/*
+		 * The ownership line, a SIBLING of the grid rather than a fifth column
+		 * so the `2fr 1fr 1fr 1.4fr` track list at style.css:778 is untouched.
+		 * It pairs with the privacy/terms/returns entries in the Help column:
+		 * a footer that links a privacy policy and names nobody as its owner is
+		 * the half-finished state. The name comes from slk_wordmark_text() —
+		 * prose is one of the two places the É is allowed (inc/wordmark.php).
+		 */
+		?>
+		<p class="slk-footer__legal">
+			<?php
+			printf(
+				/* translators: 1: four-digit year. 2: the brand name. */
+				esc_html__( '© %1$s %2$s. All rights reserved.', 'slk' ),
+				esc_html( date_i18n( 'Y' ) ),
+				esc_html( slk_wordmark_text() )
+			);
+			?>
+		</p>
 	</footer>
 	<?php
 }
@@ -652,6 +701,11 @@ add_action(
 /* Anchors borrowed into the icon-button shape need the link reset. */
 a.slk-icon-btn{text-decoration:none}
 .slk-bag__count{font:500 12px/1 var(--slk-font-ui)}
+/* style.css:713 handles the icon inside a button. Icons also sit inline beside
+   a sentence now (the home assurances, the PDP trust rows), and those are flex
+   rows — without this the drawn box is squeezed by the text next to it. The
+   icon buttons are grid, so flex:none is inert there. */
+.slk-icon{flex:none}
 
 /* -- header search panel ------------------------------------------------ */
 .slk-header__search{
@@ -767,9 +821,21 @@ a.slk-icon-btn{text-decoration:none}
 .slk-footer__list a{font:400 13px/1.5 var(--slk-font-ui);min-width:var(--slk-touch)}
 .slk-footer__col > .slk-wordmark{margin-bottom:var(--slk-space-3)}
 .slk-footer__blurb{margin:0}
+/* The copyright line repeats .slk-footer__inner's container so it lines up
+   under the wordmark, and borrows the blurb's type — no new voice for four
+   quiet words. */
+.slk-footer__legal{
+	max-width:var(--slk-container);
+	margin:0 auto;
+	padding:0 var(--slk-gutter) var(--slk-space-6);
+	font:400 12.5px/1.7 var(--slk-font-ui);
+	color:var(--slk-color-muted);
+}
 
 @media (min-width:1000px){
 	.slk-drawer__panel{inset:var(--slk-space-4) auto var(--slk-space-4) var(--slk-space-4);width:380px}
+	/* Matches the grid's own padding-inline:0 at this width. */
+	.slk-footer__legal{padding-inline:0}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -808,11 +874,13 @@ CSS;
 			t.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 		});
 
-		var modal = panel.classList.contains('slk-drawer');
-		if (modal) {
+		if (panel.classList.contains('slk-drawer')) {
 			document.documentElement.style.overflow = isOpen ? 'hidden' : '';
-			open = isOpen ? id : null;
 		}
+
+		// Tracked for every panel, modal or not, so Escape can close whatever
+		// is open — see the keydown handler below.
+		open = isOpen ? id : null;
 
 		if (isOpen) {
 			var first = panel.querySelector('input, button, a[href]');
@@ -842,11 +910,14 @@ CSS;
 
 	document.addEventListener('keydown', function (e) {
 		if (e.key === 'Escape' && open) { setState(open, false); return; }
-		if (e.key !== 'Tab' || !open) { return; }
 
-		// Keep focus inside the dialog while it is modal.
-		var panel = panelOf(open);
-		var items = panel ? panel.querySelectorAll('a[href], button, input') : [];
+		// Focus-trapping stays modal-only: a non-modal panel (the search bar)
+		// never had a trap, and widening `open` to track it too must not
+		// change that.
+		var panel = open ? panelOf(open) : null;
+		if (e.key !== 'Tab' || !panel || !panel.classList.contains('slk-drawer')) { return; }
+
+		var items = panel.querySelectorAll('a[href], button, input');
 		if (!items.length) { return; }
 
 		var first = items[0];

@@ -134,8 +134,12 @@ function slk_template_loop_product_link_open() {
 
 /**
  * Replaces woocommerce_template_loop_product_thumbnail().
- * Real product image via core WC accessors (width/height always declared by
- * the registered image size, so nothing shifts). Falls back to
+ * Requests 'slk_card' (600x800, a real 3:4 crop registered in functions.php)
+ * — not WooCommerce's default 'woocommerce_thumbnail' square, which used to
+ * be cropped a second time by the portrait tile's object-fit:cover and
+ * upscaled on top of that, with srcset topping out at 300w. Real product
+ * image via core WC accessors (width/height always declared by the
+ * registered image size, so nothing shifts). Falls back to
  * wc_placeholder_img() when the product has no image — the shoot hasn't
  * happened yet for most SKUs.
  */
@@ -149,9 +153,9 @@ function slk_template_loop_product_thumbnail() {
 	echo '<div class="slk-card__media">';
 
 	if ( $product->get_image_id() ) {
-		echo wp_kses_post( $product->get_image( 'woocommerce_thumbnail' ) );
+		echo wp_kses_post( $product->get_image( 'slk_card' ) );
 	} else {
-		echo wp_kses_post( wc_placeholder_img( 'woocommerce_thumbnail' ) );
+		echo wp_kses_post( wc_placeholder_img( 'slk_card' ) );
 	}
 
 	echo '</div>';
@@ -161,9 +165,20 @@ function slk_template_loop_product_thumbnail() {
  * Replaces woocommerce_template_loop_product_title().
  * Kept as a real heading (not a styled span) so the grid still has a sane
  * accessibility outline; visual weight comes entirely from .slk-card__name.
+ * h3, not h2: every card sits under a section/rail heading that introduces it
+ * (home rails, the archive h1, the PDP related rail), so h2 made the garment
+ * names peers of "Ready to wear" in the outline. Filterable for any context
+ * that legitimately needs another level; the value is whitelisted because it
+ * lands in markup unescaped.
  */
 function slk_template_loop_product_title() {
-	echo '<h2 class="slk-card__name">' . esc_html( get_the_title() ) . '</h2>';
+	$tag = apply_filters( 'slk_loop_title_tag', 'h3' );
+
+	if ( ! in_array( $tag, array( 'h2', 'h3', 'h4' ), true ) ) {
+		$tag = 'h3';
+	}
+
+	echo '<' . $tag . ' class="slk-card__name">' . esc_html( get_the_title() ) . '</' . $tag . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $tag whitelisted above.
 }
 
 /**
@@ -375,14 +390,27 @@ add_action(
 /* One-baseline archive head (design: Desktop shop). Head left, sort right;
    ul.products spans below. NOT a grid re-declaration — §6 still applies. */
 .slk-shop-head__title{font-family:var(--slk-font-display);font-weight:300;font-size:var(--slk-display-s);margin:0}
-.slk-shop-head__count{font-family:var(--slk-font-ui);font-size:15px;color:var(--slk-color-faint);font-weight:400;margin-inline-start:6px}
-.slk-shop-results{display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:var(--slk-space-3)}
-.slk-shop-results > .slk-shop-head{grid-column:1}
-.slk-shop-results > .woo-listing-top{grid-column:2;margin:0}
-.slk-shop-results > ul.products,
-.slk-shop-results > nav.woocommerce-pagination{grid-column:1 / -1}
+/* muted, not faint: faint (#8a867e) is meta/disabled only and measures 3.19:1
+   on the page ground — this count is content. */
+.slk-shop-head__count{font-family:var(--slk-font-ui);font-size:15px;color:var(--slk-color-muted);font-weight:400;margin-inline-start:6px}
 @media (min-width:1000px){
 	.slk-shop-head__title{font-size:34px}
+	/* The one-baseline row is a DESKTOP composition. Below 1000px the `auto`
+	   track is sized by the 210px sort pill (inc/select.php), which left the
+	   h1 and the Filters button ~95px on a 360px viewport — so mobile falls
+	   back to normal block flow. */
+	.slk-shop-results{display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:var(--slk-space-3)}
+	.slk-shop-results > .slk-shop-head{grid-column:1}
+	.slk-shop-results > .woo-listing-top{grid-column:2;margin:0}
+	/* Every other child placed explicitly: an unplaced child auto-fills the
+	   next free cell, and the empty .woocommerce-notices-wrapper was landing
+	   in the sort pill\'s. Blocksy emits nav.ct-pagination, not
+	   nav.woocommerce-pagination, so both are named. */
+	.slk-shop-results > .slk-filterbar,
+	.slk-shop-results > .woocommerce-notices-wrapper,
+	.slk-shop-results > ul.products,
+	.slk-shop-results > nav.woocommerce-pagination,
+	.slk-shop-results > nav.ct-pagination{grid-column:1 / -1}
 }
 '
 		);

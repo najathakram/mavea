@@ -333,8 +333,9 @@ function slk_moments_facet( $args ) {
  * Print the sheet/sidebar form plus the mobile trigger bar and active chips.
  *
  * One form serves both breakpoints: below 1000px `.slk-filterbox` is a fixed
- * bottom sheet over a scrim; at 1000px it becomes the static 240px sidebar that
- * style.css §3.7 (`.slk-shop-layout > .slk-filters`) already has rules for.
+ * bottom sheet over a scrim; at 1000px it becomes the 240px sidebar that
+ * style.css §3.7's `.slk-shop-layout` grid places, made sticky by the
+ * 1000px block at the foot of this file.
  */
 function slk_moments_render_filters() {
 	$cats     = slk_moments_active_cats();
@@ -1233,6 +1234,9 @@ a.slk-chip{text-decoration:none}
 	/* The sheet becomes the sidebar: no scrim, no fixed shell, always open. */
 	.slk-filterbox{position:static;z-index:auto}
 	.slk-filterbox[hidden]{display:block}
+	/* The wrapper sticks, not the form: style.css's old
+	   `.slk-shop-layout > .slk-filters` never matched this nesting. */
+	.slk-shop-layout > .slk-filterbox{position:sticky;top:var(--slk-space-6)}
 	.slk-filterbox > .slk-scrim{display:none}
 	.slk-filterbox > .slk-filters{
 		position:static;max-height:none;display:grid;gap:var(--slk-space-3);

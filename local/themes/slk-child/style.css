@@ -771,7 +771,7 @@ img, svg, video { max-width: 100%; height: auto; }
   padding-block: 6px;
 }
 .slk-footer a:hover { color: var(--slk-color-ink); }
-.slk-footer__col > .slk-eyebrow { color: var(--slk-color-faint); display: block; margin-bottom: 10px; }
+.slk-footer__col > .slk-eyebrow { color: var(--slk-color-muted); display: block; margin-bottom: 10px; }
 .slk-footer__blurb { font: 400 12.5px/1.7 var(--slk-font-ui); color: var(--slk-color-muted); max-width: 34ch; }
 
 @media (min-width: 1000px) {
@@ -1018,6 +1018,8 @@ select, textarea {
   width: 100%;
   min-height: 48px;
   box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
   border: 1px solid var(--slk-field-border);
   background: var(--slk-color-white);
   border-radius: var(--slk-radius-field);
@@ -1025,6 +1027,12 @@ select, textarea {
   font: 400 14px/1.4 var(--slk-font-ui);
   color: var(--slk-color-ink);
   transition: border-color var(--slk-motion-base) var(--slk-ease);
+}
+/* type=search carries -webkit-appearance:searchfield plus the platform clear
+   control, which survives the group reset above on WebKit. */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
 }
 textarea,
 .woocommerce form .form-row textarea {
@@ -1248,7 +1256,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   text-align: left;
   transition: transform 320ms var(--slk-ease);
 }
-.woocommerce ul.products li.product:hover { transform: translateY(-4px); }
+/* Lift lives on .slk-card alone (§2). li.product used to duplicate the same
+   -4px transform, and hovering the anchor also hovers its ancestor li, so the
+   two independent transitions composed into an 8px (9px desktop) lift. */
 .woocommerce ul.products li.product a { text-decoration: none; color: inherit; }
 
 /*
@@ -1295,12 +1305,16 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 }
 
 .woocommerce ul.products li.product .woocommerce-loop-product__title,
-.woocommerce ul.products li.product h2 {
+.woocommerce ul.products li.product :is(h2, h3) {
   /* Card names are Archivo, not the display face: at 13.5px Newsreader 300
-     goes thin and grey against the photograph above it. */
+     goes thin and grey against the photograph above it. :is(h2,h3) because
+     the card name may render as either level (inc/shop.php nests it under
+     the rail heading); padding-top restores the 10px gap under the photo
+     that this reset would otherwise zero out on .slk-card__name. */
   font: 500 13.5px/1.4 var(--slk-font-ui);
   letter-spacing: 0;
   padding: 0;
+  padding-top: 10px;
   margin: 0;
   color: var(--slk-color-ink);
 }
@@ -1325,28 +1339,27 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    the round-card variant is already defined in §2 as .slk-card--colour. */
 .woocommerce ul.products li.product .slk-swatches { padding-top: 7px; }
 
-.woocommerce nav.woocommerce-pagination { padding-block: var(--slk-space-8); text-align: center; }
-.woocommerce nav.woocommerce-pagination ul {
+/* Blocksy emits <nav class="ct-pagination" data-pagination="simple"> with bare
+   .page-numbers children — no ul/li — so the old nav.woocommerce-pagination
+   rules above never matched anything and Blocksy's own 4px/40px control won
+   by default. This is the sole owner of pagination now. */
+.ct-pagination { padding-block: var(--slk-space-8); text-align: center; }
+.ct-pagination .page-numbers {
   display: inline-flex;
-  gap: var(--slk-space-2);
-  border: 0;
-  margin: 0;
-}
-.woocommerce nav.woocommerce-pagination ul li { border: 0; margin: 0; overflow: visible; }
-.woocommerce nav.woocommerce-pagination ul li a,
-.woocommerce nav.woocommerce-pagination ul li span {
-  display: grid;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   min-width: var(--slk-touch);
   min-height: var(--slk-touch);
+  height: auto;
   padding: 0 var(--slk-space-3);
   border-radius: var(--slk-radius-pill);
-  font: 500 13px/1 var(--slk-font-ui);
-  color: var(--slk-color-ink);
   background: var(--slk-glass-solid);
   border: 1px solid rgba(35,34,32,.1);
+  font: 500 13px/1 var(--slk-font-ui);
+  text-transform: none;
+  color: var(--slk-color-ink);
 }
-.woocommerce nav.woocommerce-pagination ul li span.current {
+.ct-pagination .page-numbers.current {
   background: var(--slk-color-ink);
   color: var(--slk-color-on-ink);
   border-color: transparent;
@@ -1412,12 +1425,18 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     gap: 34px;
     align-items: start;
   }
-  .slk-shop-layout > .slk-filters { position: sticky; top: var(--slk-space-6); }
   .slk-shop-layout ul.products { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-  .woocommerce ul.products li.product:hover { transform: translateY(-5px); }
+  /* .slk-card__name is listed twice on purpose. Inside the loop the
+     :is(h2,h3) reset above sets 13.5px at (0,3,3), which a lone class
+     selector cannot outrank however late it is declared; the bare selector
+     still carries the bump where a card renders outside ul.products (the
+     empty-bag rail builds .slk-card from spans). */
   .woocommerce ul.products li.product .woocommerce-loop-product__title,
-  .woocommerce ul.products li.product .price { font-size: 14px; }
+  .woocommerce ul.products li.product .price,
+  .woocommerce ul.products li.product .slk-card__name,
+  .slk-card__name,
+  .slk-card__price { font-size: 14px; }
 }
 
 
@@ -2182,10 +2201,16 @@ ins,
   .woocommerce-checkout .slk-checkout__aside,
   .woocommerce-cart .slk-cart-collaterals,
   .woocommerce-cart .woocommerce > .cart-collaterals,
-  .slk-shop-layout > .slk-filters,
   .slk-buy-dock { position: static; }
   .woocommerce ul.products li.product:hover,
   .slk-card:hover { transform: none; }
+}
+
+/* The filter box is sticky only inside inc/moments.php's 1000px block. Below
+   that the same element is the fixed bottom sheet (position:fixed;inset:0),
+   so releasing it at every width would strand the panel off-screen. */
+@media (prefers-reduced-motion: reduce) and (min-width: 1000px) {
+  .slk-shop-layout > .slk-filterbox[data-slk-sheet] { position: static; }
 }
 
 @media print {
@@ -2193,7 +2218,7 @@ ins,
      Glass, blur and shadow cost ink and print as grey mud. */
   body { background: var(--slk-color-white); color: var(--slk-print-ink); }
   .slk-header, .slk-footer, .slk-buy-dock, .slk-sheet, .slk-scrim,
-  .woocommerce-breadcrumb, .woocommerce nav.woocommerce-pagination,
+  .woocommerce-breadcrumb, .ct-pagination,
   .woocommerce .related.products, .woocommerce .up-sells,
   .woocommerce-MyAccount-navigation { display: none; }
 

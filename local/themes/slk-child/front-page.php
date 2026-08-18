@@ -43,7 +43,6 @@ $slk_hero = slk_editorial_picture(
 
 $slk_atelier = slk_editorial_image( 'room_wide', 'large' );
 
-$slk_total    = slk_home_product_count();
 $slk_new      = slk_home_new_count();
 $slk_shop_url = slk_home_new_in_url();
 $slk_story    = slk_home_page_link( 'story' );
@@ -60,8 +59,44 @@ $slk_from     = slk_home_from_price( $slk_hijabs );
 $slk_cod_amount = slk_delivery_cod_fee();
 $slk_cod_fee    = slk_home_cod_fee_text();
 
+/*
+ * Cash on delivery is the only gateway installed today. The rest of this
+ * sentence is read from WooCommerce's own registered gateways, never typed,
+ * so it can never again name a payment method that is not actually live —
+ * the same discipline slk_delivery_cod_fee() already applies to the fee.
+ *
+ * Enabled, not available: get_available_payment_gateways() answers for the
+ * current cart, and the home page's cart is empty — where cash on delivery
+ * declares itself unavailable, so the available set is empty here rather than
+ * ['cod']. Reading the enabled set instead means the sentence turns itself on
+ * the moment a second gateway is switched on; with COD alone the list stays
+ * empty and the sentence is dropped rather than printed false.
+ */
+$slk_other_payment_methods = array();
+
+if ( function_exists( 'WC' ) && WC()->payment_gateways() ) {
+	foreach ( WC()->payment_gateways()->payment_gateways() as $slk_gateway_id => $slk_gateway ) {
+		if ( 'cod' === $slk_gateway_id || 'yes' !== $slk_gateway->enabled ) {
+			continue;
+		}
+
+		$slk_other_payment_methods[] = wp_strip_all_tags( $slk_gateway->get_title() );
+	}
+}
+
 $slk_days_metro  = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 0 ) : '';
 $slk_days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2 ) : '';
+
+/*
+ * The zone names, not just their day ranges, are read from the same source
+ * slk_delivery_days() already reads — typing "Colombo" and "island-wide"
+ * here let them drift from slk_delivery_zones() the moment a tier is
+ * renamed. Tier 0 is the fastest zone, tier 2 the slowest, the order
+ * slk_delivery_zones() returns.
+ */
+$slk_zones       = function_exists( 'slk_delivery_zones' ) ? array_values( (array) slk_delivery_zones() ) : array();
+$slk_zone_metro  = isset( $slk_zones[0]['label'] ) ? (string) $slk_zones[0]['label'] : '';
+$slk_zone_island = isset( $slk_zones[2]['label'] ) ? (string) $slk_zones[2]['label'] : '';
 ?>
 
 <div class="slk-home">
@@ -109,12 +144,18 @@ $slk_days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2
 	</section>
 
 	<?php
+	/*
+	 * hide_empty is left at its default of true on purpose: a chip is a link,
+	 * and a term with no products is a link to an empty archive. Letting the
+	 * chip disappear on its own is the same never-a-dead-link discipline
+	 * slk_home_page_link() applies to the story and delivery buttons above,
+	 * and it fills back in by itself the day the category is stocked.
+	 */
 	$slk_cats = get_terms(
 		array(
-			'taxonomy'   => 'product_cat',
-			'hide_empty' => false,
-			'exclude'    => array( (int) get_option( 'default_product_cat', 0 ) ),
-			'slug'       => array( 'abayas', 'dresses', 'hijabs' ),
+			'taxonomy' => 'product_cat',
+			'exclude'  => array( (int) get_option( 'default_product_cat', 0 ) ),
+			'slug'     => array( 'abayas', 'dresses', 'hijabs' ),
 		)
 	);
 
@@ -124,17 +165,7 @@ $slk_days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2
 		<div class="slk-container">
 			<nav class="slk-home__chips" aria-label="<?php esc_attr_e( 'Shop by category', 'slk' ); ?>">
 				<a class="slk-btn slk-btn--primary" href="<?php echo esc_url( $slk_shop_url ); ?>">
-					<?php
-					if ( $slk_total > 0 ) {
-						printf(
-							/* translators: %s: total number of pieces in the catalogue. */
-							esc_html__( 'All %s', 'slk' ),
-							esc_html( number_format_i18n( $slk_total ) )
-						);
-					} else {
-						esc_html_e( 'All', 'slk' );
-					}
-					?>
+					<?php esc_html_e( 'All', 'slk' ); ?>
 				</a>
 				<?php foreach ( $slk_cats as $slk_cat ) : ?>
 					<?php
@@ -157,17 +188,7 @@ $slk_days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2
 			<div class="slk-section__head">
 				<h2 id="slk-ready"><?php esc_html_e( 'Ready to wear', 'slk' ); ?></h2>
 				<a class="slk-home__all" href="<?php echo esc_url( $slk_shop_url ); ?>">
-					<?php
-					if ( $slk_total > 0 ) {
-						printf(
-							/* translators: %s: total number of pieces in the catalogue. */
-							esc_html__( 'All %s →', 'slk' ),
-							esc_html( number_format_i18n( $slk_total ) )
-						);
-					} else {
-						esc_html_e( 'All →', 'slk' );
-					}
-					?>
+					<?php esc_html_e( 'All →', 'slk' ); ?>
 				</a>
 			</div>
 
@@ -182,15 +203,36 @@ $slk_days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2
 			<p>
 				<?php
 				if ( $slk_cod_amount <= 0 ) {
-					esc_html_e( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and there is no handling fee to add. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' );
+					esc_html_e( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and there is no handling fee to add.', 'slk' );
 				} elseif ( $slk_cod_fee ) {
 					printf(
 						/* translators: %s: cash-on-delivery handling fee, e.g. "Rs. 150". */
-						esc_html__( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and the %s handling fee is shown before you order. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' ),
+						esc_html__( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and the %s handling fee is shown before you order.', 'slk' ),
 						esc_html( $slk_cod_fee )
 					);
 				} else {
-					esc_html_e( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and the handling fee is shown before you order. Card, eZ Cash, helaPay and bank transfer also work.', 'slk' );
+					esc_html_e( 'We deliver cash on delivery to all 25 districts. We call to confirm before we ship, and the handling fee is shown before you order.', 'slk' );
+				}
+
+				if ( $slk_other_payment_methods ) {
+					$slk_payment_count = count( $slk_other_payment_methods );
+					$slk_last_method   = array_pop( $slk_other_payment_methods );
+
+					$slk_payment_list = $slk_other_payment_methods
+						? sprintf(
+							/* translators: 1: all other payment methods but the last, comma-separated. 2: the last payment method in the list. */
+							__( '%1$s and %2$s', 'slk' ),
+							implode( ', ', $slk_other_payment_methods ),
+							$slk_last_method
+						)
+						: $slk_last_method;
+
+					echo ' ';
+					printf(
+						/* translators: %s: other payment methods installed besides cash on delivery, e.g. "Card and Koko". */
+						esc_html( _n( '%s also works.', '%s also work.', $slk_payment_count, 'slk' ) ),
+						esc_html( $slk_payment_list )
+					);
 				}
 				?>
 			</p>
@@ -236,11 +278,11 @@ $slk_days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2
 	<section class="slk-section slk-container" aria-label="<?php esc_attr_e( 'What to expect', 'slk' ); ?>">
 		<ul class="slk-assurances slk-home__assurances">
 			<li class="slk-assurance">
-				<span aria-hidden="true">✓</span>
+				<?php echo slk_chrome_icon( 'check', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup. ?>
 				<span><?php esc_html_e( 'Cash on delivery, with a call to confirm first', 'slk' ); ?></span>
 			</li>
 			<li class="slk-assurance">
-				<span aria-hidden="true">⇄</span>
+				<?php echo slk_chrome_icon( 'exchange', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup. ?>
 				<span>
 					<?php
 					printf(
@@ -252,14 +294,16 @@ $slk_days_island = function_exists( 'slk_delivery_days' ) ? slk_delivery_days( 2
 				</span>
 			</li>
 			<li class="slk-assurance">
-				<span aria-hidden="true">◷</span>
+				<?php echo slk_chrome_icon( 'clock', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup. ?>
 				<span>
 					<?php
-					if ( $slk_days_metro && $slk_days_island ) {
+					if ( $slk_zone_metro && $slk_days_metro && $slk_zone_island && $slk_days_island ) {
 						printf(
-							/* translators: 1: Colombo & Gampaha day range. 2: rest-of-island day range. */
-							esc_html__( 'Colombo in %1$s · island-wide in %2$s', 'slk' ),
+							/* translators: 1: fastest delivery zone's label. 2: its day range. 3: slowest delivery zone's label. 4: its day range. */
+							esc_html__( '%1$s in %2$s · %3$s in %4$s', 'slk' ),
+							esc_html( $slk_zone_metro ),
 							esc_html( $slk_days_metro ),
+							esc_html( $slk_zone_island ),
 							esc_html( $slk_days_island )
 						);
 					} else {

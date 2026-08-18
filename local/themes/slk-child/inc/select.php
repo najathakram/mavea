@@ -121,6 +121,12 @@ function slk_select_css() {
 	border-color:var(--slk-glass-edge);
 }
 .woocommerce-ordering .slk-dd{width:auto;min-width:210px}
+/* Blocksy ships <svg class="ct-sort-icon ct-hidden-lg ct-hidden-md"> — hidden
+   on desktop and tablet, so visible on phones — absolutely positioned on the
+   assumption its native select has collapsed to a 34px icon button. We clipped
+   that select to 1px and drew the pill above in its place, so the icon lands
+   over the pill\'s own label. The pill draws its caret in select.js. */
+.woo-listing-top .woocommerce-ordering .ct-sort-icon{display:none}
 
 /* ── The panel ─────────────────────────────────────────────────────────── */
 .slk-dd__panel{

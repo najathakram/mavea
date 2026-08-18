@@ -168,3 +168,78 @@ add_filter(
 	static fn() => 3,
 	20
 );
+
+/* -------------------------------------------------------------------------
+ * 6a. Product imagery — real card and gallery-thumbnail sizes
+ *
+ * slk_template_loop_product_thumbnail() (inc/shop.php) used to request
+ * 'woocommerce_thumbnail' — WooCommerce's hard SQUARE crop — and pour it
+ * into the 3:4 portrait card with object-fit:cover: the source photo
+ * (1153x1537, an exact 3:4) was cropped to square, cropped again on the
+ * sides by the tile, then upscaled ~1.2x on a ~270px card. 'slk_card' is the
+ * real 3:4 crop the card actually needs, registered large enough to cover
+ * retina at the card's rendered width.
+ *
+ * The PDP gallery pills are the same defect: a 100x100 square laid out around
+ * 196x261 (inc/pdp.php). Blocksy renders that gallery itself
+ * (inc/components/gallery.php) and asks wp_get_attachment_image() for the
+ * registered 'woocommerce_gallery_thumbnail' BY NAME — it never consults
+ * WooCommerce's woocommerce_gallery_thumbnail_size filter, so pointing that
+ * filter at a size of our own left the pills on 100x100 (confirmed in the
+ * rendered DOM). The registered size itself is the only lever that reaches
+ * them; 300x400 is the 3:4 crop the pill needs with headroom for retina.
+ *
+ * Regenerate thumbnails after deploying this: `wp media regenerate --yes`.
+ * ---------------------------------------------------------------------- */
+
+add_image_size( 'slk_card', 600, 800, true );
+
+add_filter(
+	'woocommerce_get_image_size_gallery_thumbnail',
+	static fn() => array(
+		'width'  => 300,
+		'height' => 400,
+		'crop'   => 1,
+	)
+);
+
+/*
+ * WordPress's default `sizes` guess for a 300w image
+ * ("(max-width: 300px) 100vw, 300px") assumes the image can run the full
+ * viewport width. The gallery pill never does — it is one of three columns
+ * inside the gallery's thumbnail strip (inc/pdp.php), painting at roughly
+ * 196px regardless of viewport. Left uncorrected, the browser fetches the
+ * largest srcset candidate for a slot a third that size.
+ *
+ * Matched on the resolved dimensions rather than a size name: core hands this
+ * filter the array( width, height ) it read off the image, never the
+ * registered name, so a name comparison here can never fire.
+ */
+add_filter(
+	'wp_calculate_image_sizes',
+	static function ( $sizes, $size ) {
+		if ( ! is_array( $size ) || ! isset( $size[0], $size[1] ) ) {
+			return $sizes;
+		}
+
+		return ( 300 === (int) $size[0] && 400 === (int) $size[1] ) ? '196px' : $sizes;
+	},
+	10,
+	2
+);
+
+/* -------------------------------------------------------------------------
+ * 7. PDP size-guide route
+ *
+ * inc/pdp.php applies slk_pdp_size_guide_url and nothing registered it, so
+ * the link shipped as '#slk-size-guide' — an anchor to nothing. The Size
+ * Guide page is created by inc/pages-brand.php; slk_chrome_page_url() returns
+ * '' when it is missing or unpublished, and inc/pdp.php then prints no link
+ * at all rather than a dead one — the same discipline the chrome help links
+ * already follow.
+ * ---------------------------------------------------------------------- */
+
+add_filter(
+	'slk_pdp_size_guide_url',
+	static fn() => slk_chrome_page_url( 'size-guide' )
+);

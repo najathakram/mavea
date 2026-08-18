@@ -73,7 +73,7 @@ $slk_fit_hint      = apply_filters( 'slk_pdp_fit_hint', '', $product );
 	do_action( 'woocommerce_before_single_product_summary' );
 	?>
 
-	<div class="summary entry-summary slk-panel slk-panel--lifted slk-pdp__summary"
+	<div class="summary entry-summary slk-pdp__summary"
 		data-slk-sold-out="<?php echo esc_attr( wp_json_encode( $slk_sold_out_map ) ); ?>"
 		data-slk-fit-hint="<?php echo esc_attr( $slk_fit_hint ); ?>">
 		<?php
