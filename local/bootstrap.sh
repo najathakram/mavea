@@ -83,7 +83,10 @@ wp plugin install notifylk-sms-for-woocommerce       # Notify.lk SMS for WooComm
 wp plugin install paykoko-bnpl-payment-gateway       # Koko BNPL v-current, only ~30 installs - inspect before trusting
 wp plugin install mintpay                            # Mintpay BNPL v2.2.3, ~600 installs - healthier alternative to Koko
 
-echo "==> Sri Lanka store defaults (LKR, Rs., 0 decimals, Galle origin)"
+echo "==> Sri Lanka store defaults (LKR, Rs., 0 decimals)"
+# Tagline is a brand fact, not a placeholder: decided 2026-08-18, recorded in
+# design/docs/brand-guidelines.md §2. Seeded here so a fresh install matches live.
+wp option update blogdescription "Effortless Femininity"
 wp option update woocommerce_currency LKR
 wp option update woocommerce_currency_pos left_space
 wp option update woocommerce_price_thousand_sep ","
@@ -93,8 +96,15 @@ wp option update woocommerce_price_num_decimals 0
 # price by. The district list is installed by slk-checkout (plan section 5), not guessed here.
 wp option update woocommerce_default_country "LK"
 wp option update woocommerce_store_country "LK"
-wp option update woocommerce_store_city "Galle"
-wp option update woocommerce_store_postcode "80000"
+# No town, no street, no postcode in the store base. WooCommerce expands
+# {store_address} into the footer of every transactional email, so anything
+# stored here is customer-facing — and naming the town of origin is the one
+# thing brand law forbids outright (guidelines §2). Country is all the base
+# location is actually used for here: tax is off and the district tiers in
+# slk-checkout rate against the CUSTOMER's address, never the store's.
+# Cleared on live 2026-08-18; seeded empty so a rebuild cannot reintroduce it.
+wp option update woocommerce_store_city ""
+wp option update woocommerce_store_postcode ""
 # No VAT registration below LKR 60M/yr turnover (verified 2026), so taxes stay off.
 wp option update woocommerce_calc_taxes "no"
 wp option update woocommerce_allowed_countries "specific"

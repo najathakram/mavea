@@ -1,7 +1,7 @@
 # MAVÉA — HANDOFF & LIVING STATUS
 
-**Last updated: 2026-08-14** · Single source of truth for what is done, what is open, and what
-bit us, across every work session on the Sri Lanka sister store.
+**Last updated: 2026-08-19** · Single source of truth for what is done, what is open, and what
+bit us, across every work session on the Sri Lanka store.
 
 > **▶ NEW SESSION — START HERE.**
 >
@@ -10,28 +10,179 @@ bit us, across every work session on the Sri Lanka sister store.
 > status; those two are the design. Update this file whenever work changes state — a session
 > that changes something and does not record it here has not finished.
 >
-> **Repo:** `C:\ClaudeCode\mavea`, branch `main`. **HEAD:** `35fe132` (2026-08-13).
-> **Working tree is NOT clean** — see the open item immediately below.
+> **THE STORE IS LIVE** at https://mavea.lk on Hostinger (deliberately `noindex` until launch).
+> **Repo:** `C:\ClaudeCode\mavea`, branch `campaign-imagery-and-positioning`, tree clean as of
+> this entry. `main` is behind — merging is a deliberate step because
+> `.github/workflows/deploy.yml` auto-deploys from `main` once its secrets are set.
+> **Deploy:** `SSH_DEST=u860340467@46.17.172.250 bash local/deploy/deploy-code.sh code` —
+> it lints everything in the container BEFORE pushing and aborts if anything fails.
+> **`khaki-lobster-518218.hostingersite.com` is an ALIAS of production, not a staging site.**
+> There is one docroot; anything done there is done to mavea.lk.
 
 ---
 
 ## 👤 OPEN RIGHT NOW
 
-- **🔴 One uncommitted fix sits in the working tree** —
-  `local/plugins/slk-checkout/includes/class-slk-checkout-fields.php`, +52/−9. It is the district
-  case-mangling fix described in the 2026-08-14 entry below, and it is verified end to end. It was
-  left uncommitted because `main` is the default branch and committing was not asked for.
-  **Decide: branch and commit, or discard.** Nothing else is pending in the tree.
-- **⚠ Five dev orders carry a corrupted delivery district** (111–115: `shipping_state` = `GALLE`
-  / `COLOMBO` instead of `Galle` / `Colombo`). They are local test data from before the fix, so no
-  migration is planned. If any of them are wanted as clean fixtures, repair is a one-liner over
-  `wc_get_orders()` setting `shipping_state` from `billing_state`.
-- **⚠ There is no `.claude/code-map/`** in this repo, so the global code-map routine in
-  `~/.claude/CLAUDE.md` has nothing to read. Worth bootstrapping — the plugin and theme surface is
-  now large enough (2 plugins, 16 theme `inc/` modules) that sessions are re-reading source to
-  orient.
-- **⚠ There is no automated test of any kind.** The checkout smoke recipe below is the only
-  repeatable check that exists, and it lives in this file rather than in the repo.
+**Owner decisions / actions blocking launch steps — nothing below moves without Najath:**
+
+- **🔴 A mailbox on mavea.lk** (e.g. `orders@`). Emails currently claim `najathakram1@gmail.com`
+  from a Hostinger IP — SPF fails, deliverability is poor, and the wp-admin password-reset email
+  probably never arrives. Create in hPanel, then set `woocommerce_email_from_address`.
+- **🔴 Policy copy: Privacy, Terms, Returns.** Terms does not exist; privacy (page 3) and
+  refund_returns (page 9) are unpublished drafts. While drafts, the footer renders NO policy
+  links at all (`slk_chrome_page_url()` returns '' for non-published pages) and the register
+  form's privacy link 404s. Also a hard PayHere-review requirement.
+- **🔴 The postal-address decision.** PayHere requires business name + phone + email + postal
+  address displayed on the site; brand law says no address. These cannot both hold. Card
+  payments are gated on this call.
+- **⚠ PayHere application** — only AFTER policies + contact block + real prices are live.
+  A rejection on "nature of business" cannot be re-applied for. See the 2026-08-19 payments
+  section below before touching it.
+- **⚠ Google OAuth consent screen** — sign-in works; if it is still in "Testing", only listed
+  test users can use it. Publish to production before launch ([docs/SETUP-GOOGLE-SIGNIN.md](docs/SETUP-GOOGLE-SIGNIN.md)).
+- **⚠ `dresses/` originals now exist ONLY on this machine's disk** (untracked 2026-08-18 on
+  Najath's instruction; Hostinger uploads hold only derivatives). **Back the folder up.**
+- **⚠ GitHub Actions secrets** (`SSH_PRIVATE_KEY`/`SSH_DEST`/`SSH_PORT`) not set — auto-deploy
+  is inert until then ([docs/DEPLOY-GITHUB-ACTIONS.md](docs/DEPLOY-GITHUB-ACTIONS.md)).
+- Still open from before: G3 real prices (placeholders live) · WhatsApp number (all surfaces
+  dark by design) · contact email + Instagram · hero copy · `noindex` lift at launch ·
+  admin password rotation · IG/TikTok handles · NIPO trademark check.
+
+**Technical debt, not blocking:**
+
+- **⚠ No `.claude/code-map/`** — worth bootstrapping; sessions re-read source to orient.
+- **⚠ No automated tests** — the checkout smoke recipe below is still the only repeatable check.
+- **⚠ Mobile verified from served HTML + CSS reasoning, not by eye** — browser tooling refused
+  screenshots late in the 08-19 session. Someone should look at a real phone.
+- **⚠ Five dev orders (111–115) carry corrupted district case** — local test data, ignore.
+
+---
+
+## 2026-08-18/19 — 🟢 THE LAUNCH PUSH: STORE LIVE, ACCOUNTS, TRACKING, GOOGLE, LOGO, PAYMENTS TRUTH
+
+Two long sessions. The store went from "sealed behind a holding page" to a functioning,
+brand-correct storefront. Everything below is **deployed and verified on live** (page-level
+curls + probes, not just gates), and committed on `campaign-imagery-and-positioning`.
+
+### Storefront features
+
+- **Live shop filters** ([inc/moments.php](local/themes/slk-child/inc/moments.php)): price bands
+  now DERIVED from the catalogue (under 13k / 13–15k / over 15k — the hardcoded "under 5,000"
+  band could never match), AJAX grid/heading/chips/pagination swap with pushState + popstate,
+  aria-live count, paginated exactly like a reload, no-JS form fallback intact (it 302s to the
+  canonical URL — curl needs `-L`).
+- **Account & tracking parity**: registration fields (full name + SL mobile, validating through
+  `SLK_Phone` so account and checkout accept the same numbers), lost/reset-password templates in
+  Porcelain, **track-order accepts order # + email OR mobile** (`SLK_Track::resolve()`, both
+  must match, rate-limited, failures indistinguishable), Porcelain tracking result template,
+  wishlist ("Saved pieces", `SLK_Saved`), native rules-based order-help assistant (`SLK_Assist`,
+  no vendor, hidden on checkout), desktop account icon, computed announcement line, footer
+  payment chips from enabled gateways.
+- **/my-account/ redesigned**: 980px two-up grid ≥1000px (sign-in and register side by side —
+  register being below the fold was why "sign-up looked missing"), Google button above both,
+  three reasons-to-join tiles (only features that actually ship), guest-checkout note.
+  Below 1000px unchanged.
+- **Google sign-in/sign-up is LIVE end to end** — verified against Google's OAuth endpoint, not
+  assumed. Config: client id + secret in `wp_google_login_settings`, registration on,
+  One Tap off. **The OAuth callback is the bare `https://mavea.lk/wp-login.php` — no query
+  string** (an earlier note claiming `?action=google_login` was wrong; that is the button href).
+  The button renders the OFFICIAL four-colour G (data-URI, documented trademark exception to
+  the no-raw-hex rule) on my-account, checkout and wp-login.
+- **The real wordmark artwork** now renders in header + footer
+  ([assets/brand/wordmark.png](local/themes/slk-child/assets/brand/wordmark.png), rebuilt
+  ink-on-transparent at 12.6KB — the original staged PNG was OPAQUE cream and would have painted
+  a rectangle over the homepage hero; caught by the pipeline, transparency verified by decoding
+  the bytes). Text stays the source of truth (`slk_wordmark_text()` → alt); filter
+  `slk_wordmark_use_image` reverts to type. É clipping fixed via shared token
+  `--slk-wordmark-leading: 1.15` (style.css AND inc/wordmark.php read it — wordmark.php's inline
+  block cascades later and silently overrode style.css at 1.12 before).
+- **Drawer scroll-lock fixed**: `overflow:hidden` on `<html>` clamped scroll to 0 (the "MAVÉA
+  text goes up weirdly" report); now position-fixed body lock storing/restoring `scrollY`.
+- **One `<main>` per page**: nine templates nested their own `<main>` inside Blocksy's
+  `main#main` (the three help templates even duplicated `id="main"`). All demoted to
+  `div#primary`; every page verified at exactly one landmark.
+- **Stock counts no longer published anywhere**: `stock_format=no_amount`, quantity stepper
+  capped at a fixed 5 (`slk_max_quantity_per_item` filter) instead of `max="<real stock>"`,
+  and the two core over-order notices rewritten count-free (the cap is only safe WITH the
+  notice rewrite — core's message names the exact remaining stock).
+
+### Live WooCommerce configuration (wp-cli over SSH; every change was user-approved)
+
+Email footer `{store_address}` removed (it printed the Gintota street address in EVERY order
+email — double brand-law breach), email palette to ink/porcelain, kg/cm restored, gateway order
+cleaned to real gateways, COD description + instructions stored (matching the strings
+slk-checkout forces), verified-purchase-only reviews, marketplace suggestions off,
+`default_role=customer` (Google sign-ups land as customers), store street/city/postcode blanked
+(base country LK kept — nothing else consumes the address; bootstrap.sh now seeds them empty).
+Tagline **"Effortless Femininity" is canonical** (Najath, 2026-08-18) — live, seeded by
+bootstrap.sh, recorded in brand-guidelines §2; the "eight women / twenty of a cut" instruction
+in §2 is struck (contradicted the rare-never-small positioning). Rollback commands for the
+non-address options are in the 08-18 session log; the old street address is deliberately NOT
+recorded in this repo.
+
+### Payments: the verified truth (2026-08-19 research, adversarially fact-checked)
+
+| Rail | Verdict |
+|---|---|
+| COD | **Live now. The launch rail.** Dominant method in SL e-commerce anyway. |
+| Cards (PayHere) | Yes — 1–3 day partner-bank review, gated on policies + contact block + real catalogue. Plugin installed, inactive. Budget **Plus** (Rs 3,990/mo + 2.99%); Lite caps at Rs 50k/payment. Fees NOT read from payhere.lk directly (403s bots) — eyeball payhere.lk/fees before signing. |
+| Koko BNPL | Possible, 12% headline fee. **Do NOT activate the plugin even to look** — it appends instalment copy + logo to EVERY price render sitewide, unconditionally, and the merchant contract requires that branding (suppressing it = breach). Real gateway id is `darazbnpl`. |
+| Mintpay BNPL | Fee unpublished. Plugin has no IPN (paid-but-unpaid orders WILL occur), refunds declared but not implemented, hard-coded "MINT20 20% OFF" checkout banner. Not on the critical path. |
+| PayPal | **Impossible.** No live receiving rail for SL merchants; LKR unsupported; domestic payments not permitted. |
+| Apple Pay | **Impossible in practice** — no SL bank issues into Apple Wallet, so no local customer CAN pay. Keep out of copy and iconography. |
+| Google Pay | Real but post-launch: consumer side live (ComBank/HNB/Sampath/Seylan), acceptance only via a bank IPG (HNB/CyberSource, weeks). No SL aggregator is on Google's processor list. |
+
+Repo hardening landed for this: `darazbnpl` in the Koko id/order lists, and
+`gate_unconfigured()` now also hides any credentialed gateway still in `test_mode` — the
+dangerous state is credentials-in-sandbox-on, which the old merchant-id check waved through.
+**PayHere go-live trap:** its plugin ships Sandbox ON silently; and its `notify_url` callback is
+server-to-server — any Basic-Auth/coming-soon/bot-fight layer in front of the site means
+customers get charged and orders never mark paid. `noindex` does NOT cause this.
+
+### Deploy infrastructure
+
+- **`deploy-code.sh` now refuses to ship broken PHP** — single in-container `php -l` pass over
+  everything (~49s), aborts before anything leaves the machine. History honestly: a parse error
+  DID reach live on 08-19 and took every page to "critical error" for ~1 minute (lint and deploy
+  were separate statements; the failing lint didn't stop the push). The gate then had two bugs of
+  its own — Git Bash path-mangling false positives, and `grep -v` + `set -e` making a CLEAN tree
+  abort its own deploy silently. All three are fixed and the fixes are commented in the script.
+- **`.github/workflows/deploy.yml`**: lint → tar theme+plugins → purge → verify four pages
+  return 200. Fires on `main` only; inert until secrets are set. hPanel's own Git tool was
+  deliberately NOT used — the repo tree doesn't match the server tree, it would dump plans and
+  photography into the web root.
+- **THE FILE-FORMAT TRAP (cost us the outage):** the inline CSS in
+  [inc/checkout-view.php](local/themes/slk-child/inc/checkout-view.php) and
+  [inc/shop.php](local/themes/slk-child/inc/shop.php) lives in SINGLE-QUOTED PHP STRINGS — one
+  apostrophe kills the site. `inc/account.php` and `inc/chrome.php` use heredocs and are safe.
+  Check before editing any inline CSS block.
+
+### Repo hygiene
+
+- **Product photography untracked** (159 files, 202MB) on Najath's instruction — files stay on
+  disk, `NAMES.md`/`DESCRIPTIONS.md`/`prompt.txt` stay tracked, `.gitignore` carries the warning.
+  `.git` is still ~597MB because history holds the blobs; reclaiming needs `git filter-repo`
+  (rewrites every SHA, force-push) — owner's call, not done.
+- Docs added: [docs/SETUP-GOOGLE-SIGNIN.md](docs/SETUP-GOOGLE-SIGNIN.md),
+  [docs/DEPLOY-GITHUB-ACTIONS.md](docs/DEPLOY-GITHUB-ACTIONS.md). Pipeline plans in
+  `.claude/pipeline/plans/`.
+
+### Next steps, in order
+
+1. **Owner:** mavea.lk mailbox → set `woocommerce_email_from_address` (+ new-order recipient).
+2. **Owner:** write/approve Privacy, Terms, Returns → publish → footer links appear by
+   themselves; register-form 404 dies.
+3. **Owner:** the address decision → unblocks the PayHere application (submit only when the
+   site would pass review: policies, contact block, real prices).
+4. **Owner:** publish the Google consent screen; set GitHub secrets; back up `dresses/`.
+5. **Repo:** email header image + PDF invoice logo (assets staged in `assets/brand/`; wpo_wcpdf
+   `header_logo` wants an attachment ID + `header_logo_height`; watch email img sizing — Woo
+   does not constrain header-image width in older templates).
+6. **Repo:** delivery-page "Other ways to pay" cards + FAQ hardcode payment routes that are not
+   live (bank transfer, cards, LankaQR — LankaQR could not be confirmed in PayHere's own
+   materials). Cut or soften before launch; owner-voice copy, needs sign-off.
+7. **Repo:** bootstrap `.claude/code-map/`; consider a CI smoke test from the recipe below.
+8. **Merge to `main`** when auto-deploy should arm (after secrets, after visual mobile check).
 
 ---
 

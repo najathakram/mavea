@@ -40,7 +40,15 @@ Her friend with excellent taste, not a boutique assistant and not a preacher.
   Delivery districts are the one exception: a shipping-rate table and the
   district selector must still list all 25, Galle among them, because she is
   picking a destination, not being told an origin.
-- Numbers over adjectives: "eight women", "twenty of a cut", "7 days".
+- Numbers over adjectives — but only numbers that describe the OFFER, never the size
+  of the business: "7 days to exchange", "25 districts", "Rs. 350". Headcounts and
+  batch sizes ("eight women", "twenty of a cut") are struck, on the same 2026-08-18
+  instruction that struck the Galle line above: the brand must read as rare, never
+  as small. A number that tells her how few of us there are tells her what to pay.
+
+**Tagline: Effortless Femininity.** Decided 2026-08-18. Both words capitalised, used
+verbatim. It is the site's `blogdescription` and the one line that may stand in for
+the brand without further explanation.
 
 Never: urgency, scarcity theatre, exclamation marks, "shop now babe", emoji.
 

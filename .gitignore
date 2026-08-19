@@ -18,3 +18,18 @@ design/_patch820.txt
 # Normalised product frames: 20MB of derivatives, rebuilt from dresses/ by
 # local/prepare-product-images.py. The generator is tracked; its output is not.
 temp/products/
+
+# Product photography (202MB, 159 files). Untracked 2026-08-18 on Najath's
+# instruction: the garments are live in WooCommerce and served from
+# wp-content/uploads on Hostinger, so the repo no longer needs to carry them.
+# The files stay on disk in place — this ignores them, it does not delete them,
+# and nothing in the deploy path reads them (deploy-code.sh ships only
+# local/plugins and local/themes).
+# WARNING: these originals now live ONLY on the local disk and in Hostinger's
+# uploads. There is no longer a versioned copy. Back the folder up somewhere.
+# The written record stays tracked: NAMES.md, DESCRIPTIONS.md, prompt.txt.
+dresses/**/*.png
+dresses/**/*.jpg
+dresses/**/*.jpeg
+dresses/**/*.webp
+dresses/**/*.avif

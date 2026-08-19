@@ -112,7 +112,10 @@ Still open:
   theme or the `mavea-checkout` plugin.
 - **WP admin password** is still Hostinger's generated one — rotate at
   `https://mavea.lk/wp-admin/profile.php`.
-- Site tagline empty, deliberately — brand voice is gate G2, not something to improvise.
+- Site tagline is **Effortless Femininity** — decided by Najath 2026-08-18, closing gate G2 for
+  this string. It is the canonical tagline: `blogdescription` on the live site, seeded by
+  `local/bootstrap.sh`, and recorded in `design/docs/brand-guidelines.md` §2. Use it verbatim,
+  with both words capitalised, wherever a tagline is called for.
 
 ### DNS values (read from hPanel 2026-08-17) — file at the registry, NOT as registry-hosted records
 
