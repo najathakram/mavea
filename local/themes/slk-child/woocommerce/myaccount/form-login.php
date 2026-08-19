@@ -17,16 +17,26 @@
 
 defined( 'ABSPATH' ) || exit;
 
-do_action( 'woocommerce_before_customer_login_form' );
-
 $registration_open = 'yes' === get_option( 'woocommerce_enable_myaccount_registration' );
 $guest_checkout     = 'yes' === get_option( 'woocommerce_enable_guest_checkout' );
 ?>
 
 <div class="slk-auth-head">
 	<h1><?php esc_html_e( 'Welcome back.', 'slk' ); ?></h1>
-	<p><?php esc_html_e( 'Sign in to see your orders, addresses and saved sizes.', 'slk' ); ?></p>
+	<p><?php esc_html_e( 'Sign in, or make an account in a moment.', 'slk' ); ?></p>
 </div>
+
+<?php
+/**
+ * Fires as early as core's own form-login.php fires it (immediately before
+ * the sign-in / register cards) — moved below the heading rather than above
+ * it so a Google row printed here (inc/account.php, slk_account_google_row())
+ * reads after "Welcome back." as the redesign's composition calls for. Still
+ * strictly before woocommerce_login_form_start below it, so hook order
+ * relative to every other core action in this template is unchanged.
+ */
+do_action( 'woocommerce_before_customer_login_form' );
+?>
 
 <?php if ( $registration_open ) : ?>
 
@@ -36,9 +46,9 @@ $guest_checkout     = 'yes' === get_option( 'woocommerce_enable_guest_checkout' 
 
 <?php endif; ?>
 
-		<h2 class="screen-reader-text"><?php esc_html_e( 'Login', 'slk' ); ?></h2>
-
 		<form class="woocommerce-form woocommerce-form-login login" method="post" novalidate>
+
+			<h2 class="slk-auth-card__h"><?php esc_html_e( 'Sign in', 'slk' ); ?></h2>
 
 			<?php do_action( 'woocommerce_login_form_start' ); ?>
 
@@ -74,9 +84,9 @@ $guest_checkout     = 'yes' === get_option( 'woocommerce_enable_guest_checkout' 
 
 	<div class="u-column2 col-2">
 
-		<h2><?php esc_html_e( 'Create an account', 'slk' ); ?></h2>
-
 		<form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?> >
+
+			<h2 class="slk-auth-card__h"><?php esc_html_e( 'Create an account', 'slk' ); ?></h2>
 
 			<?php do_action( 'woocommerce_register_form_start' ); ?>
 
@@ -103,7 +113,7 @@ $guest_checkout     = 'yes' === get_option( 'woocommerce_enable_guest_checkout' 
 
 			<?php else : ?>
 
-				<p><?php esc_html_e( 'A link to set a new password will be sent to your email address.', 'woocommerce' ); ?></p>
+				<p class="slk-auth-note"><?php esc_html_e( 'A link to set a new password will be sent to your email address.', 'woocommerce' ); ?></p>
 
 			<?php endif; ?>
 

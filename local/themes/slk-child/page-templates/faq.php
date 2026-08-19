@@ -19,7 +19,7 @@ $wa_url = slk_whatsapp_url( __( 'Hi! I have a question that wasn\'t answered on 
 $first  = true;
 ?>
 
-<main id="main" class="slk-help-main">
+<div id="primary" class="slk-help-main">
 	<div class="slk-help-col">
 
 		<div class="slk-help-hero">
@@ -83,7 +83,7 @@ $first  = true;
 		<?php endif; ?>
 
 	</div>
-</main>
+</div>
 
 <?php
 get_footer();

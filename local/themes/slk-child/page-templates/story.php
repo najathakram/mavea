@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
 get_header();
 ?>
 
-<main id="primary" class="slk-story">
+<div id="primary" class="slk-story">
 
 	<div class="slk-story__hero">
 		<?php
@@ -125,6 +125,6 @@ get_header();
 		</div>
 
 	</div>
-</main>
+</div>
 
 <?php get_footer(); ?>

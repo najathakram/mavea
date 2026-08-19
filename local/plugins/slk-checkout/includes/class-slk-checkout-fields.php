@@ -440,17 +440,17 @@ final class SLK_Checkout_Fields {
 	 */
 	public static function reword_account_checkbox( $translated, $text, $domain ) {
 		if ( 'woocommerce' === $domain && 'Create an account?' === $text && function_exists( 'is_checkout' ) && is_checkout() ) {
-			return __( 'Save my details for next time', 'slk' );
+			return __( 'Create an account and save my details', 'slk' );
 		}
 
 		return $translated;
 	}
 
 	/**
-	 * One line under the account checkbox saying what the account is for.
-	 * Fires from woocommerce/checkout/form-billing.php immediately after the
-	 * checkbox, and only renders when the checkbox itself is showing
-	 * (registration optional, not forced).
+	 * Two lines under the account checkbox saying what the account is for and
+	 * what happens next. Fires from woocommerce/checkout/form-billing.php
+	 * immediately after the checkbox, and only renders when the checkbox
+	 * itself is showing (registration optional, not forced).
 	 *
 	 * @param WC_Checkout|null $checkout Current checkout instance.
 	 */
@@ -459,7 +459,11 @@ final class SLK_Checkout_Fields {
 			return;
 		}
 		?>
-		<p class="slk-field__hint slk-account-hint"><?php esc_html_e( 'Orders on an account earn points towards credit.', 'slk' ); ?></p>
+		<p class="slk-field__hint slk-account-hint">
+			<?php esc_html_e( 'Orders on an account earn points towards credit.', 'slk' ); ?>
+			<br />
+			<?php esc_html_e( 'We will email you a link to set your password.', 'slk' ); ?>
+		</p>
 		<?php
 	}
 

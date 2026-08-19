@@ -103,6 +103,34 @@ function slk_chrome_shop_url() {
 }
 
 /**
+ * The my-account URL, or '' when there is no published page to send her to.
+ *
+ * There was previously no desktop route to it at all: the hamburger that
+ * opens the drawer (and its "Sign in or create an account" pill) is hidden
+ * at >=1000px, leaving only a footer link. slk_chrome_render_header() uses
+ * this to add one — dropped, not dead-linked, if WooCommerce is absent.
+ *
+ * Not wc_get_page_permalink( 'myaccount' ): with no `$fallback` argument that
+ * returns get_home_url() whenever the page id is unset, trashed or deleted, so
+ * the caller's `if ( $account_url )` guard could never drop the control and a
+ * person tapping a glyph labelled "Account" landed back on the home page. The
+ * page id is resolved directly instead, then held to the same published test
+ * slk_chrome_page_url() applies below.
+ *
+ * @return string
+ */
+function slk_chrome_account_url() {
+	if ( ! function_exists( 'wc_get_page_id' ) ) {
+		return '';
+	}
+
+	$id   = (int) wc_get_page_id( 'myaccount' );
+	$page = $id > 0 ? get_post( $id ) : null;
+
+	return ( $page && 'publish' === $page->post_status ) ? (string) get_permalink( $page ) : '';
+}
+
+/**
  * URL for a product category slug, or '' when the term does not exist.
  *
  * @param string $slug Product category slug.
@@ -200,13 +228,13 @@ function slk_chrome_primary_links() {
  * returns) do not exist on a fresh install, so they are included only once
  * someone publishes them — slk_chrome_page_url() drops any slug with no
  * published page, the same discipline slk_chrome_product_cat_url() applies
- * to an empty category. My account always exists under WooCommerce, so the
- * column is never empty.
+ * to an empty category. My account holds the column up on any ordinary
+ * WooCommerce install, and drops out by the same rule if that page is gone.
  *
  * @return array<int,array{label:string,url:string}>
  */
 function slk_chrome_help_links() {
-	$account = function_exists( 'wc_get_page_permalink' ) ? (string) wc_get_page_permalink( 'myaccount' ) : '';
+	$account = slk_chrome_account_url();
 
 	$links = array(
 		array(
@@ -293,6 +321,97 @@ function slk_chrome_link_list( $links, $class = '' ) {
 	);
 }
 
+/**
+ * Every gateway the merchant has switched on, keyed by gateway id.
+ *
+ * Enabled, not available: get_available_payment_gateways() answers for the
+ * current cart, and cash on delivery runs its own is_available() there —
+ * which reads false against a cart that needs no shipping, an empty one
+ * included. Both callers below print on pages where the cart is normally
+ * empty (the home page, the shop, a PDP, and the footer of every one of
+ * them), so the available set answered `array()` on almost every view and
+ * took the line and the chips with it. front-page.php:68-85 already reads
+ * the enabled set for exactly this reason. It is the cart-independent answer
+ * to "what can this store take money with", and it still turns a new
+ * gateway's chip on by itself the moment that gateway is enabled.
+ *
+ * @return array<string,WC_Payment_Gateway>
+ */
+function slk_chrome_enabled_gateways() {
+	if ( ! function_exists( 'WC' ) || ! WC()->payment_gateways() ) {
+		return array();
+	}
+
+	$enabled = array();
+
+	foreach ( WC()->payment_gateways()->payment_gateways() as $id => $gateway ) {
+		if ( isset( $gateway->enabled ) && 'yes' === $gateway->enabled ) {
+			$enabled[ $id ] = $gateway;
+		}
+	}
+
+	return $enabled;
+}
+
+/**
+ * The quiet line above the header pill: cash-on-delivery availability, read
+ * live from the enabled gateways, with the live free-delivery threshold
+ * appended when the merchant has one configured. Never hardcoded — dropped
+ * entirely the moment cash on delivery is not enabled, so no copy about a
+ * threshold is ever printed without the sentence it belongs to.
+ *
+ * @return string Plain text (escaped by the caller), or '' to render nothing.
+ */
+function slk_chrome_announcement_text() {
+	$gateways = slk_chrome_enabled_gateways();
+
+	if ( ! isset( $gateways['cod'] ) ) {
+		return '';
+	}
+
+	$threshold = 0.0;
+
+	// SLK_Shipping::free_over() is the live setting on the slk_delivery
+	// shipping method instance; 0 means the merchant switched free delivery
+	// off, same reading pages-help.php's slk_delivery_free_over() gives it.
+	if ( class_exists( 'SLK_Shipping' ) && method_exists( 'SLK_Shipping', 'free_over' ) ) {
+		$threshold = (float) SLK_Shipping::free_over();
+	}
+
+	if ( $threshold > 0 ) {
+		return sprintf(
+			/* translators: %s: free-delivery threshold, e.g. "Rs. 15,000". */
+			__( 'Cash on delivery island-wide - Free delivery over %s', 'slk' ),
+			wp_strip_all_tags( html_entity_decode( wc_price( $threshold ) ) )
+		);
+	}
+
+	return __( 'Cash on delivery island-wide', 'slk' );
+}
+
+/**
+ * Titles of every enabled payment gateway, for the footer "We accept" chips.
+ * Text only, straight from get_title() — never a fabricated brand mark — and
+ * empty when nothing is enabled, so the row drops out with it. Cash on
+ * delivery today; a PayHere or Mintpay chip appears by itself the day that
+ * gateway is switched on.
+ *
+ * @return array<int,string>
+ */
+function slk_chrome_payment_gateway_titles() {
+	$titles = array();
+
+	foreach ( slk_chrome_enabled_gateways() as $gateway ) {
+		$title = trim( wp_strip_all_tags( (string) $gateway->get_title() ) );
+
+		if ( '' !== $title ) {
+			$titles[] = $title;
+		}
+	}
+
+	return $titles;
+}
+
 /* -------------------------------------------------------------------------
  * 4. The bag button
  *
@@ -339,6 +458,9 @@ function slk_chrome_icon( $name, $size = 19 ) {
 		// The two-way arrow: out on the top rail, back on the bottom one.
 		'exchange' => '<path d="M4 9h15M15.5 5.5 19 9l-3.5 3.5"/><path d="M20 15H5M8.5 11.5 5 15l3.5 3.5"/>',
 		'clock'    => '<circle cx="12" cy="12" r="7.6"/><path d="M12 7.5V12l3.1 1.9"/>',
+		// A head over shoulders — the desktop account route's glyph, drawn to
+		// the same stroke weight and viewBox as its search/bag neighbours.
+		'account'  => '<circle cx="12" cy="8.4" r="3.5"/><path d="M5.3 19.2c1.1-3.9 3.9-5.9 6.7-5.9s5.6 2 6.7 5.9"/>',
 	);
 
 	if ( ! isset( $paths[ $name ] ) ) {
@@ -434,11 +556,29 @@ function slk_chrome_render_header() {
 	$over = (bool) apply_filters( 'slk_header_over', false );
 
 	$links = slk_chrome_primary_links();
+
+	/*
+	 * The announcement is ground-coloured meta with no fill of its own (§7):
+	 * muted ink, uppercase, transparent. That only reads where the header
+	 * sits on the porcelain ground. Under `--over` the header is absolutely
+	 * positioned across the top of a full-bleed hero photograph
+	 * (style.css:588-593, switched on by inc/home.php for the front page), so
+	 * the line would print onto the picture with nothing behind it and its
+	 * box would push the glass pill down over the composition. Dropped there
+	 * rather than restyled — the plan asks for a quiet line, not a banner.
+	 */
+	$announce = $over ? '' : slk_chrome_announcement_text();
 	?>
 	<header class="slk-header <?php echo $over ? 'slk-header--over' : 'slk-header--solid'; ?>">
+		<?php if ( $announce ) : ?>
+			<p class="slk-header__announce"><?php echo esc_html( $announce ); ?></p>
+		<?php endif; ?>
+
 		<div class="slk-header__inner">
 			<?php
-			echo slk_wordmark_markup( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+			// WP3: the real wordmark artwork, text fallback built in --
+			// see slk_wordmark_render() in inc/wordmark.php.
+			echo slk_wordmark_render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
 				array(
 					'size' => 'md',
 					'link' => true,
@@ -470,6 +610,21 @@ function slk_chrome_render_header() {
 					aria-controls="slk-drawer"
 					aria-expanded="false"
 					aria-label="<?php esc_attr_e( 'Menu', 'slk' ); ?>"><?php echo slk_chrome_icon( 'menu' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup. ?></button>
+
+				<?php
+				/*
+				 * Desktop-only: below 1000px the drawer (with its own "Sign in
+				 * or create an account" pill) is the account route, so this
+				 * stays out of the actions cluster entirely rather than just
+				 * visually hidden — see .slk-icon-btn--account in style.css.
+				 */
+				$account_url = slk_chrome_account_url();
+				if ( $account_url ) :
+					?>
+					<a class="slk-icon-btn slk-icon-btn--account"
+						href="<?php echo esc_url( $account_url ); ?>"
+						aria-label="<?php esc_attr_e( 'Account', 'slk' ); ?>"><?php echo slk_chrome_icon( 'account' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup. ?></a>
+				<?php endif; ?>
 
 				<button type="button"
 					class="slk-icon-btn"
@@ -589,16 +744,19 @@ function slk_chrome_render_footer() {
 		__( 'Modest ready-to-wear, made in Sri Lanka to export standard.', 'slk' )
 	);
 
-	$help = slk_chrome_help_links();
-	$wa   = function_exists( 'slk_whatsapp_url' )
+	$help           = slk_chrome_help_links();
+	$wa             = function_exists( 'slk_whatsapp_url' )
 		? slk_whatsapp_url( __( 'Hi! I have a question.', 'slk' ) )
 		: '';
+	$payment_titles = slk_chrome_payment_gateway_titles();
 	?>
 	<footer class="slk-footer">
 		<div class="slk-footer__inner">
 			<div class="slk-footer__col">
 				<?php
-				echo slk_wordmark_markup( array( 'size' => 'md' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+				// WP3: the real wordmark artwork, text fallback built in --
+				// see slk_wordmark_render() in inc/wordmark.php.
+				echo slk_wordmark_render( array( 'size' => 'md' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
 				?>
 				<p class="slk-footer__blurb"><?php echo esc_html( $blurb ); ?></p>
 			</div>
@@ -658,6 +816,17 @@ function slk_chrome_render_footer() {
 				<?php endif; ?>
 			</div>
 		</div>
+
+		<?php if ( $payment_titles ) : ?>
+			<div class="slk-footer__accepts">
+				<span class="slk-eyebrow"><?php esc_html_e( 'We accept', 'slk' ); ?></span>
+				<ul class="slk-footer__accepts-list">
+					<?php foreach ( $payment_titles as $payment_title ) : ?>
+						<li><?php echo esc_html( $payment_title ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+		<?php endif; ?>
 
 		<?php
 		/*
@@ -733,6 +902,22 @@ a.slk-icon-btn{text-decoration:none}
 .slk-header__search-row{display:flex;gap:var(--slk-space-2)}
 .slk-header__search-row .slk-input{flex:1;min-width:0}
 .slk-header__search-row .slk-btn{flex:none}
+
+/* -- header announcement line (slk_chrome_announcement_text()) ---------- */
+/* Ground-coloured, not a banner: no fill, no border, just quiet centred
+   meta sitting above the pill. An empty string from the PHP means the <p>
+   never prints, so there is no empty-bar state to style around — and there
+   is deliberately no `--over` variant: the renderer drops the line rather
+   than print it onto a hero photograph. */
+.slk-header__announce{
+	margin:0;
+	padding:10px 0;
+	text-align:center;
+	font:500 var(--slk-text-xs)/1 var(--slk-font-ui);
+	letter-spacing:var(--slk-track-label);
+	text-transform:uppercase;
+	color:var(--slk-color-muted);
+}
 
 /* -- mobile nav drawer (design/sections/04-pages.html, "Mobile nav") ----- */
 .slk-drawer{position:fixed;inset:0;z-index:80}
@@ -832,10 +1017,33 @@ a.slk-icon-btn{text-decoration:none}
 	color:var(--slk-color-muted);
 }
 
+/* -- footer "We accept" chips (slk_chrome_payment_gateway_titles()) ------ */
+/* Another grid sibling, same container as .slk-footer__legal below it.
+   Text chips only — no gateway is ever drawn as a logo here. */
+.slk-footer__accepts{
+	max-width:var(--slk-container);
+	margin:0 auto;
+	padding:0 var(--slk-gutter) var(--slk-space-4);
+	display:flex;align-items:center;flex-wrap:wrap;gap:var(--slk-space-3);
+}
+.slk-footer__accepts-list{
+	display:flex;flex-wrap:wrap;gap:var(--slk-space-2);
+	margin:0;padding:0;list-style:none;
+}
+.slk-footer__accepts-list li{
+	font:500 var(--slk-text-xs)/1 var(--slk-font-ui);
+	letter-spacing:.08em;
+	border:1px solid var(--slk-hairline);
+	border-radius:var(--slk-radius-pill);
+	padding:6px 12px;
+	color:var(--slk-color-muted);
+}
+
 @media (min-width:1000px){
 	.slk-drawer__panel{inset:var(--slk-space-4) auto var(--slk-space-4) var(--slk-space-4);width:380px}
 	/* Matches the grid's own padding-inline:0 at this width. */
 	.slk-footer__legal{padding-inline:0}
+	.slk-footer__accepts{padding-inline:0}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -857,6 +1065,49 @@ CSS;
 (function () {
 	var open = null;
 
+	// Position-based scroll lock for the drawer. `overflow:hidden` on <html>
+	// used to stop <html> being the scroll container, so the browser clamped
+	// scrollTop to 0 and the page snapped to the top the instant the drawer
+	// opened. Pinning <body> with position:fixed at its current offset keeps
+	// the page visually still without losing the reading position, which is
+	// restored on close. scrollLockY doubles as the re-entrancy guard: a
+	// second lock() call while already locked would otherwise read
+	// window.scrollY as 0 (the page is already fixed) and clobber the real
+	// offset, and a stray unlock() call with nothing locked would scroll the
+	// page to 0. Both are no-ops here, which is what keeps this idempotent
+	// across the drawer and the non-modal search panel sharing setState().
+	var scrollLockY = null;
+
+	function lockScroll() {
+		if (scrollLockY !== null) { return; }
+		scrollLockY = window.scrollY || window.pageYOffset || 0;
+		var body = document.body.style;
+		body.position = 'fixed';
+		body.top = '-' + scrollLockY + 'px';
+		body.left = '0';
+		body.right = '0';
+		body.width = '100%';
+	}
+
+	function unlockScroll() {
+		if (scrollLockY === null) { return; }
+		var y = scrollLockY;
+		scrollLockY = null;
+		var body = document.body.style;
+		body.position = '';
+		body.top = '';
+		body.left = '';
+		body.right = '';
+		body.width = '';
+		window.scrollTo(0, y);
+	}
+
+	// Shared with the filter sheet in inc/moments.php, which is modal on the
+	// same viewports the drawer is. Two independent locks would stack: the
+	// second would read window.scrollY off an already-fixed <body> as 0 and
+	// lose the real offset. One owner of scrollLockY, two callers.
+	window.slkScrollLock = { lock: lockScroll, unlock: unlockScroll };
+
 	function panelOf(id) { return document.getElementById(id); }
 
 	function triggersFor(id) {
@@ -875,7 +1126,9 @@ CSS;
 		});
 
 		if (panel.classList.contains('slk-drawer')) {
-			document.documentElement.style.overflow = isOpen ? 'hidden' : '';
+			// Restore scroll position before focus returns (below), so the
+			// focus return does not itself scroll the page anywhere.
+			if (isOpen) { lockScroll(); } else { unlockScroll(); }
 		}
 
 		// Tracked for every panel, modal or not, so Escape can close whatever

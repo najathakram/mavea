@@ -52,7 +52,7 @@ $slk_sizeguide_wa = function_exists( 'slk_whatsapp_url' )
 	: '';
 ?>
 
-<main id="primary" class="slk-sizeguide">
+<div id="primary" class="slk-sizeguide">
 	<div class="slk-container">
 
 		<div class="slk-sizeguide__intro">
@@ -153,6 +153,6 @@ $slk_sizeguide_wa = function_exists( 'slk_whatsapp_url' )
 		</div>
 
 	</div>
-</main>
+</div>
 
 <?php get_footer(); ?>

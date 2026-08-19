@@ -192,6 +192,158 @@ function slk_the_wordmark( $args = array() ) {
 }
 
 /* -------------------------------------------------------------------------
+ * The real artwork (WP3). slk_wordmark_text() stays the single source of
+ * truth above -- this only decides what PAINTS it: the staged
+ * assets/brand/wordmark.png, with the text as its alt, or the type-based
+ * slk_wordmark_markup() rendering when the image cannot be used. The name
+ * itself never moves out of slk_wordmark_text().
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Resolve the wordmark artwork, or false when it cannot be used.
+ *
+ * get_theme_file_path()/get_theme_file_uri() are child-theme aware, so an
+ * override staged in a future child of this theme still resolves. Reads the
+ * file's real dimensions when it can, so a future re-export at a different
+ * size still gets an accurate box; falls back to the documented 457x126 of
+ * the staged asset only if that read fails on an otherwise-present file.
+ *
+ * The staged asset is INK ON TRANSPARENT (PNG colour type 6) at --slk-color-ink,
+ * derived from the master at branding/MAVEA_wordmark_highres.png. The master is
+ * a 3044x840, 551KB opaque render with the cream ground baked in; shipped as-is
+ * it painted a solid rectangle over the homepage hero and a visible edge on the
+ * glass pill, and cost half a megabyte on the critical path of every page to
+ * paint a ~62x17px mark. Two rules follow, and both must hold on any re-export:
+ *   1. Alpha channel, no ground. Verify with the IHDR colour-type byte (6).
+ *   2. Sized for the front end, not for print — 126px tall is 6x the largest
+ *      render height. The master stays in branding/, out of the theme.
+ * The canvas keeps the master's proportions and padding on purpose: it is what
+ * makes the artwork's cap height land on the same 12.5px the set type did, so
+ * the mark occupies exactly the space the text occupied. Do not crop it.
+ *
+ * @return array{url:string,width:int,height:int}|false
+ */
+function slk_wordmark_image_data() {
+	static $data = null;
+
+	if ( null !== $data ) {
+		return $data;
+	}
+
+	$relative = 'assets/brand/wordmark.png';
+	$path     = get_theme_file_path( $relative );
+
+	if ( ! file_exists( $path ) ) {
+		$data = false;
+
+		return $data;
+	}
+
+	// Suppressed: a corrupt (but present) file must not warn on a live front
+	// end; file_exists() above already guards the missing-file case.
+	$size = @getimagesize( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+	$data = array(
+		'url'    => get_theme_file_uri( $relative ),
+		'width'  => ( is_array( $size ) && ! empty( $size[0] ) ) ? (int) $size[0] : 457,
+		'height' => ( is_array( $size ) && ! empty( $size[1] ) ) ? (int) $size[1] : 126,
+	);
+
+	return $data;
+}
+
+/**
+ * Render the wordmark, real artwork first.
+ *
+ * Same $args shape as slk_wordmark_markup() (size/link/initial/class/tag).
+ * `initial` always falls back to text — a cropped sliver of the wordmark
+ * artwork is not a thing, so the §6 initial-only fallback stays text-only.
+ *
+ * The <img> carries explicit width/height (the asset's real size, so the
+ * browser reserves the right box before it loads — no CLS), loading="eager"
+ * and decoding="async" (it is above the fold on every page this prints on),
+ * and slk_wordmark_text() as the alt, so the accessible name is unchanged.
+ *
+ * Falls back to slk_wordmark_markup() — the exact prior text rendering —
+ * when the `slk_wordmark_use_image` filter is false or the asset cannot be
+ * resolved. Never an empty header.
+ *
+ * @param array $args See slk_wordmark_markup().
+ * @return string Escaped markup.
+ */
+function slk_wordmark_render( $args = array() ) {
+	$args = wp_parse_args(
+		$args,
+		array(
+			'size'    => 'md',
+			'link'    => false,
+			'initial' => false,
+			'class'   => '',
+			'tag'     => 'span',
+		)
+	);
+
+	/**
+	 * Filters whether the wordmark renders as the real artwork rather than
+	 * set type. Off restores the text rendering exactly, with no code
+	 * change — the revert path if the asset is ever wrong on a deploy.
+	 *
+	 * @param bool $use_image Default true.
+	 */
+	$use_image = ! $args['initial'] && (bool) apply_filters( 'slk_wordmark_use_image', true );
+
+	$image = $use_image ? slk_wordmark_image_data() : false;
+
+	if ( ! $image ) {
+		return slk_wordmark_markup( $args );
+	}
+
+	$size = array_key_exists( $args['size'], slk_wordmark_sizes() ) ? $args['size'] : 'md';
+
+	$classes = array_filter(
+		array_merge(
+			// Keeps every .slk-wordmark box rule (min-width, the home-link
+			// touch target, the size token) — style.css's --image modifier
+			// only changes how the mark inside that box is centred.
+			array( 'slk-wordmark', 'slk-wordmark--' . $size, 'slk-wordmark--image' ),
+			preg_split( '/\s+/', (string) $args['class'], -1, PREG_SPLIT_NO_EMPTY )
+		)
+	);
+
+	$class_attr = esc_attr( implode( ' ', $classes ) );
+
+	$img = sprintf(
+		'<img class="slk-wordmark__img" src="%1$s" width="%2$d" height="%3$d" alt="%4$s" loading="eager" decoding="async">',
+		esc_url( $image['url'] ),
+		$image['width'],
+		$image['height'],
+		esc_attr( slk_wordmark_text() )
+	);
+
+	if ( $args['link'] ) {
+		return sprintf(
+			'<a class="%1$s" href="%2$s" rel="home">%3$s</a>',
+			$class_attr,
+			esc_url( home_url( '/' ) ),
+			$img
+		);
+	}
+
+	$tag = in_array( $args['tag'], array( 'span', 'div', 'p', 'h1', 'h2' ), true ) ? $args['tag'] : 'span';
+
+	return sprintf( '<%1$s class="%2$s">%3$s</%1$s>', $tag, $class_attr, $img );
+}
+
+/**
+ * Echo slk_wordmark_render().
+ *
+ * @param array $args See slk_wordmark_markup().
+ */
+function slk_the_wordmark_render( $args = array() ) {
+	echo slk_wordmark_render( $args ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in slk_wordmark_render().
+}
+
+/* -------------------------------------------------------------------------
  * Shortcode: [slk_wordmark size="md" link="1" initial="0" class=""]
  * ---------------------------------------------------------------------- */
 
@@ -312,7 +464,12 @@ add_action(
 	font-family:var(--slk-wordmark-font);
 	font-weight:300;
 	font-optical-sizing:auto;
-	line-height:var(--slk-leading-tight);
+	/* NOT --slk-leading-tight. This block is appended to the child stylesheet,
+	   so it lands after style.css at the same specificity and wins: at 1.12 it
+	   silently overrode the wordmark leading style.css sets, everywhere
+	   .slk-wordmark renders as text. Both now read the one token, which is 1.15
+	   — the room the acute on the É needs. See the note beside the token. */
+	line-height:var(--slk-wordmark-leading);
 	text-transform:uppercase;
 	letter-spacing:var(--slk-wordmark-tracking);
 	text-indent:var(--slk-wordmark-tracking);

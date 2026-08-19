@@ -22,7 +22,7 @@ $query_str = get_search_query();
 $count     = (int) $GLOBALS['wp_query']->found_posts;
 ?>
 
-<main id="primary" class="slk-page slk-search">
+<div id="primary" class="slk-page slk-search">
 
 	<?php if ( have_posts() ) : ?>
 
@@ -92,7 +92,7 @@ $count     = (int) $GLOBALS['wp_query']->found_posts;
 
 	<?php endif; ?>
 
-</main>
+</div>
 
 <?php
 get_footer();

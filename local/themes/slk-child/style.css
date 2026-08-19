@@ -62,6 +62,11 @@ Text Domain: slk
   --slk-font-ui:      "Archivo", system-ui, sans-serif; /* everything else */
   --slk-wordmark-font: var(--slk-font-display);
   --slk-wordmark-tracking: 0.26em;
+  /* Not --slk-leading-tight (1.12): the É needs more line box than body copy
+     does — see the note on the .slk-wordmark rule below. It is a token so the
+     inline block in inc/wordmark.php, which the cascade puts AFTER this file,
+     can set the same value instead of quietly overriding it with 1.12. */
+  --slk-wordmark-leading: 1.15;
 
   --slk-text-xs:   11px;   /* meta, never below this */
   --slk-text-sm:   12.5px;
@@ -637,7 +642,7 @@ img, svg, video { max-width: 100%; height: auto; }
   font-family: var(--slk-wordmark-font);
   font-weight: 300;
   font-size: 19px;
-  line-height: 1;
+  line-height: var(--slk-wordmark-leading);
   letter-spacing: var(--slk-wordmark-tracking);
   text-indent: var(--slk-wordmark-tracking);
   text-transform: uppercase;
@@ -648,6 +653,71 @@ img, svg, video { max-width: 100%; height: auto; }
   display: inline-flex;
   align-items: center;
   min-height: var(--slk-touch); /* the wordmark is also the home link */
+}
+
+/* WP3: the real wordmark artwork (inc/wordmark.php slk_wordmark_render()).
+   Every box rule above still applies — min-width, the home-link touch
+   target, the size token's font-size — this only changes how the mark
+   INSIDE that box is centred. The text rendering needs a line-height +
+   cap-height offset tuned to the glyphs (see inc/wordmark.php); a bitmap has
+   no cap height to compensate for, so it is centred with flex instead. Two
+   classes in the selector so this wins on specificity over the single-class
+   `.slk-wordmark` rule inc/wordmark.php appends after this file, regardless
+   of which one prints later. */
+.slk-wordmark.slk-wordmark--image {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-indent: 0;
+}
+/* The header pill's mark is also the home link and must keep its 44px touch
+   target even though the artwork itself renders far shorter. Scoped to the
+   anchor only — the footer mark is not interactive and is left to size to
+   its own content, same as the text did. */
+a.slk-wordmark.slk-wordmark--image {
+  min-height: var(--slk-touch);
+}
+/* Sized for CAP HEIGHT, not box height, because the two are not the same
+   thing here. The asset keeps the master's padding (see slk_wordmark_image_data()
+   in inc/wordmark.php — do not crop it), so the M's ink spans rows 39-108 of the
+   126px canvas: 0.556 of the box is caps, the rest is empty band. The set type it
+   replaces has a cap height of ~0.72em (measured in the live header at 17px:
+   12.25px). 0.72 / 0.556 = 1.3em of box, which lands the artwork's caps on the
+   same 12.25px — at height:1em the mark rendered a quarter short of the text.
+
+   1em here is the SIZE MODIFIER's font-size, not the 19px above or the 21px in
+   the ≥1000px block: inc/wordmark.php prints .slk-wordmark--md{font-size:17px}
+   into an inline block that lands after this file at equal specificity, so it
+   beats both (media queries add no specificity). There is deliberately no
+   breakpoint here — there is none in the type it replaces either. The em keeps
+   the ratio right at --sm/--lg/--xl too. The box stays well inside the 44px
+   touch target and the 96px min-width, so no container height changes. */
+.slk-wordmark__img {
+  display: block;
+  height: 1.3em;
+  width: auto;
+  /* …and then the mark still read LOW, for the mirror of the reason the text
+     read high. `align-items:center` above centres the img BOX; the ink inside
+     that box is not centred on it. Measured on the asset: the canvas is 126px
+     and the padding is symmetric on TOTAL ink (rows 16-109), but the acute on
+     the É eats the top of that band, so the CAPS span rows 39-108 and their
+     midpoint is 74.0 against the canvas midpoint of 63.0 — an 11/126 = 8.7%
+     downward bias baked into the artwork. At 1.3em of a 17px --md that is
+     1.9px, and the capitals sat 1.9px under the optical centre of the 20px
+     search/bag/account glyphs beside them in the pill.
+
+     Same correction the type gets, same target: inc/wordmark.php nudges
+     `.slk-wordmark__text` down .18em to put CAP HEIGHT — not total ink — on
+     the centre, with the note that centring on the ink "would drag the whole
+     wordmark down to make room for one diacritic". That is precisely what the
+     bitmap's own padding does, so it is undone here.
+
+     Percent, not em: translateY resolves a percentage against the element's
+     OWN height, so 8.7% stays the artwork's bias whatever height above is set
+     — re-tune it only if the asset is re-exported with different padding. The
+     accent still clears: after the shift its top sits 10.2px above the anchor
+     centre, inside the 22px half of the touch target. */
+  transform: translateY(-8.7%);
 }
 
 .slk-nav { display: none; }     /* mobile: navigation lives in the drawer */
@@ -712,6 +782,11 @@ img, svg, video { max-width: 100%; height: auto; }
    match the wordmark's weight; they inherit colour from the button. */
 .slk-icon-btn .slk-icon { display: block; }
 
+/* The desktop account route. Below 1000px the drawer's own account pill
+   covers this job, so the icon stays out of the actions cluster rather than
+   just sitting invisible — reversed at >=1000px alongside .slk-nav below. */
+.slk-icon-btn--account { display: none; }
+
 /* The bag has two states. Empty: the tote outline, quiet, like its siblings —
    a filled dark circle containing "0" was the loudest thing in the header and
    it was announcing nothing. Filled: the design's ink disc with the count. */
@@ -746,6 +821,8 @@ img, svg, video { max-width: 100%; height: auto; }
   .slk-wordmark { font-size: 21px; }
   .slk-nav { display: block; }
   .slk-nav--drawer-only { display: none; }
+  /* grid, not flex, so the base rule's place-items keeps the glyph centred. */
+  .slk-icon-btn--account { display: grid; }
 }
 
 

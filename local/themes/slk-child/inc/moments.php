@@ -116,23 +116,233 @@ function slk_moments_current_url() {
  * ====================================================================== */
 
 /**
- * The price buckets from 02-moments.html:19-23, as real min/max price args.
+ * The real min/max published product price, cached.
  *
- * The boundaries are the design's; the rendering of them is wc_price(), so the
- * "Rs." prefix, the comma thousands and the zero decimals all come from the
- * store's own currency settings and never from a typed symbol.
+ * Reads wc_product_meta_lookup directly — the same table
+ * slk_moments_price_clause() joins against for the archive's own price
+ * filter — rather than loading every product through wc_get_products(), so
+ * this stays a single indexed aggregate query. It runs at most once per
+ * cache window: slk_moments_flush_price_bounds() below clears the transient
+ * the moment a product is written, so a price edit is never left stale for
+ * up to 12 hours.
+ *
+ * @return array{min:float,max:float}|null Null when there are fewer than two
+ *                                          distinct prices to bucket (an
+ *                                          empty catalogue, one product, or
+ *                                          every product at the same price).
+ */
+function slk_moments_price_bounds() {
+	$cached = get_transient( 'slk_price_bounds' );
+
+	if ( false !== $cached ) {
+		return $cached ? $cached : null;
+	}
+
+	global $wpdb;
+
+	$bounds = null;
+	$row    = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- no user input; result cached below.
+		"SELECT MIN(wc_product_meta_lookup.min_price) AS lo, MAX(wc_product_meta_lookup.max_price) AS hi
+		FROM {$wpdb->wc_product_meta_lookup} wc_product_meta_lookup
+		INNER JOIN {$wpdb->posts} p ON p.ID = wc_product_meta_lookup.product_id
+		WHERE p.post_status = 'publish' AND p.post_type = 'product'"
+	);
+
+	if ( $row && null !== $row->lo && null !== $row->hi && (float) $row->lo < (float) $row->hi ) {
+		$bounds = array(
+			'min' => (float) $row->lo,
+			'max' => (float) $row->hi,
+		);
+	}
+
+	// Cache the degenerate result too (as a plain 0, not null — a transient
+	// cannot be told apart from "not set" by returning null itself), or a
+	// catalogue with one price point would re-run this query every request.
+	set_transient( 'slk_price_bounds', $bounds ? $bounds : 0, 12 * HOUR_IN_SECONDS );
+
+	return $bounds;
+}
+
+/**
+ * Flush the cached price bounds whenever a product is written.
+ */
+function slk_moments_flush_price_bounds() {
+	delete_transient( 'slk_price_bounds' );
+	delete_transient( 'slk_price_mid_band' );
+}
+add_action( 'woocommerce_update_product', 'slk_moments_flush_price_bounds' );
+add_action( 'woocommerce_new_product', 'slk_moments_flush_price_bounds' );
+add_action( 'save_post_product', 'slk_moments_flush_price_bounds' );
+
+/**
+ * The out-of-stock half of the archive's own visibility constraint.
+ *
+ * `'visibility' => 'catalog'` is a real WC_Product_Query argument and covers
+ * the exclude-from-catalog term, but WC_Query::get_tax_query() also drops the
+ * outofstock term when the store is set to hide sold-out items — and there is
+ * no product-query argument for that one. Returned as tax_query clauses so
+ * the filter endpoint and the price-band probe can both bolt it on and
+ * measure against the same set the archive would render.
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function slk_moments_stock_tax_query() {
+	if ( 'yes' !== get_option( 'woocommerce_hide_out_of_stock_items' ) || ! function_exists( 'wc_get_product_visibility_term_ids' ) ) {
+		return array();
+	}
+
+	$term_ids = wc_get_product_visibility_term_ids();
+
+	if ( empty( $term_ids['outofstock'] ) ) {
+		return array();
+	}
+
+	return array(
+		array(
+			'taxonomy' => 'product_visibility',
+			'field'    => 'term_taxonomy_id',
+			'terms'    => array( (int) $term_ids['outofstock'] ),
+			'operator' => 'NOT IN',
+		),
+	);
+}
+
+/**
+ * Does the middle band actually hold anything?
+ *
+ * The two outer bands are provable from the bounds alone — a product exists
+ * at $min and one at $max — but nothing about [min, max] says the interval
+ * between the boundaries is occupied. Two products at Rs. 1,000 and
+ * Rs. 20,000 clear every arithmetic guard in slk_moments_price_buckets() and
+ * still leave "Rs. 7,000 to Rs. 14,000" matching nothing, which is exactly
+ * the dead band the whole exercise exists to remove. So this counts it for
+ * real, through the same overlap clause the archive's own min_price/max_price
+ * filter applies, and caches the answer against the boundary pair it was
+ * measured for (12 hours, cleared by the same product-write flush above), so
+ * it is one indexed query per cache window rather than one per request.
+ *
+ * @param int $under Lower boundary.
+ * @param int $over  Upper boundary.
+ * @return bool True when at least one product falls in [$under, $over].
+ */
+function slk_moments_price_band_populated( $under, $over ) {
+	$cached = get_transient( 'slk_price_mid_band' );
+
+	if ( is_array( $cached ) && isset( $cached['under'], $cached['over'], $cached['has'] )
+		&& (int) $cached['under'] === (int) $under && (int) $cached['over'] === (int) $over ) {
+		return (bool) $cached['has'];
+	}
+
+	if ( ! function_exists( 'wc_get_products' ) ) {
+		return true; // Nothing to measure with; leave the facet as the arithmetic left it.
+	}
+
+	$clause = slk_moments_price_clause( $under, $over );
+	add_filter( 'posts_clauses', $clause );
+
+	$probe = array(
+		'status'     => 'publish',
+		'limit'      => 1,
+		'return'     => 'ids',
+		'type'       => array_keys( wc_get_product_types() ),
+		// The archive's own constraint. Without it this can certify a band
+		// whose one occupant is catalog-hidden (or sold out, with sold-out
+		// items hidden) and ship exactly the dead band this function exists
+		// to eliminate.
+		'visibility' => 'catalog',
+	);
+
+	$stock_clauses = slk_moments_stock_tax_query();
+
+	if ( $stock_clauses ) {
+		$probe['tax_query'] = $stock_clauses; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- the archive runs the same clause.
+	}
+
+	$found = wc_get_products( $probe );
+
+	remove_filter( 'posts_clauses', $clause );
+
+	$has = ! empty( $found );
+
+	set_transient(
+		'slk_price_mid_band',
+		array(
+			'under' => (int) $under,
+			'over'  => (int) $over,
+			'has'   => $has,
+		),
+		12 * HOUR_IN_SECONDS
+	);
+
+	return $has;
+}
+
+/**
+ * The price buckets from 02-moments.html:19-23, sized to the live catalogue.
+ *
+ * The two interior boundaries are not the design's fixed 5,000/10,000 — that
+ * pair came from a mockup catalogue and left "Under Rs. 5,000" permanently
+ * empty once real stock (Rs. 9,900-17,900) went live. Instead the real
+ * min/max price is split into three even thirds and each interior boundary
+ * is rounded to the nearest Rs. 1,000, so a boundary is always a round human
+ * number (never "Rs. 12,566") while still sitting inside the real range.
+ * Rendering of the labels is still wc_price(), so the "Rs." prefix, the comma
+ * thousands and the zero decimals all come from the store's own currency
+ * settings and never from a typed symbol.
+ *
+ * Degenerate ranges — too narrow to round into two distinct boundaries that
+ * both still fall strictly inside [min, max], a catalogue clustered at the
+ * two extremes so that the middle band holds nothing, or no usable range at
+ * all — return no buckets whatsoever, and slk_moments_render_filters() omits
+ * the whole Price group in that case: a facet that cannot match anything is
+ * worse than no facet.
  *
  * @return array<string,array{min:int|null,max:int|null,label:string}>
  */
 function slk_moments_price_buckets() {
-	$under = 5000;
-	$over  = 10000;
+	$bounds = slk_moments_price_bounds();
+
+	if ( ! $bounds ) {
+		return array();
+	}
+
+	$min  = $bounds['min'];
+	$max  = $bounds['max'];
+	$step = 1000;
+
+	$under = (int) ( round( ( $min + ( $max - $min ) / 3 ) / $step ) * $step );
+	$over  = (int) ( round( ( $min + ( $max - $min ) * 2 / 3 ) / $step ) * $step );
+
+	// Rounding a narrow range can push the two boundaries together or past
+	// each other (e.g. a few-hundred-rupee spread rounds both to the same
+	// thousand). Widen them apart by one step rather than render an inverted
+	// or empty middle band.
+	if ( $under >= $over ) {
+		$over = $under + $step;
+	}
+
+	// Each boundary must still leave the outer bands non-empty: "under" needs
+	// a product at or below it, "over" needs one at or above it. Rounding can
+	// walk a boundary outside [min, max] on a narrow or lopsided range, at
+	// which point that outer band can never match — omit the facet entirely
+	// rather than ship a band with zero results.
+	if ( $under < $min || $over > $max || $under >= $over ) {
+		return array();
+	}
+
+	// The middle band is the one the arithmetic cannot vouch for: a catalogue
+	// clustered at both extremes leaves it empty with every guard above
+	// satisfied. Same treatment as the outer bands — no facet at all beats a
+	// band that cannot match.
+	if ( ! slk_moments_price_band_populated( $under, $over ) ) {
+		return array();
+	}
 
 	return array(
 		'under' => array(
 			'min'   => null,
 			'max'   => $under,
-			/* translators: %s: a formatted price, e.g. Rs. 5,000. */
+			/* translators: %s: a formatted price, e.g. Rs. 13,000. */
 			'label' => sprintf( __( 'Under %s', 'slk' ), wp_strip_all_tags( wc_price( $under ) ) ),
 		),
 		'mid'   => array(
@@ -144,7 +354,7 @@ function slk_moments_price_buckets() {
 		'over'  => array(
 			'min'   => $over,
 			'max'   => null,
-			/* translators: %s: a formatted price, e.g. Rs. 10,000. */
+			/* translators: %s: a formatted price, e.g. Rs. 15,000. */
 			'label' => sprintf( __( 'Over %s', 'slk' ), wp_strip_all_tags( wc_price( $over ) ) ),
 		),
 	);
@@ -283,6 +493,149 @@ function slk_moments_active_chips() {
 }
 
 /**
+ * The listing's own base URL (no filter args) for an explicit taxonomy/term
+ * pair, rather than the current front-end query.
+ *
+ * slk_moments_listing_url() reads is_product_taxonomy()/get_queried_object(),
+ * which describe the page WordPress is currently rendering — inside an
+ * admin-ajax.php request that is never this listing (is_admin() is true
+ * there, so slk_moments_is_listing() itself is false), so the AJAX filter
+ * response resolves its base URL through this instead, given the taxonomy
+ * and slug the client already carries in data-slk-ctx-tax/-term.
+ *
+ * @param string $taxonomy  Term-archive taxonomy, '' for the shop root.
+ * @param string $term_slug Term-archive slug, '' for the shop root.
+ * @return string
+ */
+function slk_moments_base_url_for( $taxonomy, $term_slug ) {
+	if ( $taxonomy && $term_slug && taxonomy_exists( $taxonomy ) ) {
+		$term = get_term_by( 'slug', $term_slug, $taxonomy );
+
+		if ( $term && ! is_wp_error( $term ) ) {
+			$link = get_term_link( $term );
+
+			if ( ! is_wp_error( $link ) ) {
+				return (string) $link;
+			}
+		}
+	}
+
+	return function_exists( 'wc_get_page_permalink' ) ? (string) wc_get_page_permalink( 'shop' ) : home_url( '/' );
+}
+
+/**
+ * The shareable URL for an explicit filter selection — the same query args a
+ * real form submit would produce — built against a base URL rather than
+ * $_GET. slk_moments_current_url() (used by the page-load chips above) stays
+ * exactly as it was; this is the AJAX-side equivalent, for a candidate
+ * selection that has not been submitted and so has no "current URL" of its
+ * own yet.
+ *
+ * @param string   $base_url Listing URL with no filter args.
+ * @param string[] $cats     Category slugs.
+ * @param int|null $min      Price floor, or null for none.
+ * @param int|null $max      Price ceiling, or null for none.
+ * @param string   $orderby  Sort key to carry through, '' for none.
+ * @return string
+ */
+function slk_moments_filtered_url( $base_url, array $cats, $min, $max, $orderby = '' ) {
+	$q = array();
+
+	if ( $cats ) {
+		$q['product_cat'] = implode( ',', $cats );
+	}
+	if ( null !== $min ) {
+		$q['min_price'] = (int) $min;
+	}
+	if ( null !== $max ) {
+		$q['max_price'] = (int) $max;
+	}
+	if ( $orderby ) {
+		$q['orderby'] = $orderby;
+	}
+
+	return $q ? add_query_arg( $q, $base_url ) : $base_url;
+}
+
+/**
+ * The active-filter chips for an explicit selection (category slugs + price
+ * bucket key), rather than $_GET. The AJAX filter response has a candidate
+ * selection that has not been submitted, so it cannot read
+ * slk_moments_active_chips()'s $_GET-sourced state — but it resolves to the
+ * exact same shape {label,url}, from the exact same bucket labels
+ * (slk_moments_price_buckets() is the one source for those either way), so
+ * slk_moments_render_chips() below renders either without caring which one
+ * produced them.
+ *
+ * @param string[] $cats       Active category slugs.
+ * @param string   $bucket_key Active price bucket key, '' for none.
+ * @param string   $base_url   Listing URL with no filter args.
+ * @param string   $orderby    Sort key to carry through, '' for none.
+ * @return array<int,array{label:string,url:string}>
+ */
+function slk_moments_build_filter_chips( array $cats, $bucket_key, $base_url, $orderby = '' ) {
+	$chips   = array();
+	$buckets = slk_moments_price_buckets();
+
+	foreach ( $cats as $slug ) {
+		$term = get_term_by( 'slug', $slug, 'product_cat' );
+
+		if ( ! $term || is_wp_error( $term ) ) {
+			continue;
+		}
+
+		$rest = array_values( array_diff( $cats, array( $slug ) ) );
+		$min  = ( $bucket_key && isset( $buckets[ $bucket_key ] ) ) ? $buckets[ $bucket_key ]['min'] : null;
+		$max  = ( $bucket_key && isset( $buckets[ $bucket_key ] ) ) ? $buckets[ $bucket_key ]['max'] : null;
+
+		$chips[] = array(
+			'label' => $term->name,
+			'url'   => slk_moments_filtered_url( $base_url, $rest, $min, $max, $orderby ),
+		);
+	}
+
+	if ( $bucket_key && isset( $buckets[ $bucket_key ] ) ) {
+		$chips[] = array(
+			'label' => $buckets[ $bucket_key ]['label'],
+			'url'   => slk_moments_filtered_url( $base_url, $cats, null, null, $orderby ),
+		);
+	}
+
+	return $chips;
+}
+
+/**
+ * The chips markup: one removable pill per active filter, plus "Clear all".
+ * Shared by the page-load filterbar and the AJAX filter response, so a
+ * chip's markup can only ever come from one place and the two can never draw
+ * it differently.
+ *
+ * @param array<int,array{label:string,url:string}> $chips     From slk_moments_active_chips() or slk_moments_build_filter_chips().
+ * @param string                                     $clear_url The no-filters URL.
+ * @return string
+ */
+function slk_moments_render_chips( array $chips, $clear_url ) {
+	if ( ! $chips ) {
+		return '';
+	}
+
+	ob_start();
+	?>
+	<div class="slk-chips">
+		<?php foreach ( $chips as $chip ) : ?>
+			<a class="slk-chip" href="<?php echo esc_url( $chip['url'] ); ?>">
+				<?php echo esc_html( $chip['label'] ); ?>
+				<span aria-hidden="true">✕</span>
+				<span class="screen-reader-text"><?php esc_html_e( 'Remove this filter', 'slk' ); ?></span>
+			</a>
+		<?php endforeach; ?>
+		<a class="slk-btn slk-btn--ghost" href="<?php echo esc_url( $clear_url ); ?>"><?php esc_html_e( 'Clear all', 'slk' ); ?></a>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
  * How many products the current, filtered query found.
  *
  * @return int
@@ -366,39 +719,41 @@ function slk_moments_render_filters() {
 			</div>
 
 			<div class="slk-filters__body">
-				<div class="slk-filters__group">
-					<span class="slk-eyebrow"><?php esc_html_e( 'Price', 'slk' ); ?></span>
-					<div class="slk-facets">
+				<?php if ( $buckets ) : ?>
+					<div class="slk-filters__group">
+						<span class="slk-eyebrow"><?php esc_html_e( 'Price', 'slk' ); ?></span>
+						<div class="slk-facets">
+							<?php
+							foreach ( $buckets as $key => $b ) {
+								// Radios, not checkboxes: the buckets do not overlap,
+								// and min_price/max_price are single-valued args.
+								echo slk_moments_facet( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+									array(
+										'type'    => 'radio',
+										'name'    => 'slk_price',
+										'value'   => $key,
+										'label'   => $b['label'],
+										'checked' => $key === $bucket,
+										'id'      => 'slk-price-' . $key,
+									)
+								);
+							}
+							?>
+						</div>
 						<?php
-						foreach ( $buckets as $key => $b ) {
-							// Radios, not checkboxes: the buckets do not overlap,
-							// and min_price/max_price are single-valued args.
-							echo slk_moments_facet( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
-								array(
-									'type'    => 'radio',
-									'name'    => 'slk_price',
-									'value'   => $key,
-									'label'   => $b['label'],
-									'checked' => $key === $bucket,
-									'id'      => 'slk-price-' . $key,
-								)
-							);
-						}
+						/*
+						 * The form posts the bucket key; these two carry the real
+						 * WooCommerce args. JS rewrites their values on change; with
+						 * no JS the submit handler below has nothing to rewrite, so
+						 * they ship pre-filled with whatever is already applied and
+						 * a bucket change is resolved server-side (see the
+						 * slk_price -> min/max redirect on `template_redirect`).
+						 */
 						?>
+						<input type="hidden" name="min_price" value="<?php echo esc_attr( $bucket && null !== $buckets[ $bucket ]['min'] ? $buckets[ $bucket ]['min'] : '' ); ?>" data-slk-min>
+						<input type="hidden" name="max_price" value="<?php echo esc_attr( $bucket && null !== $buckets[ $bucket ]['max'] ? $buckets[ $bucket ]['max'] : '' ); ?>" data-slk-max>
 					</div>
-					<?php
-					/*
-					 * The form posts the bucket key; these two carry the real
-					 * WooCommerce args. JS rewrites their values on change; with
-					 * no JS the submit handler below has nothing to rewrite, so
-					 * they ship pre-filled with whatever is already applied and
-					 * a bucket change is resolved server-side (see the
-					 * slk_price -> min/max redirect on `template_redirect`).
-					 */
-					?>
-					<input type="hidden" name="min_price" value="<?php echo esc_attr( $bucket && null !== $buckets[ $bucket ]['min'] ? $buckets[ $bucket ]['min'] : '' ); ?>" data-slk-min>
-					<input type="hidden" name="max_price" value="<?php echo esc_attr( $bucket && null !== $buckets[ $bucket ]['max'] ? $buckets[ $bucket ]['max'] : '' ); ?>" data-slk-max>
-				</div>
+				<?php endif; ?>
 
 				<?php if ( $terms ) : ?>
 					<div class="slk-filters__group">
@@ -426,9 +781,20 @@ function slk_moments_render_filters() {
 			<div class="slk-filters__foot">
 				<button type="submit" class="slk-btn slk-btn--primary slk-filters__submit">
 					<?php
+					/*
+					 * "Showing", not "Show": this count is already on screen,
+					 * in the <h1> beside the button, on every page load — a
+					 * shared or bookmarked filtered URL, every chip click
+					 * (chips are real links), every use of the button itself,
+					 * and permanently at 1000px where the sheet is the
+					 * always-visible sidebar. The same two strings the live
+					 * client swaps in (showingPiece/showingPieces below), so
+					 * the label reads correctly at first paint and on the
+					 * no-JS path, not only after an AJAX round trip.
+					 */
 					printf(
 						/* translators: %s: number of products. */
-						esc_html( _n( 'Show %s piece', 'Show %s pieces', $total, 'slk' ) ),
+						esc_html( _n( 'Showing %s piece', 'Showing %s pieces', $total, 'slk' ) ),
 						esc_html( number_format_i18n( $total ) )
 					);
 					?>
@@ -450,7 +816,7 @@ function slk_moments_render_filterbar() {
 	$chips = slk_moments_active_chips();
 	$count = count( $chips );
 	?>
-	<div class="slk-filterbar">
+	<div class="slk-filterbar" id="slk-filterbar">
 		<button type="button" class="slk-btn slk-btn--primary slk-filterbar__trigger"
 			data-slk-sheet-open="slk-filters"
 			aria-controls="slk-filters"
@@ -461,18 +827,17 @@ function slk_moments_render_filterbar() {
 			<?php endif; ?>
 		</button>
 
-		<?php if ( $chips ) : ?>
-			<div class="slk-chips">
-				<?php foreach ( $chips as $chip ) : ?>
-					<a class="slk-chip" href="<?php echo esc_url( $chip['url'] ); ?>">
-						<?php echo esc_html( $chip['label'] ); ?>
-						<span aria-hidden="true">✕</span>
-						<span class="screen-reader-text"><?php esc_html_e( 'Remove this filter', 'slk' ); ?></span>
-					</a>
-				<?php endforeach; ?>
-				<a class="slk-btn slk-btn--ghost" href="<?php echo esc_url( slk_moments_listing_url() ); ?>"><?php esc_html_e( 'Clear all', 'slk' ); ?></a>
-			</div>
-		<?php endif; ?>
+		<?php
+		/*
+		 * Always present, even with zero chips right now: the AJAX filter
+		 * response swaps this element's content directly (id="slk-filterbar-chips"),
+		 * and a container that only exists once a filter is active would give
+		 * that swap nothing to target on the very first tick.
+		 */
+		?>
+		<div id="slk-filterbar-chips" data-slk-chips>
+			<?php echo slk_moments_render_chips( $chips, slk_moments_listing_url() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
+		</div>
 	</div>
 	<?php
 }
@@ -589,25 +954,213 @@ function slk_moments_price_clause( $min, $max ) {
 }
 
 /**
- * AJAX: how many products a candidate filter selection matches, before the
- * form is submitted.
+ * "N piece"/"N pieces" — the same two translatable strings inc/shop.php's
+ * woocommerce_before_shop_loop closure renders inside the archive's <h1>.
+ * That closure is anonymous (hooked directly with add_action, not a named
+ * function) and lives in a file this package cannot touch, so it cannot be
+ * called from here directly; kept to the identical _n() call instead, so a
+ * translator sees one msgid rather than a second, divergent string, and the
+ * AJAX response's heading text can never read differently from a reload of
+ * the same URL.
+ *
+ * @param int $count Result count.
+ * @return string
+ */
+function slk_moments_shop_head_count_text( $count ) {
+	return sprintf(
+		/* translators: %d: number of products in the listing. */
+		_n( '%d piece', '%d pieces', $count, 'slk' ),
+		$count
+	);
+}
+
+/**
+ * The products grid markup for an explicit list of product IDs, via
+ * WooCommerce's own loop-start/loop-end and content-product.php — the exact
+ * mechanism inc/shop.php's slk_template_loop_*() callbacks already restyle
+ * for the page-load grid, and the one search.php uses for the identical
+ * reason (its own doc comment: "each result renders through the exact same
+ * card renderer as the shop grid... by using WooCommerce's own
+ * loop-start/loop-end and wc_get_template_part(), not a hand-rolled result
+ * row"). A card can never look different depending on which path drew it,
+ * because no path draws its own copy.
+ *
+ * setup_postdata()/global $product are set by hand rather than run through a
+ * second WP_Query: the id list already comes from the exact wc_get_products()
+ * call the archive's own filtering runs (see slk_moments_ajax_filter_count()
+ * below), so this is purely a fetch-and-render pass, not a second,
+ * independently-written filter that could disagree with it. The same
+ * pattern WooCommerce core itself uses to render a product list outside the
+ * main loop (single-product/related.php).
+ *
+ * @param int[] $product_ids Product IDs, in display order.
+ * @return string
+ */
+function slk_moments_render_products_grid( array $product_ids ) {
+	if ( ! $product_ids ) {
+		return '';
+	}
+
+	global $product;
+
+	ob_start();
+
+	/*
+	 * The page-load grid gets [data-slk-grid] from the
+	 * woocommerce_product_loop_start filter below, which deliberately does
+	 * nothing unless slk_moments_is_listing() — and that is false inside
+	 * admin-ajax.php, where is_admin() is true. Left to the filter alone the
+	 * AJAX response would hand back a grid with no attribute for
+	 * applyResult() to find, so live filtering would swap the grid exactly
+	 * once (off the page-load markup) and then silently stop. Stamped here
+	 * instead, guarded by strpos so the two paths can never double it up.
+	 */
+	$loop_start = woocommerce_product_loop_start( false );
+
+	if ( false === strpos( $loop_start, 'data-slk-grid' ) ) {
+		$loop_start = preg_replace( '/<ul /', '<ul data-slk-grid ', $loop_start, 1 );
+	}
+
+	echo $loop_start; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WooCommerce's own loop-start template output.
+
+	foreach ( $product_ids as $product_id ) {
+		$product_obj = wc_get_product( $product_id );
+
+		if ( ! $product_obj || ! $product_obj->is_visible() ) {
+			continue;
+		}
+
+		$post_object = get_post( $product_id );
+
+		if ( ! $post_object ) {
+			continue;
+		}
+
+		$GLOBALS['post'] = $post_object; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- drives content-product.php outside the main loop, same as WC core's related.php.
+		setup_postdata( $post_object );
+		$product = $product_obj;
+
+		wc_get_template_part( 'content', 'product' );
+	}
+
+	woocommerce_product_loop_end();
+	wp_reset_postdata();
+
+	return (string) ob_get_clean();
+}
+
+/**
+ * Mark the grid's own top-level element — ul.products on a normal result,
+ * .slk-moments-empty on a zero-result one (slk_moments_render_empty_panel()
+ * carries the attribute itself) — with one stable, unambiguous selector. The
+ * AJAX filter response swaps whichever of the two is currently in the DOM
+ * for whichever of the two the new selection produces, and an outerHTML
+ * replacement needs a target that survives the element's own tag changing
+ * from <ul> to <div> and back.
+ */
+add_filter(
+	'woocommerce_product_loop_start',
+	static function ( $html ) {
+		if ( ! slk_moments_is_listing() ) {
+			return $html;
+		}
+
+		return preg_replace( '/<ul /', '<ul data-slk-grid ', $html, 1 );
+	}
+);
+
+/**
+ * The archive's own pager, for a result set rendered outside the archive.
+ *
+ * Goes through wc_get_template( 'loop/pagination.php' ) with explicit
+ * total/current/base/format rather than calling paginate_links() directly,
+ * because that template part is the one hook point the parent theme listens
+ * on (woocommerce_before_template_part) to swap WooCommerce's markup for its
+ * own nav.ct-pagination — so the pager the AJAX response returns is drawn by
+ * exactly the code that draws the pager on a reload of the same URL, never a
+ * second lookalike that could drift from it.
+ *
+ * The base cannot come from get_pagenum_link(): inside admin-ajax.php that
+ * resolves against wp-admin. It is built from the filtered listing URL the
+ * client is about to push instead, so page 2 of a filtered result still
+ * carries the filter — the stale page-load pager this replaces pointed at the
+ * unfiltered query and silently dropped it.
+ *
+ * @param int    $pages Total pages in the filtered result.
+ * @param string $url   The filtered listing URL, page 1.
+ * @return string Empty string when there is nothing to page through.
+ */
+function slk_moments_render_pagination( $pages, $url ) {
+	if ( (int) $pages < 2 ) {
+		return '';
+	}
+
+	$parts  = wp_parse_url( $url );
+	$path   = isset( $parts['path'] ) ? $parts['path'] : '/';
+	$query  = isset( $parts['query'] ) ? '?' . $parts['query'] : '';
+	$origin = ( isset( $parts['scheme'] ) ? $parts['scheme'] . '://' : '' )
+		. ( isset( $parts['host'] ) ? $parts['host'] : '' )
+		. ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' );
+
+	if ( get_option( 'permalink_structure' ) ) {
+		global $wp_rewrite;
+
+		$page_base = ( isset( $wp_rewrite ) && $wp_rewrite && $wp_rewrite->pagination_base ) ? $wp_rewrite->pagination_base : 'page';
+		$base      = $origin . trailingslashit( $path ) . $page_base . '/%#%/' . $query;
+	} else {
+		$base = $origin . $path . ( $query ? $query . '&' : '?' ) . 'paged=%#%';
+	}
+
+	ob_start();
+	wc_get_template(
+		'loop/pagination.php',
+		array(
+			'total'   => (int) $pages,
+			'current' => 1,
+			'base'    => $base,
+			'format'  => '',
+		)
+	);
+
+	return (string) ob_get_clean();
+}
+
+/**
+ * AJAX: the live result of a candidate filter selection, before the form is
+ * submitted — the rendered grid, the heading count and the active-filter
+ * chips, not only a number, so the real-time client and a page reload can
+ * never disagree about what a selection matches.
  *
  * The query is the archive's own: same status, same category args, the
  * archive's own term when the listing is a term archive, and the archive's own
- * price clause, so the number handed back can never disagree with what
+ * price clause, so the result handed back can never disagree with what
  * submitting the form would actually produce. Registered for both wp_ajax_ and
  * wp_ajax_nopriv_ because most shoppers on the shop page are not logged in.
  */
 function slk_moments_ajax_filter_count() {
+	// The response is candidate, already-public product-listing HTML — the
+	// same markup any visitor's next page load would see for this selection
+	// — so this stays unauthenticated and unnonced, same as the count-only
+	// version it replaces (see that rationale below). What changes is that a
+	// cache sitting in front of PHP must never be allowed to serve one
+	// shopper's filter selection back to the next one.
+	nocache_headers();
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true );
+	}
+	// LiteSpeed Cache's own opt-out for a single request; a harmless no-op
+	// when that plugin is not active.
+	do_action( 'litespeed_control_set_nocache', 'slk_filter_count' );
+
 	if ( ! function_exists( 'wc_get_products' ) ) {
 		wp_send_json_error( array(), 500 );
 	}
 
-	// A read-only count of already-public product data; nothing here is
-	// written or disclosed beyond the same number the archive itself shows.
-	// The endpoint answers unauthenticated callers, so only scalars are handed
-	// to sanitize_title() (an array element would raise a TypeError inside it)
-	// and the list of slugs is capped.
+	// A read-only query of already-public product data; nothing here is
+	// written or disclosed beyond what the archive itself would show for the
+	// same selection. The endpoint answers unauthenticated callers, so only
+	// scalars are handed to sanitize_title() (an array element would raise a
+	// TypeError inside it) and the list of slugs is capped.
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing
 	$raw_cats   = isset( $_POST['product_cat'] ) ? wp_unslash( $_POST['product_cat'] ) : array();
 	$raw_cats   = array_slice( array_filter( (array) $raw_cats, 'is_scalar' ), 0, 50 );
@@ -622,6 +1175,8 @@ function slk_moments_ajax_filter_count() {
 	if ( isset( $buckets[ $bucket_key ] ) ) {
 		$min = null !== $buckets[ $bucket_key ]['min'] ? (int) $buckets[ $bucket_key ]['min'] : 0;
 		$max = null !== $buckets[ $bucket_key ]['max'] ? (int) $buckets[ $bucket_key ]['max'] : 0;
+	} else {
+		$bucket_key = ''; // Never carry forward a key that does not resolve to a real bucket.
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -630,23 +1185,74 @@ function slk_moments_ajax_filter_count() {
 	$raw_term = isset( $_POST['slk_ctx_term'] ) && is_scalar( $_POST['slk_ctx_term'] ) ? wp_unslash( $_POST['slk_ctx_term'] ) : '';
 	$ctx_term = sanitize_title( $raw_term );
 
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$orderby = ( isset( $_POST['orderby'] ) && is_scalar( $_POST['orderby'] ) ) ? sanitize_text_field( wp_unslash( $_POST['orderby'] ) ) : '';
+
+	// The archive's own page size: functions.php filters loop_shop_per_page to
+	// 12, so a request for every match would hand the client a grid that a
+	// reload of the very URL it is about to push does not reproduce.
+	$per_page = (int) apply_filters( 'loop_shop_per_page', wc_get_default_products_per_row() * wc_get_default_product_rows_per_page() );
+	$per_page = $per_page > 0 ? $per_page : 12;
+
+	/*
+	 * The archive's own sort. WC only splits "price-desc" into key and
+	 * direction on the branch where it reads $_GET itself, which an
+	 * admin-ajax POST is not — so the split happens here and the two halves
+	 * go in. An empty $orderby is passed straight through, which is what
+	 * makes WC fall back to the store's own default catalog ordering (here
+	 * menu_order + title) rather than WC_Product_Query's date DESC, so the
+	 * live grid is not reshuffled by a facet change for reasons unrelated to
+	 * the filter.
+	 */
+	$sort_key   = '';
+	$sort_order = '';
+
+	if ( $orderby ) {
+		$sort_parts = explode( '-', $orderby );
+		$sort_key   = $sort_parts[0];
+		$sort_order = isset( $sort_parts[1] ) ? $sort_parts[1] : '';
+	}
+
+	$ordering = ( function_exists( 'WC' ) && WC()->query ) ? WC()->query->get_catalog_ordering_args( $sort_key, $sort_order ) : array();
+
 	$args = array(
-		'status'   => 'publish',
-		'limit'    => -1,
-		'return'   => 'ids',
+		'status'     => 'publish',
+		'limit'      => $per_page,
+		'page'       => 1,
+		'paginate'   => true,
+		'return'     => 'ids',
 		// Pinned, because the default also counts variations.
-		'type'     => array_keys( wc_get_product_types() ),
-		'category' => $categories, // array of slugs, empty for all
+		'type'       => array_keys( wc_get_product_types() ),
+		'category'   => $categories, // array of slugs, empty for all
+		/*
+		 * The archive's own WC_Query::get_tax_query() drops anything flagged
+		 * exclude-from-catalog, and so does the grid renderer below (it skips
+		 * any product failing is_visible()). Without the same constraint on
+		 * the query, the count is measured against a wider set than the one
+		 * drawn, and the heading, the live announcement and the button label
+		 * can all claim more pieces than there are cards.
+		 */
+		'visibility' => 'catalog',
 	);
 
+	foreach ( array( 'orderby', 'order', 'meta_key' ) as $ordering_key ) {
+		if ( ! empty( $ordering[ $ordering_key ] ) ) {
+			$args[ $ordering_key ] = $ordering[ $ordering_key ]; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- the archive sets the same key.
+		}
+	}
+
+	$tax_query = slk_moments_stock_tax_query();
+
 	if ( $ctx_tax && $ctx_term && in_array( $ctx_tax, get_object_taxonomies( 'product' ), true ) ) {
-		$args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- the archive runs the same clause.
-			array(
-				'taxonomy' => $ctx_tax,
-				'field'    => 'slug',
-				'terms'    => array( $ctx_term ),
-			),
+		$tax_query[] = array(
+			'taxonomy' => $ctx_tax,
+			'field'    => 'slug',
+			'terms'    => array( $ctx_term ),
 		);
+	}
+
+	if ( $tax_query ) {
+		$args['tax_query'] = $tax_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- the archive runs the same clauses.
 	}
 
 	$clause = null;
@@ -656,13 +1262,42 @@ function slk_moments_ajax_filter_count() {
 		add_filter( 'posts_clauses', $clause );
 	}
 
-	$count = count( (array) wc_get_products( $args ) );
+	$result = wc_get_products( $args );
+
+	// Unhooked before anything else queries: a price/popularity/rating sort
+	// hooks its own posts_clauses callback, and leaving it in place would
+	// reorder — and, for price, re-join — slk_moments_render_empty_panel()'s
+	// own wc_get_products() call further down.
+	if ( function_exists( 'WC' ) && WC()->query ) {
+		WC()->query->remove_ordering_args();
+	}
 
 	if ( $clause ) {
 		remove_filter( 'posts_clauses', $clause );
 	}
 
-	wp_send_json_success( array( 'count' => $count ) );
+	$ids   = ( is_object( $result ) && isset( $result->products ) && is_array( $result->products ) ) ? array_map( 'absint', $result->products ) : array();
+	// The unpaginated total, so the heading and the announcement still say how
+	// many the selection matches, not how many fit on the first page.
+	$count = ( is_object( $result ) && isset( $result->total ) ) ? (int) $result->total : count( $ids );
+	$pages = ( is_object( $result ) && isset( $result->max_num_pages ) ) ? (int) $result->max_num_pages : 1;
+
+	$base_url = slk_moments_base_url_for( $ctx_tax, $ctx_term );
+	$chips    = slk_moments_build_filter_chips( $categories, $bucket_key, $base_url, $orderby );
+
+	wp_send_json_success(
+		array(
+			'count'      => $count,
+			'heading'    => slk_moments_shop_head_count_text( $count ),
+			'grid'       => $ids ? slk_moments_render_products_grid( $ids ) : slk_moments_render_empty_panel( $bucket_key, $categories, $base_url ),
+			'chips'      => slk_moments_render_chips( $chips, $base_url ),
+			'chipCount'  => count( $chips ),
+			'pagination' => slk_moments_render_pagination(
+				$pages,
+				slk_moments_filtered_url( $base_url, $categories, $min > 0 ? $min : null, $max > 0 ? $max : null, $orderby )
+			),
+		)
+	);
 }
 add_action( 'wp_ajax_slk_filter_count', 'slk_moments_ajax_filter_count' );
 add_action( 'wp_ajax_nopriv_slk_filter_count', 'slk_moments_ajax_filter_count' );
@@ -685,7 +1320,11 @@ add_action(
 
 		echo '<div class="slk-shop-layout">';
 		slk_moments_render_filters();
-		echo '<div class="slk-shop-results">';
+		echo '<div class="slk-shop-results" id="slk-shop-results" aria-busy="false">';
+		// Announces the new count once a facet changes the result set — never
+		// moves focus, so a screen reader hears "12 pieces" without losing
+		// its place in the form.
+		echo '<div class="screen-reader-text" id="slk-shop-live" aria-live="polite" aria-atomic="true"></div>';
 		slk_moments_render_filterbar();
 	},
 	999
@@ -716,16 +1355,26 @@ add_action(
 );
 
 /**
- * Print the empty-result panel.
+ * The empty-result panel (03-components.html:90-95), for an explicit filter
+ * selection. Shared by the woocommerce_no_products_found hook below (page
+ * load, selection read from $_GET) and the AJAX filter response (candidate
+ * selection read from the POST body), so a zero-result state renders
+ * identically from either path — never as a bare, message-less blank grid.
+ *
+ * @param string      $bucket   Active price bucket key, '' for none.
+ * @param string[]    $cats     Active category slugs.
+ * @param string|null $base_url The no-filters URL; defaults to
+ *                              slk_moments_listing_url() (correct for the
+ *                              page-load path). The AJAX path passes its own,
+ *                              because that helper reads the current
+ *                              front-end query, which an admin-ajax.php
+ *                              request never has.
+ * @return string
  */
-function slk_moments_no_products_found() {
-	if ( ! slk_moments_is_listing() ) {
-		wc_get_template( 'loop/no-products-found.php' );
-		return;
+function slk_moments_render_empty_panel( $bucket, array $cats, $base_url = null ) {
+	if ( null === $base_url ) {
+		$base_url = slk_moments_listing_url();
 	}
-
-	$bucket = slk_moments_active_price_bucket();
-	$cats   = slk_moments_active_cats();
 
 	// How many there would be with the price filter lifted — a real count, not
 	// a guess, so the sentence is never a promise the grid cannot keep.
@@ -744,8 +1393,10 @@ function slk_moments_no_products_found() {
 
 		$unfiltered = count( (array) wc_get_products( $args ) );
 	}
+
+	ob_start();
 	?>
-	<div class="slk-panel slk-moments-empty">
+	<div class="slk-panel slk-moments-empty" data-slk-grid>
 		<p class="slk-moments-empty__head"><?php esc_html_e( 'No pieces match those filters', 'slk' ); ?></p>
 		<?php if ( $bucket && $unfiltered ) : ?>
 			<p class="slk-moments-empty__body">
@@ -758,9 +1409,22 @@ function slk_moments_no_products_found() {
 				?>
 			</p>
 		<?php endif; ?>
-		<a class="slk-btn slk-btn--secondary" href="<?php echo esc_url( slk_moments_listing_url() ); ?>"><?php esc_html_e( 'Clear filters', 'slk' ); ?></a>
+		<a class="slk-btn slk-btn--secondary" href="<?php echo esc_url( $base_url ); ?>"><?php esc_html_e( 'Clear filters', 'slk' ); ?></a>
 	</div>
 	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Print the empty-result panel.
+ */
+function slk_moments_no_products_found() {
+	if ( ! slk_moments_is_listing() ) {
+		wc_get_template( 'loop/no-products-found.php' );
+		return;
+	}
+
+	echo slk_moments_render_empty_panel( slk_moments_active_price_bucket(), slk_moments_active_cats() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
 }
 
 /* =========================================================================
@@ -1105,6 +1769,13 @@ add_action(
 .slk-filterbar .slk-chips{padding-bottom:0}
 a.slk-chip{text-decoration:none}
 
+/* Real-time filtering: the pending state while a facet change is in flight.
+   Reduced opacity only — no layout shift, nothing pointer-events:none, so the
+   grid stays fully usable while a request settles (~250ms debounce + a
+   normal-connection round trip). */
+.slk-shop-results{transition:opacity var(--slk-motion-base) var(--slk-ease)}
+.slk-shop-results[aria-busy="true"]{opacity:.5}
+
 /* Empty result (03-components.html:90-95). */
 .slk-moments-empty{padding:var(--slk-space-6) 18px;text-align:center;display:grid;justify-items:center;gap:6px}
 .slk-moments-empty__head{margin:0;font:500 13.5px/1.4 var(--slk-font-ui)}
@@ -1283,6 +1954,7 @@ a.slk-chip{text-decoration:none}
 
 @media (prefers-reduced-motion:reduce){
 	.slk-filterbox > .slk-filters{transition-duration:1ms}
+	.slk-shop-results{transition-duration:1ms}
 }
 CSS;
 
@@ -1306,6 +1978,21 @@ CSS;
 		wp_register_script( 'slk-moments', '', $deps, null, true );
 		wp_enqueue_script( 'slk-moments' );
 
+		// The same [min,max] pairs slk_moments_price_buckets() just rendered as
+		// radios, keyed the same way, as strings ('' standing in for the null
+		// open end) — so the client-side submit handler below rewrites
+		// min_price/max_price from the live catalogue's own boundaries rather
+		// than a second, independently hardcoded 5000/10000 that would drift
+		// from the PHP the moment the catalogue's price range changed.
+		$slk_price_buckets_js = array();
+
+		foreach ( slk_moments_price_buckets() as $bucket_key => $bucket_bounds ) {
+			$slk_price_buckets_js[ $bucket_key ] = array(
+				null !== $bucket_bounds['min'] ? (string) $bucket_bounds['min'] : '',
+				null !== $bucket_bounds['max'] ? (string) $bucket_bounds['max'] : '',
+			);
+		}
+
 		wp_add_inline_script(
 			'slk-moments',
 			'window.slkMoments=' . wp_json_encode(
@@ -1313,10 +2000,16 @@ CSS;
 					'addedUrl'          => class_exists( 'WC_AJAX' ) ? WC_AJAX::get_endpoint( 'slk_added_sheet' ) : '',
 					'filterCountUrl'    => admin_url( 'admin-ajax.php' ),
 					'filterCountAction' => 'slk_filter_count',
-					/* translators: %s: number of products, singular. */
-					'showPiece'         => __( 'Show %s piece', 'slk' ),
-					/* translators: %s: number of products, plural. */
-					'showPieces'        => __( 'Show %s pieces', 'slk' ),
+					'priceBuckets'      => $slk_price_buckets_js,
+					// The base URL a real form submit resolves against — pushState
+					// needs the same base the archive itself would land on, and
+					// slk_moments_listing_url() (term-archive aware) is only
+					// callable server-side, at this one page-load moment.
+					'listingUrl'        => slk_moments_listing_url(),
+					/* translators: %s: number of products, singular — the count is already displayed, not a promise of what clicking will reveal. */
+					'showingPiece'      => __( 'Showing %s piece', 'slk' ),
+					/* translators: %s: number of products, plural — the count is already displayed, not a promise of what clicking will reveal. */
+					'showingPieces'     => __( 'Showing %s pieces', 'slk' ),
 					'zoomOpen' => __( 'Zoom', 'slk' ),
 					'zoomOf'   => __( 'Image %1$s of %2$s', 'slk' ),
 					/*
@@ -1356,6 +2049,20 @@ CSS;
 		return !(sheet.classList.contains('slk-filterbox') && desktop.matches);
 	}
 
+	/* The drawer's position-based lock from inc/chrome.php, borrowed rather
+	   than repeated. `overflow:hidden` on <html> stops it being the scroll
+	   container, so the browser clamps scrollTop to 0 and the page behind the
+	   sheet snaps to the top the instant it opens — the same bug the drawer
+	   had. Sharing the pair also keeps one stored offset, so the drawer and
+	   this sheet cannot stack two locks. */
+	function lockScroll() {
+		if (window.slkScrollLock) { window.slkScrollLock.lock(); }
+	}
+
+	function unlockScroll() {
+		if (window.slkScrollLock) { window.slkScrollLock.unlock(); }
+	}
+
 	function open(sheet, trigger) {
 		if (!sheet) { return; }
 		sheet.removeAttribute('hidden');
@@ -1368,7 +2075,7 @@ CSS;
 		if (!isModal(sheet)) { return; }
 
 		openSheet = sheet;
-		document.documentElement.style.overflow = 'hidden';
+		lockScroll();
 
 		var first = focusables(sheet)[0];
 		if (first) { first.focus(); }
@@ -1385,7 +2092,7 @@ CSS;
 
 		if (openSheet === sheet) {
 			openSheet = null;
-			document.documentElement.style.overflow = '';
+			unlockScroll();
 		}
 
 		if (lastTrigger) { lastTrigger.focus(); lastTrigger = null; }
@@ -1428,7 +2135,7 @@ CSS;
 		desktop.addEventListener('change', function () {
 			if (openSheet && !isModal(openSheet)) {
 				openSheet = null;
-				document.documentElement.style.overflow = '';
+				unlockScroll();
 			}
 		});
 	}
@@ -1440,7 +2147,11 @@ CSS;
 	var form = document.querySelector('.slk-filterbox .slk-filters');
 
 	if (form) {
-		var buckets = { under: ['', '5000'], mid: ['5000', '10000'], over: ['10000', ''] };
+		// Sourced from PHP (cfg.priceBuckets), not hardcoded here: the buckets
+		// are derived from the live catalogue's price range and can change
+		// whenever stock does, so a second literal copy in this file would be
+		// exactly the bug this fixes, one script tag later.
+		var buckets = cfg.priceBuckets || {};
 
 		form.addEventListener('submit', function () {
 			var picked = form.querySelector('input[name="slk_price"]:checked');
@@ -1458,91 +2169,240 @@ CSS;
 		});
 	}
 
-	/* ── Filter count: keep the submit button's number live ────────────────
+	/* ── Real-time filtering ────────────────────────────────────────────
 	   Runs on every category checkbox or price radio change, debounced so a
-	   fast run of clicks fires one request, not one per click. The count
-	   comes from slk_moments_ajax_filter_count, which runs the same
-	   wc_get_products query the archive itself runs, so the number never
-	   promises a result the grid cannot deliver. On any failure the button
-	   is left showing whatever count it already had, never a wrong one. */
-	if (form && cfg.filterCountUrl && cfg.filterCountAction) {
-		var countBtn = form.querySelector('.slk-filters__submit');
-		var countTimer = null;
-		var countAbort = null;
-		/* Which request is the current one. An older request that settles late,
-		   including one this code aborted, must not touch the button: it would
-		   either write a stale number or report the newer request as finished. */
-		var countSeq = 0;
-		var ctxTax = form.getAttribute('data-slk-ctx-tax');
-		var ctxTerm = form.getAttribute('data-slk-ctx-term');
+	   fast run of clicks fires one request, not one per click. The response
+	   comes from slk_moments_ajax_filter_count, which now renders the exact
+	   grid/heading/chips the archive's own query would produce for the
+	   selection — through the same renderers the PHP template uses — so the
+	   count, the cards and the chips can never disagree with a reload of the
+	   URL this then pushes. This only ever listens for `change`, never
+	   `submit`: the form's own GET submit (wired above) is completely
+	   untouched, so a page with no JavaScript — or a request that fails —
+	   still filters correctly by a plain page reload, exactly as before. */
+	if (form && cfg.filterCountUrl && cfg.filterCountAction && window.fetch && window.URLSearchParams) {
+		var submitBtn = form.querySelector('.slk-filters__submit');
+		var resultsEl = document.getElementById('slk-shop-results');
+		var liveRegion = document.getElementById('slk-shop-live');
+		var chipsEl = document.getElementById('slk-filterbar-chips');
+		var triggerBtn = document.querySelector('.slk-filterbar__trigger');
+		var updateTimer = null;
+		var updateAbort = null;
+		/* Which request is the current one. An older request that settles
+		   late, including one this code aborted, must not touch the page:
+		   it would either overwrite a newer result with a stale one, or
+		   report the newer request as finished. */
+		var updateSeq = 0;
+		var ctxTax = form.getAttribute('data-slk-ctx-tax') || '';
+		var ctxTerm = form.getAttribute('data-slk-ctx-term') || '';
 
-		var setCount = function (n) {
-			if (!countBtn) { return; }
-			var tpl = n === 1 ? cfg.showPiece : cfg.showPieces;
-			if (!tpl) { return; }
-			countBtn.textContent = tpl.replace('%s', n.toLocaleString());
+		var currentSelection = function () {
+			var orderbyInput = form.querySelector('input[name="orderby"]');
+			var priceInput = form.querySelector('input[name="slk_price"]:checked');
+
+			return {
+				cats: Array.prototype.map.call(
+					form.querySelectorAll('input[name="product_cat[]"]:checked'),
+					function (el) { return el.value; }
+				),
+				price: priceInput ? priceInput.value : '',
+				orderby: orderbyInput ? orderbyInput.value : ''
+			};
 		};
 
-		var requestCount = function () {
-			if (!window.fetch) { return; }
-			if (countAbort && countAbort.abort) { countAbort.abort(); }
+		/* The same query args a real GET submit would produce: categories as
+		   repeated product_cat[] entries (a native checkbox submit never
+		   joins them into one value), the bucket resolved to min_price/max_price
+		   through cfg.priceBuckets exactly as the submit handler above
+		   resolves them, and the current sort carried through unchanged. */
+		var buildUrl = function (sel) {
+			var params = new URLSearchParams();
 
+			sel.cats.forEach(function (slug) { params.append('product_cat[]', slug); });
+
+			var pair = sel.price ? buckets[sel.price] : null;
+			if (pair && pair[0]) { params.set('min_price', pair[0]); }
+			if (pair && pair[1]) { params.set('max_price', pair[1]); }
+			if (sel.orderby) { params.set('orderby', sel.orderby); }
+
+			var qs = params.toString();
+			if (!qs) { return cfg.listingUrl; }
+
+			return cfg.listingUrl + (cfg.listingUrl.indexOf('?') === -1 ? '?' : '&') + qs;
+		};
+
+		var setChipBadge = function (n) {
+			if (!triggerBtn) { return; }
+			var badge = triggerBtn.querySelector('.slk-filterbar__count');
+
+			if (n > 0) {
+				if (!badge) {
+					badge = document.createElement('span');
+					badge.className = 'slk-filterbar__count';
+					triggerBtn.appendChild(badge);
+				}
+				badge.textContent = n.toLocaleString();
+			} else if (badge) {
+				badge.parentNode.removeChild(badge);
+			}
+		};
+
+		var setPending = function (pending) {
+			if (resultsEl) { resultsEl.setAttribute('aria-busy', pending ? 'true' : 'false'); }
+		};
+
+		/* The grid/empty-panel swap is by outerHTML, not innerHTML into a
+		   fixed wrapper: a zero-result selection swaps <ul class="products">
+		   for a <div class="slk-moments-empty"> panel (never a blank grid —
+		   see slk_moments_render_empty_panel()), and [data-slk-grid] is the
+		   one attribute both shapes carry. The submit button's label is
+		   rewritten to the new count from the same "Showing" strings the PHP
+		   already renders it with, so it stays a statement of what is on
+		   screen rather than a promise of something the click has not
+		   delivered yet (issue C) — the button itself is never disabled or
+		   unhooked, so it keeps working as the fallback submit exactly as
+		   before. */
+		var applyResult = function (data) {
+			var gridEl = resultsEl ? resultsEl.querySelector('[data-slk-grid]') : null;
+			if (gridEl && typeof data.grid === 'string') { gridEl.outerHTML = data.grid; }
+
+			/* The pager belongs to the query the grid was drawn from. Left
+			   alone it would sit a "1 2 Next" from the unfiltered query under
+			   a filtered grid, and clicking it would drop the filter. Swapped
+			   when the new selection still has pages, removed when it does
+			   not, appended when the previous one had none. */
+			if (resultsEl && typeof data.pagination === 'string') {
+				var pagerEl = resultsEl.querySelector('nav.ct-pagination, nav.woocommerce-pagination');
+
+				if (pagerEl && data.pagination) {
+					pagerEl.outerHTML = data.pagination;
+				} else if (pagerEl) {
+					pagerEl.parentNode.removeChild(pagerEl);
+				} else if (data.pagination) {
+					resultsEl.insertAdjacentHTML('beforeend', data.pagination);
+				}
+			}
+
+			var headCount = resultsEl ? resultsEl.querySelector('.slk-shop-head__count') : null;
+			if (headCount && typeof data.heading === 'string') { headCount.textContent = data.heading; }
+
+			if (chipsEl && typeof data.chips === 'string') { chipsEl.innerHTML = data.chips; }
+			if (typeof data.chipCount === 'number') { setChipBadge(data.chipCount); }
+
+			if (submitBtn && cfg.showingPiece && cfg.showingPieces && typeof data.count === 'number') {
+				var tpl = data.count === 1 ? cfg.showingPiece : cfg.showingPieces;
+				submitBtn.textContent = tpl.replace('%s', data.count.toLocaleString());
+			}
+
+			if (liveRegion && typeof data.heading === 'string') { liveRegion.textContent = data.heading; }
+		};
+
+		var requestUpdate = function (pushHistory) {
+			if (updateAbort && updateAbort.abort) { updateAbort.abort(); }
+
+			var sel = currentSelection();
 			var body = new FormData();
 			body.append('action', cfg.filterCountAction);
 
-			Array.prototype.forEach.call(
-				form.querySelectorAll('input[name="product_cat[]"]:checked'),
-				function (el) { body.append('product_cat[]', el.value); }
-			);
-
-			var price = form.querySelector('input[name="slk_price"]:checked');
-			if (price) { body.append('slk_price', price.value); }
+			sel.cats.forEach(function (slug) { body.append('product_cat[]', slug); });
+			if (sel.price) { body.append('slk_price', sel.price); }
+			if (sel.orderby) { body.append('orderby', sel.orderby); }
 
 			/* A term archive scopes the results without any input in the form,
-			   so the term travels with the request or the count would be the
-			   whole store while the form submits back into the term. */
+			   so the term travels with the request or the response would
+			   describe the whole store while the form submits back into the
+			   term. */
 			if (ctxTax && ctxTerm) {
 				body.append('slk_ctx_tax', ctxTax);
 				body.append('slk_ctx_term', ctxTerm);
 			}
 
-			var seq = ++countSeq;
+			var seq = ++updateSeq;
 
-			countAbort = window.AbortController ? new AbortController() : null;
-			if (countBtn) { countBtn.setAttribute('aria-busy', 'true'); }
+			updateAbort = window.AbortController ? new AbortController() : null;
+			setPending(true);
 
 			window.fetch(cfg.filterCountUrl, {
 				method: 'POST',
 				credentials: 'same-origin',
 				body: body,
-				signal: countAbort ? countAbort.signal : undefined
+				signal: updateAbort ? updateAbort.signal : undefined
 			})
 				.then(function (r) { return r.json(); })
 				.then(function (json) {
-					if (seq !== countSeq) { return; }
+					if (seq !== updateSeq) { return; }
 
-					if (json && json.success && json.data && typeof json.data.count === 'number') {
-						setCount(json.data.count);
+					if (json && json.success && json.data) {
+						applyResult(json.data);
+
+						if (pushHistory) {
+							/* One history entry per settled selection, not per
+							   click: the 250ms debounce below already coalesces
+							   a fast run of clicks into a single request, so a
+							   fast run of clicks also produces a single entry —
+							   which is what keeps Back from taking several
+							   presses to undo one interaction. */
+							window.history.pushState({ slkFilter: true }, '', buildUrl(sel));
+						}
 					}
 					// A malformed response is treated the same as a failed
-					// one: the button keeps whatever count it already had.
+					// one below: the grid, heading and chips keep whatever
+					// they already showed.
 				})
 				.catch(function () {
-					// Request failed, or was aborted by a newer request:
-					// same rule, the last known good count stays put.
+					// Request failed, or was aborted by a newer request: the
+					// previous results stay exactly as they were, and the
+					// submit button — never touched by any of this — still
+					// submits the form normally.
 				})
 				.then(function () {
-					// Only the newest request may say the button is settled.
+					// Only the newest request may say the page has settled.
 					// A superseded one leaves the flag to its replacement.
-					if (countBtn && seq === countSeq) { countBtn.setAttribute('aria-busy', 'false'); }
+					if (seq === updateSeq) { setPending(false); }
 				});
 		};
 
 		form.addEventListener('change', function (e) {
 			if (!e.target.matches('input[name="product_cat[]"], input[name="slk_price"]')) { return; }
 
-			if (countTimer) { window.clearTimeout(countTimer); }
-			countTimer = window.setTimeout(requestCount, 250);
+			if (updateTimer) { window.clearTimeout(updateTimer); }
+			updateTimer = window.setTimeout(function () { requestUpdate(true); }, 250);
+		});
+
+		/* Back/Forward: restore the form controls to match the URL the
+		   browser just navigated to, then re-run the same request — without
+		   pushing a new entry, since the browser already moved to this one —
+		   so the grid, heading and chips catch up with wherever history
+		   landed. */
+		window.addEventListener('popstate', function () {
+			var params = new URLSearchParams(window.location.search);
+			var cats = params.getAll('product_cat[]');
+
+			if (!cats.length && params.has('product_cat')) {
+				cats = String(params.get('product_cat')).split(',').filter(function (s) { return s !== ''; });
+			}
+
+			Array.prototype.forEach.call(
+				form.querySelectorAll('input[name="product_cat[]"]'),
+				function (el) { el.checked = cats.indexOf(el.value) !== -1; }
+			);
+
+			var min = params.get('min_price') || '';
+			var max = params.get('max_price') || '';
+			var matchedBucket = '';
+
+			Object.keys(buckets).forEach(function (key) {
+				var pair = buckets[key];
+				if (pair && pair[0] === min && pair[1] === max) { matchedBucket = key; }
+			});
+
+			Array.prototype.forEach.call(
+				form.querySelectorAll('input[name="slk_price"]'),
+				function (el) { el.checked = (el.value === matchedBucket); }
+			);
+
+			if (updateTimer) { window.clearTimeout(updateTimer); }
+			requestUpdate(false);
 		});
 	}
 

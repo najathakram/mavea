@@ -55,7 +55,7 @@ $rules = array(
  */
 ?>
 
-<main id="main" class="slk-help-main">
+<div id="primary" class="slk-help-main">
 	<div class="slk-help-col">
 
 		<div class="slk-help-hero">
@@ -107,7 +107,7 @@ $rules = array(
 		</div>
 
 	</div>
-</main>
+</div>
 
 <?php
 get_footer();

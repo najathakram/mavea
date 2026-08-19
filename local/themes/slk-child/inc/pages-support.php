@@ -205,10 +205,8 @@ add_action(
 	background:var(--slk-glass-solid);border:1px solid var(--slk-glass-edge);
 	border-radius:var(--slk-radius-card);padding:var(--slk-space-6) 18px;
 }
-.slk-track__panel form.woocommerce-form-track-order p:first-child{
-	margin:0 0 var(--slk-space-4);color:var(--slk-color-muted);
-	font:400 var(--slk-text-sm)/1.65 var(--slk-font-ui);
-}
+.slk-track__panel .form-row-first,
+.slk-track__panel .form-row-last{float:none;width:100%}
 .slk-track__panel .form-row{margin:0 0 var(--slk-space-3)}
 .slk-track__panel .form-row label{display:block;font:500 12px/1 var(--slk-font-ui);margin-bottom:7px}
 .slk-track__panel .form-row .input-text{
@@ -216,23 +214,30 @@ add_action(
 	background:var(--slk-color-white);border-radius:var(--slk-radius-field);padding:0 16px;
 	font:400 14px var(--slk-font-ui);color:var(--slk-color-ink);
 }
-.slk-track__panel .form-row button[name="track"]{
-	width:100%;min-height:50px;border:0;background:var(--slk-color-ink);
-	color:var(--slk-color-on-ink);border-radius:var(--slk-radius-pill);
-	font:500 13.5px/1 var(--slk-font-ui);cursor:pointer;margin-top:var(--slk-space-2);
-	transition:transform var(--slk-motion-base) var(--slk-ease);
-}
-.slk-track__panel .form-row button[name="track"]:hover{transform:translateY(-2px)}
-.slk-track__panel p.order-info{
-	font:500 13.5px/1.5 var(--slk-font-ui);margin:0 0 var(--slk-space-4);
-}
-.slk-track__panel ol.notes{list-style:none;margin:0;padding:0;display:grid;gap:var(--slk-space-3)}
-.slk-track__panel ol.notes li{
+.slk-track__panel .form-row .slk-btn{width:100%;margin-top:var(--slk-space-2)}
+
+/* -- Track order: result card (order/tracking.php) ------------------------ */
+.slk-track__result-meta{margin:0 0 var(--slk-space-2);color:var(--slk-color-faint);font:400 12px/1.5 var(--slk-font-ui)}
+.slk-track__result-status{font:400 20px/1.2 var(--slk-font-display);margin:0 0 var(--slk-space-4);color:var(--slk-color-ink)}
+.slk-track__result-terminal{margin:0;font:400 var(--slk-text-sm)/1.6 var(--slk-font-ui)}
+.slk-track__timeline{display:grid;gap:var(--slk-space-4)}
+/* .slk-step / __rail / __dot / __line / --now / --todo live in style.css
+   (loaded on every page); .slk-step__label / __desc are only defined inside
+   inc/checkout-view.php's CSS, which is gated to is_checkout() and so never
+   loads here — duplicate just those two, scoped to this result card. */
+.slk-track__result .slk-step__label{font:500 13px/1.4 var(--slk-font-ui)}
+.slk-track__result .slk-step__desc{font:400 12px/1.55 var(--slk-font-ui);padding-top:2px}
+.slk-track__notes{margin-top:var(--slk-space-6)}
+.slk-track__notes-h{font-size:var(--slk-text-lg);margin:0 0 var(--slk-space-3)}
+.slk-track__notes-list{list-style:none;margin:0;padding:0;display:grid;gap:var(--slk-space-3)}
+.slk-track__notes-list li{
 	background:rgba(255,255,255,.7);border:1px solid var(--slk-glass-edge);
 	border-radius:var(--slk-radius-tile);padding:14px 16px;
 }
-.slk-track__panel ol.notes .meta{margin:0 0 4px;color:var(--slk-color-faint);font:400 11.5px/1.5 var(--slk-font-ui)}
-.slk-track__panel ol.notes .description p{margin:0;font:400 12.5px/1.6 var(--slk-font-ui)}
+.slk-track__notes-meta{margin:0 0 4px;color:var(--slk-color-faint);font:400 11.5px/1.5 var(--slk-font-ui)}
+.slk-track__notes-body p{margin:0;font:400 12.5px/1.6 var(--slk-font-ui)}
+/* woocommerce_order_details_table(), hooked to woocommerce_view_order, still
+   renders this exact table on a successful lookup — kept for that. */
 .slk-track__panel table.order_details,
 .slk-track__panel table.shop_table{width:100%;border-collapse:collapse;margin-top:var(--slk-space-4)}
 .slk-track__panel table.order_details th,
@@ -260,7 +265,7 @@ add_action(
 .slk-search__empty p{margin:0 auto var(--slk-space-6);max-width:34ch;color:var(--slk-color-muted);font:400 var(--slk-text-sm)/1.65 var(--slk-font-ui)}
 .slk-search__suggestions{display:flex;flex-wrap:wrap;gap:var(--slk-space-2);justify-content:center}
 .slk-search__suggestions a{
-	min-height:40px;display:inline-flex;align-items:center;padding:0 14px;
+	min-height:var(--slk-touch);display:inline-flex;align-items:center;padding:0 14px;
 	background:var(--slk-glass-solid);border:1px solid var(--slk-glass-edge);
 	border-radius:var(--slk-radius-pill);font:400 12.5px/1 var(--slk-font-ui);
 	text-decoration:none;color:inherit;

@@ -367,7 +367,7 @@ add_action(
 .slk-qty__btn:hover:not(:disabled){background:var(--slk-color-white)}
 .slk-qty__btn:disabled{opacity:.3;cursor:not-allowed}
 .slk-qty .quantity{display:inline-flex;margin:0}
-.slk-qty__input{width:34px;min-height:36px;border:0;background:none;text-align:center;font:500 13px var(--slk-font-ui);color:var(--slk-color-ink);-moz-appearance:textfield}
+.slk-qty__input{width:34px;min-height:var(--slk-touch);border:0;background:none;text-align:center;font:500 13px var(--slk-font-ui);color:var(--slk-color-ink);-moz-appearance:textfield}
 .slk-qty__input::-webkit-outer-spin-button,.slk-qty__input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .slk-cart-item__remove{font:400 var(--slk-text-sm)/1 var(--slk-font-ui);color:var(--slk-color-faint);text-decoration:underline;text-underline-offset:3px;min-height:var(--slk-touch);display:inline-flex;align-items:center;padding:0 var(--slk-space-2)}
 

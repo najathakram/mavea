@@ -313,7 +313,14 @@ add_action(
 .slk-zones{width:100%;border-collapse:collapse;overflow:hidden}
 .slk-zones th,.slk-zones td{padding:var(--slk-space-3) var(--slk-space-4);text-align:left;font:400 var(--slk-text-base)/1.4 var(--slk-font-ui);border-bottom:1px solid var(--slk-hairline)}
 .slk-zones tr:last-child td{border-bottom:0}
-.slk-zones td:last-child,.slk-zones th:last-child{text-align:right;color:var(--slk-color-muted);white-space:nowrap}
+/* The last column reads "2 to 3 working days · Rs. 400" — a day-range plus a
+   fee, not the bare price a right-aligned, nowrap price column was built for.
+   Forced onto one line at 360px it was wider than the column had room for
+   (the district-name column still needs its own space beside it), so it
+   wraps and sits left like every other cell here on mobile; the desktop
+   media query below restores the original nowrap/right treatment once the
+   table has the width to hold it on one line. */
+.slk-zones td:last-child,.slk-zones th:last-child{color:var(--slk-color-muted)}
 
 /* -- numbered step cards --------------------------------------------------- */
 .slk-help-steps{list-style:none;margin:0;padding:0;display:grid;gap:var(--slk-space-3)}
@@ -361,6 +368,7 @@ add_action(
 	.slk-help-section h2{font-size:var(--slk-display-m)}
 	.slk-help-steps{grid-template-columns:repeat(3,1fr)}
 	.slk-help-cards{grid-template-columns:1fr 1fr}
+	.slk-zones td:last-child,.slk-zones th:last-child{text-align:right;white-space:nowrap}
 }
 CSS;
 

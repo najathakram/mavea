@@ -18,7 +18,7 @@ get_header();
 $related = function_exists( 'slk_cart_empty_related_products' ) ? slk_cart_empty_related_products( 4 ) : array();
 ?>
 
-<main id="primary" class="slk-page slk-404">
+<div id="primary" class="slk-page slk-404">
 	<div class="slk-404__hero">
 		<div class="slk-404__num" aria-hidden="true">404</div>
 		<h1><?php esc_html_e( "This page isn't here.", 'slk' ); ?></h1>
@@ -45,7 +45,7 @@ $related = function_exists( 'slk_cart_empty_related_products' ) ? slk_cart_empty
 			</div>
 		</div>
 	<?php endif; ?>
-</main>
+</div>
 
 <?php
 get_footer();

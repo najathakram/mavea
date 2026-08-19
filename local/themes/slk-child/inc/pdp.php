@@ -77,6 +77,69 @@ add_filter(
 	2
 );
 
+/*
+ * The same policy, two leaks further down.
+ *
+ * 1. The quantity stepper. global/quantity-input.php prints max="<exact stock>",
+ *    so stripping the stock STRING above still left the count in the page
+ *    source of every stock-managed PDP — read by anyone opening devtools, and
+ *    by every scraper. A fixed ceiling is published instead of the real figure,
+ *    so the attribute says nothing about how many exist. Nobody orders six of
+ *    one abaya; the cap is a number the catalogue never needs to exceed rather
+ *    than a scarcity device.
+ *
+ * 2. The over-order notice. Because the ceiling is fixed rather than the real
+ *    stock, a shopper CAN ask for more than exists — and core's reply names the
+ *    figure ("we have 2 in stock"). That would reinstate the leak through a
+ *    different door, so both counting messages are replaced with count-free
+ *    wording. Filtering the notice is what makes the fixed cap safe; the two
+ *    changes only work as a pair.
+ *
+ * Cap is filterable so it can be tuned without a code edit.
+ */
+add_filter(
+	'woocommerce_quantity_input_max',
+	static function ( $max, $product ) {
+		if ( ! $product instanceof WC_Product || ! $product->managing_stock() ) {
+			return $max;
+		}
+
+		/**
+		 * Ceiling for the quantity stepper, in place of the real stock count.
+		 *
+		 * @param int        $cap     Maximum orderable per line.
+		 * @param WC_Product $product Product being rendered.
+		 */
+		return (int) apply_filters( 'slk_max_quantity_per_item', 5, $product );
+	},
+	10,
+	2
+);
+
+add_filter(
+	'gettext',
+	static function ( $translated, $text, $domain ) {
+		if ( 'woocommerce' !== $domain || false === strpos( $text, 'stock' ) ) {
+			return $translated;
+		}
+
+		// Core msgids, matched verbatim. A miss is harmless — the string simply
+		// passes through — but it would restore the count, so both are checked
+		// against WooCommerce 11.0.1 exactly as core writes them.
+		if ( 0 === strpos( $text, 'You cannot add that amount' ) ) {
+			return __( 'That is more than we can send of this piece. Please lower the quantity.', 'slk' );
+		}
+
+		if ( 0 === strpos( $text, 'Sorry, we do not have enough' ) ) {
+			return __( 'We cannot send that many of one piece. Please lower the quantity.', 'slk' );
+		}
+
+		return $translated;
+	},
+	10,
+	3
+);
+
 /* -------------------------------------------------------------------------
  * Sold-out size computation.
  * ---------------------------------------------------------------------- */
@@ -243,6 +306,38 @@ add_action(
 	'slk_pdp_whatsapp_button',
 	20
 );
+
+/* -------------------------------------------------------------------------
+ * Save this piece — woocommerce_after_add_to_cart_button, priority 15 (just
+ * before the WhatsApp circle at 20, so the row reads submit -> save -> ask).
+ *
+ * Guarded with class_exists( 'SLK_Saved' ) (slk-order-flow): the control
+ * disappears outright, not half-broken, when that plugin is off — the same
+ * discipline slk-child/inc/shop.php follows for the shop-grid heart.
+ *
+ * SLK_Saved::render_toggle() draws the glyph and the markup for both places
+ * it appears; this file only decides where it prints. The click handler
+ * that wires the resulting <button> up to admin-ajax lives in
+ * slk-child/inc/shop.php's unconditional wp_enqueue_scripts callback, which
+ * runs on every front-end page including this one, so nothing extra is
+ * registered here for it — only the icon's size, below.
+ * ---------------------------------------------------------------------- */
+
+add_action(
+	'woocommerce_after_add_to_cart_button',
+	'slk_pdp_save_button',
+	15
+);
+
+function slk_pdp_save_button() {
+	global $product;
+
+	if ( ! $product instanceof WC_Product || ! class_exists( 'SLK_Saved' ) ) {
+		return;
+	}
+
+	SLK_Saved::render_toggle( $product->get_id(), 'text' );
+}
 
 /* -------------------------------------------------------------------------
  * Below the summary: the design has NO tab band.
@@ -905,6 +1000,11 @@ add_action(
 	flex:1 1 0;width:auto;min-width:0;min-height:var(--slk-touch);
 }
 .slk-pdp__whatsapp{ flex:none;width:var(--slk-touch);height:var(--slk-touch); }
+/* "Save this piece" — the ghost-button sizing/colour come from .slk-btn and
+   .slk-btn--ghost (style.css); only the icon\'s size is specific to this
+   context (the shop-grid heart\'s default is 20px, drawn for a small round
+   chip, not a text button\'s leading glyph). */
+.slk-save-btn--text .slk-save-btn__icon{ width:16px;height:16px; }
 
 .slk-pdp__trust{ grid-area:trust;display:grid;gap:var(--slk-space-2); }
 .slk-pdp__trust-row{

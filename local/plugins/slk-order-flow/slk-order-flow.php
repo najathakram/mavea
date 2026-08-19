@@ -36,11 +36,19 @@ add_action(
 		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-points-admin.php';
 		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-finance-report.php';
 		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-studio-today.php';
+		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-track.php';
+		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-saved.php';
+		require_once SLK_ORDER_FLOW_PATH . 'includes/class-slk-assist.php';
 
 		SLK_Points::init();
 		SLK_Points_Admin::init();
 		SLK_Finance_Report::init();
 		SLK_Studio_Today::init();
+		SLK_Saved::init();
+		SLK_Assist::init();
+		// SLK_Track has no hooks of its own; it is called directly by the
+		// theme's track-order template and by SLK_Assist's ajax handler, so
+		// it needs no init() call here.
 	},
 	10
 );

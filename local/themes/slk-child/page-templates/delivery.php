@@ -18,7 +18,7 @@ $cod_fee   = slk_delivery_cod_fee();
 $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my area.', 'slk' ) );
 ?>
 
-<main id="main" class="slk-help-main">
+<div id="primary" class="slk-help-main">
 	<div class="slk-help-col">
 
 		<div class="slk-help-hero">
@@ -125,7 +125,7 @@ $wa_url    = slk_whatsapp_url( __( 'Hi! I have a question about delivery to my a
 		<?php endif; ?>
 
 	</div>
-</main>
+</div>
 
 <?php
 get_footer();

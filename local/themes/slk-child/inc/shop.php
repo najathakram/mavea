@@ -405,10 +405,15 @@ add_action(
 	/* Every other child placed explicitly: an unplaced child auto-fills the
 	   next free cell, and the empty .woocommerce-notices-wrapper was landing
 	   in the sort pill\'s. Blocksy emits nav.ct-pagination, not
-	   nav.woocommerce-pagination, so both are named. */
+	   nav.woocommerce-pagination, so both are named. .slk-moments-empty is
+	   here because the live filter swaps it in for ul.products on a
+	   zero-result facet change: same slot, so it needs the same placement.
+	   A zero-result page LOAD never reaches this, since no head or sort pill
+	   renders and the auto track collapses to nothing. */
 	.slk-shop-results > .slk-filterbar,
 	.slk-shop-results > .woocommerce-notices-wrapper,
 	.slk-shop-results > ul.products,
+	.slk-shop-results > .slk-moments-empty,
 	.slk-shop-results > nav.woocommerce-pagination,
 	.slk-shop-results > nav.ct-pagination{grid-column:1 / -1}
 }
@@ -416,4 +421,174 @@ add_action(
 		);
 	},
 	30
+);
+
+/* -------------------------------------------------------------------------
+ * 8. Saved pieces — heart toggle on the card.
+ *
+ * Guarded everywhere with class_exists( 'SLK_Saved' ) (slk-order-flow): a
+ * deploy that ships this theme without that plugin renders no toggle at
+ * all rather than a fatal error or a dead button. SLK_Saved::render_toggle()
+ * draws the control itself (both the shop-card and the PDP variant); this
+ * file only decides where it is printed and carries its CSS + click script.
+ *
+ * Printed one priority BEFORE the card's own <a> opens (8, vs. 10 for
+ * slk_template_loop_product_link_open above) — a SIBLING of the anchor
+ * inside the same <li class="product">, not a descendant of it. A real,
+ * working control — a plain <a> to the account page signed out, a <button>
+ * signed in — cannot legally nest inside another <a>, and a nested anchor
+ * is not just invalid, it is actively broken: the parser closes and
+ * reopens the outer link around it, splitting the card's own click target
+ * into two disconnected pieces. Absolutely positioned in CSS below instead,
+ * over the card's top-right corner, using li.product as the positioning
+ * context.
+ *
+ * This block runs on every page a WooCommerce product loop can appear on
+ * (shop, category, home rails, related/cross-sell — nothing here is gated
+ * to slk_is_product_listing()), because the heart has to show up wherever a
+ * .slk-card does.
+ * ---------------------------------------------------------------------- */
+
+add_action(
+	'init',
+	static function () {
+		if ( ! class_exists( 'SLK_Saved' ) ) {
+			return;
+		}
+
+		add_action( 'woocommerce_before_shop_loop_item', 'slk_shop_render_save_toggle', 8 );
+	},
+	20
+);
+
+function slk_shop_render_save_toggle() {
+	global $product;
+
+	if ( ! $product instanceof WC_Product ) {
+		return;
+	}
+
+	SLK_Saved::render_toggle( $product->get_id(), 'card' );
+}
+
+add_action(
+	'wp_enqueue_scripts',
+	static function () {
+		if ( ! class_exists( 'SLK_Saved' ) ) {
+			return;
+		}
+
+		$css = <<<'CSS'
+.woocommerce ul.products li.product{position:relative}
+.slk-save-btn{cursor:pointer;background:none}
+.slk-save-btn__icon{display:block}
+.slk-save-btn.is-saved .slk-save-btn__icon{fill:currentColor}
+.slk-save-btn--card{
+	position:absolute;top:8px;right:8px;z-index:2;
+	display:inline-flex;align-items:center;justify-content:center;
+	padding:12px;margin:0;border:0;
+	background:var(--slk-glass-solid);
+	border-radius:var(--slk-radius-pill);
+	color:var(--slk-color-ink);
+	text-decoration:none;
+	transition:transform var(--slk-motion-base) var(--slk-ease), background var(--slk-motion-base) var(--slk-ease);
+}
+.slk-save-btn--card:hover{background:#fff}
+.slk-save-btn--card:active{transform:scale(.92)}
+.slk-save-btn--card .slk-save-btn__icon{width:20px;height:20px}
+CSS;
+
+		wp_add_inline_style( 'slk-child', $css );
+
+		if ( ! is_user_logged_in() ) {
+			return; // Signed out, the control is a plain <a> to the account page — nothing to wire up.
+		}
+
+		wp_register_script( 'slk-saved', false, array(), '1.0.0', true );
+		wp_enqueue_script( 'slk-saved' );
+
+		$js = <<<'JS'
+(function () {
+	"use strict";
+
+	function setState( btn, saved ) {
+		if ( typeof window.slkSaved === 'undefined' ) {
+			return;
+		}
+
+		btn.classList.toggle( 'is-saved', saved );
+		btn.setAttribute( 'aria-pressed', saved ? 'true' : 'false' );
+		btn.setAttribute( 'aria-label', saved ? window.slkSaved.labelSaved : window.slkSaved.labelSave );
+
+		var text = btn.querySelector( '[data-slk-save-label]' );
+		if ( text ) {
+			text.textContent = saved ? window.slkSaved.textSaved : window.slkSaved.textSave;
+		}
+	}
+
+	function onSaveClick( event ) {
+		var btn = event.target.closest( '[data-slk-save]' );
+		if ( ! btn || btn.disabled || typeof window.slkSaved === 'undefined' ) {
+			return;
+		}
+
+		event.preventDefault();
+
+		var id = btn.getAttribute( 'data-slk-save-id' );
+		if ( ! id ) {
+			return;
+		}
+
+		var wasSaved = btn.classList.contains( 'is-saved' );
+
+		btn.disabled = true;
+		setState( btn, ! wasSaved ); // Optimistic; reverted below on failure.
+
+		var body = new URLSearchParams();
+		body.set( 'action', window.slkSaved.action );
+		body.set( 'product_id', id );
+		body.set( 'nonce', window.slkSaved.nonce );
+
+		window.fetch( window.slkSaved.ajaxUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: body.toString()
+		} )
+			.then( function ( response ) { return response.json(); } )
+			.then( function ( json ) {
+				if ( ! json || ! json.success || ! json.data ) {
+					throw new Error( 'slk-saved-failed' );
+				}
+				setState( btn, !! json.data.saved );
+			} )
+			.catch( function () {
+				setState( btn, wasSaved );
+			} )
+			.finally( function () {
+				btn.disabled = false;
+			} );
+	}
+
+	document.addEventListener( 'click', onSaveClick );
+})();
+JS;
+
+		wp_add_inline_script( 'slk-saved', $js );
+
+		wp_localize_script(
+			'slk-saved',
+			'slkSaved',
+			array(
+				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+				'action'     => SLK_Saved::AJAX_ACTION,
+				'nonce'      => wp_create_nonce( SLK_Saved::NONCE_ACTION ),
+				'labelSave'  => __( 'Save this piece', 'slk' ),
+				'labelSaved' => __( 'Remove from saved pieces', 'slk' ),
+				'textSave'   => __( 'Save this piece', 'slk' ),
+				'textSaved'  => __( 'Saved', 'slk' ),
+			)
+		);
+	},
+	31
 );

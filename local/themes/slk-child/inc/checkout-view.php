@@ -326,14 +326,23 @@ function slk_checkout_view_css() {
   transition:border-color var(--slk-motion-base) var(--slk-ease),transform var(--slk-motion-base) var(--slk-ease);
 }
 .slk-checkout__signin .slk-google-button:hover{border-color:var(--slk-color-ink);transform:translateY(-1px)}
-/* The icon span SLK_Google::button() emits is empty and aria-hidden, so its
-   mark comes from CSS — the same way the account area draws its WhatsApp mark.
-   A letterform also keeps this rule inside the tokens-only, no-raw-hex rule. */
+/* The OFFICIAL four-colour Google G, drawn as a CSS background on the empty
+   aria-hidden span SLK_Google::button() emits. It replaces a letter "G" set in
+   Archivo, which respected the tokens-only no-raw-hex convention but was not the
+   real mark — and the Sign in with Google identity guidelines require Google
+   artwork, unaltered. A trademark held by someone else outranks our internal
+   colour rule, so this is a documented exception rather than a slip. Do not
+   recolour, redraw or single-colour it.
+
+   NOTE FOR ANYONE EDITING: this CSS is a SINGLE-QUOTED PHP string, unlike the
+   heredoc in inc/account.php. Apostrophes and raw single quotes terminate it, so
+   the SVG attribute quotes are percent-encoded as %27 and this comment carries
+   no apostrophes. The decoded artwork is byte-identical to the account copy;
+   change both or neither. */
 .slk-checkout__signin .slk-google-button__icon{
-  width:18px;height:18px;flex:none;display:grid;place-items:center;
-  font:600 12px/1 var(--slk-font-ui);color:var(--slk-color-ink);
+  width:18px;height:18px;flex:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 48 48%27%3E%3Cpath fill=%27%23EA4335%27 d=%27M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z%27/%3E%3Cpath fill=%27%234285F4%27 d=%27M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z%27/%3E%3Cpath fill=%27%23FBBC05%27 d=%27M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z%27/%3E%3Cpath fill=%27%2334A853%27 d=%27M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z%27/%3E%3C/svg%3E") center/contain no-repeat;
 }
-.slk-checkout__signin .slk-google-button__icon::before{content:"G"}
 .slk-checkout__signin .showlogin{
   display:inline-flex;align-items:center;min-height:var(--slk-touch);
   font:400 12.5px/1.4 var(--slk-font-ui);color:var(--slk-color-muted);

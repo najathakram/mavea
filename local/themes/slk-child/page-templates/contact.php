@@ -24,7 +24,7 @@ $atelier_image = slk_editorial_image( 'room_wide' );
 $sent = isset( $_GET['slk_contact'] ) ? sanitize_text_field( wp_unslash( $_GET['slk_contact'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display flag, no state change.
 ?>
 
-<main id="primary" class="slk-page slk-contact">
+<div id="primary" class="slk-page slk-contact">
 	<div class="slk-page__head">
 		<h1><?php esc_html_e( 'Talk to us', 'slk' ); ?></h1>
 		<p class="slk-page__intro"><?php esc_html_e( 'A person reads every message. We usually reply within the hour, and always on the same day.', 'slk' ); ?></p>
@@ -103,7 +103,7 @@ $sent = isset( $_GET['slk_contact'] ) ? sanitize_text_field( wp_unslash( $_GET['
 			<button class="slk-btn slk-btn--primary" type="submit"><?php esc_html_e( 'Send', 'slk' ); ?></button>
 		</form>
 	</div>
-</main>
+</div>
 
 <?php
 get_footer();

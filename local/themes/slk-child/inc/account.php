@@ -541,7 +541,221 @@ add_action( 'woocommerce_before_checkout_billing_form', 'slk_checkout_signin_row
 remove_action( 'woocommerce_before_checkout_form', array( 'SLK_Points', 'render_guest_notice' ) );
 
 /* -------------------------------------------------------------------------
- * 6. Styling — restyle the native login form, nav, dashboard, orders table
+ * 5A. Logged-out /my-account/ screen — Google sign-in row + reasons to have
+ * an account.
+ *
+ * WP1 (2026-08-18): at 1568px the register card sat below the fold inside a
+ * 420px ribbon, so "Create an account" was effectively invisible and sign-up
+ * looked missing to a visitor who never scrolled. Section 7 below widens the
+ * layout to a two-up grid at >=1000px so both cards are visible together;
+ * this adds the two things the old page never said at all: a Google
+ * sign-in option, and why an account is worth having.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * "Continue with Google" row above the sign-in / register cards, mirroring
+ * slk_checkout_signin_row() (section 5) but standalone: no "Already have an
+ * account? Sign in" link is needed here, the sign-in form is right below.
+ *
+ * Redirects to the my-account permalink, NOT wc_get_checkout_url() — unlike
+ * slk_checkout_signin_row()'s call site, this one is the account screen
+ * itself, so a visitor who authorises with Google should land back here.
+ *
+ * Prints nothing at all — no wrapper, no "or" divider — when Google sign-in
+ * is not configured (SLK_Google::available() false, or button() still
+ * returns '' for some other reason), so an empty shell or an orphaned
+ * divider never reaches a visitor.
+ */
+function slk_account_google_row() {
+	if ( ! class_exists( 'SLK_Google' ) || ! is_callable( array( 'SLK_Google', 'available' ) ) || ! SLK_Google::available() ) {
+		return;
+	}
+
+	$button = (string) SLK_Google::button( wc_get_page_permalink( 'myaccount' ) );
+
+	if ( '' === $button ) {
+		return;
+	}
+	?>
+	<div class="slk-auth-google">
+		<div class="slk-auth-google-row"><?php echo wp_kses_post( $button ); ?></div>
+		<div class="slk-auth-google-divider" aria-hidden="true"><span><?php esc_html_e( 'or', 'slk' ); ?></span></div>
+	</div>
+	<?php
+}
+add_action( 'woocommerce_before_customer_login_form', 'slk_account_google_row' );
+
+/**
+ * Three quiet tiles naming what an account is actually for, printed after
+ * the sign-in / register cards. Each is gated on the class that ships the
+ * feature it names being active, and dropped entirely — never printed with
+ * placeholder copy — when that class is not there: order tracking
+ * (SLK_Track), Saved pieces (SLK_Saved), points toward credit (SLK_Points).
+ * No numbers, no rate, no urgency: the points rate is SLK_Points's own
+ * dashboard disclosure (render_account_panel()), not this page's.
+ */
+function slk_account_reasons_to_join() {
+	$reasons = array();
+
+	if ( class_exists( 'SLK_Track' ) ) {
+		$reasons[] = array(
+			'title' => __( 'Track every order', 'slk' ),
+			'text'  => __( 'Follow each order from confirmation to delivery.', 'slk' ),
+		);
+	}
+
+	if ( class_exists( 'SLK_Saved' ) ) {
+		$reasons[] = array(
+			'title' => __( 'Saved pieces', 'slk' ),
+			'text'  => __( 'Keep pieces you like somewhere you can find them again.', 'slk' ),
+		);
+	}
+
+	if ( class_exists( 'SLK_Points' ) ) {
+		$reasons[] = array(
+			'title' => __( 'Points towards credit', 'slk' ),
+			'text'  => __( 'Orders earn points that go towards credit on the next one.', 'slk' ),
+		);
+	}
+
+	if ( empty( $reasons ) ) {
+		return;
+	}
+	?>
+	<div class="slk-auth-reasons">
+		<?php foreach ( $reasons as $reason ) : ?>
+			<div class="slk-auth-reason">
+				<div class="slk-auth-reason__t"><?php echo esc_html( $reason['title'] ); ?></div>
+				<div class="slk-auth-reason__s"><?php echo esc_html( $reason['text'] ); ?></div>
+			</div>
+		<?php endforeach; ?>
+	</div>
+	<?php
+}
+add_action( 'woocommerce_after_customer_login_form', 'slk_account_reasons_to_join' );
+
+/* -------------------------------------------------------------------------
+ * 6. Registration — full name + mobile number.
+ *
+ * Registration is passwordless (a set-password link is emailed —
+ * woocommerce_registration_generate_username and ..._generate_password stay
+ * 'yes'; see woocommerce/myaccount/form-login.php). Email alone leaves no way
+ * to reach a customer for a cash-on-delivery confirmation call, so this adds
+ * a full name and a Sri Lankan mobile number to the same form via
+ * woocommerce_register_form — no template edit needed. The fields use the
+ * same .woocommerce-form-row.form-row-wide / .input-text markup the stock
+ * email field uses, so section 7's CSS already styles them.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Render the extra registration fields. Values are repopulated from $_POST
+ * so a validation failure on the other fields does not blank these out.
+ */
+function slk_account_registration_fields() {
+	$name  = ! empty( $_POST['reg_full_name'] ) && is_string( $_POST['reg_full_name'] ) ? sanitize_text_field( wp_unslash( $_POST['reg_full_name'] ) ) : '';
+	$phone = ! empty( $_POST['reg_phone'] ) && is_string( $_POST['reg_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['reg_phone'] ) ) : '';
+	?>
+	<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+		<label for="reg_full_name"><?php esc_html_e( 'Full name', 'slk' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span><span class="screen-reader-text"><?php esc_html_e( 'Required', 'woocommerce' ); ?></span></label>
+		<input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="reg_full_name" id="reg_full_name" autocomplete="name" value="<?php echo esc_attr( $name ); ?>" required aria-required="true" />
+	</p>
+	<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+		<label for="reg_phone"><?php esc_html_e( 'Mobile number', 'slk' ); ?>&nbsp;<span class="required" aria-hidden="true">*</span><span class="screen-reader-text"><?php esc_html_e( 'Required', 'woocommerce' ); ?></span></label>
+		<input type="tel" class="woocommerce-Input woocommerce-Input--text input-text" name="reg_phone" id="reg_phone" autocomplete="tel" aria-describedby="reg_phone-hint" value="<?php echo esc_attr( $phone ); ?>" required aria-required="true" />
+		<span class="slk-field__hint" id="reg_phone-hint"><?php esc_html_e( 'The number we confirm orders on.', 'slk' ); ?></span>
+	</p>
+	<?php
+}
+add_action( 'woocommerce_register_form', 'slk_account_registration_fields' );
+
+/**
+ * Validate the extra registration fields, appended to WooCommerce's own
+ * $errors bag from WC_Form_Handler::process_registration().
+ *
+ * @param string   $username Posted username (unused; part of the hook signature).
+ * @param string   $email    Posted email (unused; part of the hook signature).
+ * @param WP_Error $errors   Error bag.
+ */
+function slk_account_validate_registration_fields( $username, $email, $errors ) {
+	// wc_create_new_customer() fires this hook for checkout's "Create an account"
+	// tick and for programmatic customer creation too, neither of which posts
+	// these fields. Only the my-account register form carries this nonce field,
+	// so leave every other path alone.
+	if ( ! isset( $_POST['woocommerce-register-nonce'] ) ) {
+		return;
+	}
+
+	if ( ! $errors instanceof WP_Error ) {
+		return;
+	}
+
+	$name  = ! empty( $_POST['reg_full_name'] ) && is_string( $_POST['reg_full_name'] ) ? sanitize_text_field( wp_unslash( $_POST['reg_full_name'] ) ) : '';
+	$phone = ! empty( $_POST['reg_phone'] ) && is_string( $_POST['reg_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['reg_phone'] ) ) : '';
+
+	if ( '' === trim( $name ) ) {
+		$errors->add( 'reg_full_name', __( 'Please enter your full name.', 'slk' ) );
+	}
+
+	// One phone contract for the whole store. SLK_Phone::check() is what the
+	// checkout validates with (SLK_Checkout_Fields::validate()), and it accepts
+	// dashes, dots, brackets and the 94… / 0094… prefixes as well as 07X…; a
+	// second, narrower rule here would reject at registration the very numbers
+	// checkout accepts. The inline fallback runs only if slk-checkout is off.
+	if ( class_exists( 'SLK_Phone' ) ) {
+		$check = SLK_Phone::check( $phone );
+
+		if ( ! $check['ok'] ) {
+			$errors->add( 'reg_phone', $check['message'] );
+		}
+	} else {
+		$phone_compact = preg_replace( '/\s+/', '', $phone );
+
+		if ( ! is_string( $phone_compact ) || ! preg_match( '/^(?:\+94|0)?7\d{8}$/', $phone_compact ) ) {
+			$errors->add( 'reg_phone', __( 'Enter a Sri Lankan mobile number, like 07X XXX XXXX.', 'slk' ) );
+		}
+	}
+}
+add_action( 'woocommerce_register_post', 'slk_account_validate_registration_fields', 10, 3 );
+
+/**
+ * Persist the extra registration fields once WooCommerce has created the
+ * account: split the full name into first/last, set the display name, and
+ * store the mobile number as billing_phone.
+ *
+ * @param int   $customer_id        Newly created user ID.
+ * @param array $new_customer_data  Unused; part of the hook signature.
+ * @param bool  $password_generated Unused; part of the hook signature.
+ */
+function slk_account_save_registration_fields( $customer_id, $new_customer_data, $password_generated ) {
+	$name  = ! empty( $_POST['reg_full_name'] ) && is_string( $_POST['reg_full_name'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['reg_full_name'] ) ) ) : '';
+	$phone = ! empty( $_POST['reg_phone'] ) && is_string( $_POST['reg_phone'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['reg_phone'] ) ) ) : '';
+
+	if ( '' !== $name ) {
+		$parts = explode( ' ', $name, 2 );
+
+		wp_update_user(
+			array(
+				'ID'           => $customer_id,
+				'first_name'   => $parts[0],
+				'last_name'    => isset( $parts[1] ) ? $parts[1] : '',
+				'display_name' => $name,
+			)
+		);
+	}
+
+	if ( '' !== $phone ) {
+		// billing_phone is stored canonically as +94XXXXXXXXX everywhere else
+		// (see class-slk-phone.php); store the same form here so the dashboard
+		// header and the orders show one number, not two formats of it.
+		$normalised = class_exists( 'SLK_Phone' ) ? SLK_Phone::normalise( $phone ) : '';
+
+		update_user_meta( $customer_id, 'billing_phone', '' !== $normalised ? $normalised : $phone );
+	}
+}
+add_action( 'woocommerce_created_customer', 'slk_account_save_registration_fields', 10, 3 );
+
+/* -------------------------------------------------------------------------
+ * 7. Styling — restyle the native login form, nav, dashboard, orders table
  * and order-view screen to the glass-panel / pill contract. Tokens only,
  * one 1000px breakpoint.
  * ---------------------------------------------------------------------- */
@@ -560,14 +774,27 @@ add_action(
 
 /* -- sign in --------------------------------------------------------------
    #customer_login is WooCommerce's own login wrapper; targeted directly so
-   no template markup has to be duplicated. */
+   no template markup has to be duplicated. 420px / stacked below 1000px
+   (unchanged from before WP1); a 980px two-up grid at >=1000px — see the
+   media query below. .slk-auth-head, .slk-auth-guest, .slk-auth-google and
+   .slk-auth-reasons all default to the same 420px so nothing drifts out of
+   alignment with the card(s) beneath them, at any width. */
 .woocommerce-account #customer_login{
 	max-width:420px;margin:0 auto;padding:var(--slk-space-6) var(--slk-space-4);
 }
-.woocommerce-account .slk-auth-head{padding-bottom:var(--slk-space-6)}
+.woocommerce-account .slk-auth-head{max-width:420px;margin-inline:auto;padding-inline:var(--slk-space-4);padding-bottom:var(--slk-space-6)}
 .woocommerce-account .slk-auth-head h1{font-size:var(--slk-display-s);margin:0 0 var(--slk-space-2)}
 .woocommerce-account .slk-auth-head p{margin:0;color:var(--slk-color-muted);font-size:var(--slk-text-sm)}
 .woocommerce-account .u-columns{display:block}
+/* Blocksy's .col2-set > * padding/border survives the display:block override
+   above, adding a 40px inline offset and a dashed divider between the two
+   stacked cards at >=690px (a dashed bottom-border variant applies below
+   that). Zero both — the extra :first-child/:last-child raises specificity
+   above the original rule, so this wins regardless of viewport, source
+   order or the grid change below (this rule only ever touches padding and
+   border, never display, so the two never fight over the same property). */
+.ct-woo-unauthorized .col2-set > *:first-child,
+.ct-woo-unauthorized .col2-set > *:last-child{padding:0;border:0}
 .woocommerce-account .woocommerce-form-login,
 .woocommerce-account .woocommerce-form-register{
 	background:var(--slk-glass-solid);border:1px solid var(--slk-glass-edge);
@@ -575,7 +802,17 @@ add_action(
 	box-shadow:var(--slk-shadow-lift);
 }
 .woocommerce-account .woocommerce-form-register{margin-top:var(--slk-space-4)}
+.woocommerce-account .slk-auth-card__h{font:400 20px/1.2 var(--slk-font-display);margin:0 0 var(--slk-space-4);color:var(--slk-color-ink)}
 .woocommerce-account .u-column2{margin-top:0}
+/* With my-account registration turned off, form-login.php prints the bare
+   sign-in form and no #customer_login wrapper at all (see
+   woocommerce/myaccount/form-login.php:41), so nothing caps the card and it
+   would stretch out from under the 420px head, Google row, guest note and
+   tiles. Cap it to the width the card renders at when registration is on —
+   #customer_login's 420px less that wrapper's own inline padding. */
+.woocommerce-account:not(:has(#customer_login)) .woocommerce-form-login{
+	max-width:calc(420px - var(--slk-space-4) * 2);margin-inline:auto;
+}
 .woocommerce-account .woocommerce-form-row{margin:0 0 var(--slk-space-3)}
 .woocommerce-account .woocommerce-form-row label{display:block;font:500 12px/1 var(--slk-font-ui);margin-bottom:7px}
 .woocommerce-account .woocommerce-form-row .input-text{
@@ -593,7 +830,106 @@ add_action(
 .woocommerce-account button.woocommerce-form-register__submit:hover{transform:translateY(-2px);box-shadow:var(--slk-shadow-press)}
 .woocommerce-account .woocommerce-LostPassword{margin-top:var(--slk-space-3);text-align:center;font-size:12.5px}
 .woocommerce-account .woocommerce-LostPassword a{color:var(--slk-color-ink);text-decoration:underline;text-underline-offset:3px}
-.woocommerce-account .slk-auth-guest{padding-top:var(--slk-space-4);text-align:center;font-size:12px;color:var(--slk-color-faint)}
+.woocommerce-account .slk-auth-guest{max-width:420px;margin-inline:auto;padding-inline:var(--slk-space-4);padding-top:var(--slk-space-4);text-align:center;font-size:12px;color:var(--slk-color-faint)}
+.woocommerce-account .slk-auth-note,
+.woocommerce-account .woocommerce-privacy-policy-text{font:400 12.5px/1.55 var(--slk-font-ui);color:var(--slk-color-muted)}
+.woocommerce-account .woocommerce-privacy-policy-text a{color:var(--slk-color-ink);text-decoration:underline;text-underline-offset:2px}
+
+/* -- sign-in: Google row ----------------------------------------------------
+   slk_account_google_row() (section 5A). Same visual language as the
+   checkout's slk-checkout__signin row (see inc/checkout-view.php around
+   :302/:329) so the two surfaces match; classed separately (slk-auth-*
+   rather than slk-checkout__*) because this row is centred and standalone,
+   not sat inside a billing-field column. */
+.woocommerce-account .slk-auth-google{max-width:420px;margin:0 auto;padding:0 var(--slk-space-4) var(--slk-space-6)}
+.woocommerce-account .slk-auth-google-row{display:flex;justify-content:center}
+.woocommerce-account .slk-auth-google .slk-google-button{
+	width:100%;min-height:var(--slk-touch);padding:0 20px;border-radius:var(--slk-radius-pill);
+	border:1px solid var(--slk-field-border);background:var(--slk-color-white);
+	color:var(--slk-color-ink);font:500 13px/1 var(--slk-font-ui);
+	display:inline-flex;align-items:center;justify-content:center;gap:var(--slk-space-2);
+	text-decoration:none;cursor:pointer;
+	transition:border-color var(--slk-motion-base) var(--slk-ease),transform var(--slk-motion-base) var(--slk-ease);
+}
+.woocommerce-account .slk-auth-google .slk-google-button:hover{border-color:var(--slk-color-ink);transform:translateY(-1px)}
+/* The icon span SLK_Google::button() emits is empty and aria-hidden, so the
+   mark comes from CSS as a background image.
+
+   This is Google's OFFICIAL four-colour G, and it is a deliberate, documented
+   exception to two of this codebase's own rules — no accent colour, and no raw
+   hex outside the token set. An earlier version drew a letter "G" in Archivo to
+   stay inside those rules; that is not Google's mark, and Google's identity
+   guidelines for Sign in with Google require their artwork, unaltered, in one of
+   the permitted colourways. A trademark belonging to someone else is not ours to
+   restyle, so the brand rule yields here rather than the other way round. Do not
+   recolour, rotate, outline or single-colour this. The white button with the
+   colour G is Google's own "light" treatment and is the closest of their
+   permitted styles to Porcelain. Same artwork at inc/checkout-view.php. */
+.woocommerce-account .slk-auth-google .slk-google-button__icon{
+	width:18px;height:18px;flex:none;
+	background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/%3E%3Cpath fill='%23FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.woocommerce-account .slk-auth-google-divider{
+	display:flex;align-items:center;gap:var(--slk-space-3);margin:var(--slk-space-4) 0 0;
+	font:500 11px/1 var(--slk-font-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--slk-color-muted);
+}
+.woocommerce-account .slk-auth-google-divider::before,
+.woocommerce-account .slk-auth-google-divider::after{content:"";flex:1;height:1px;background:var(--slk-hairline)}
+
+/* -- sign-in: reasons to join ------------------------------------------------
+   slk_account_reasons_to_join() (section 5A) — quiet tiles under the cards,
+   one column on mobile, three across at >=1000px (see the media query
+   below). Any tile whose backing class is not active is simply absent from
+   the loop, so this grid can render with fewer than three children. */
+.woocommerce-account .slk-auth-reasons{
+	max-width:420px;margin:var(--slk-space-2) auto 0;padding:0 var(--slk-space-4) var(--slk-space-6);
+	display:grid;grid-template-columns:1fr;gap:10px;
+}
+.woocommerce-account .slk-auth-reason{
+	background:var(--slk-glass-solid);border:1px solid var(--slk-glass-edge);border-radius:20px;
+	padding:16px 18px;text-align:center;
+}
+.woocommerce-account .slk-auth-reason__t{font:500 13px/1.3 var(--slk-font-ui)}
+/* Muted, not faint: this line is body copy on the glass tile, and
+   --slk-color-faint is reserved for meta/disabled (style.css:45) — it lands
+   near 3.4:1 there, under the 4.5:1 the redesign accepts on. */
+.woocommerce-account .slk-auth-reason__s{font:400 11.5px/1.5 var(--slk-font-ui);color:var(--slk-color-muted);margin-top:3px}
+
+/* -- sign-in: two-up at >=1000px --------------------------------------------
+   WP1 (2026-08-18): the register card sat below the fold in the 420px
+   single column above; here it moves level with sign-in instead. Scoped to
+   :has(#customer_login) for .slk-auth-head/.slk-auth-guest so the lost- and
+   reset-password screens below (same .slk-auth-head class, no #customer_login
+   on those routes) are left at 420px untouched, per plan risk #2. */
+@media (min-width:1000px){
+	.woocommerce-account #customer_login{max-width:980px}
+	.woocommerce-account:has(#customer_login) .slk-auth-head,
+	.woocommerce-account:has(#customer_login) .slk-auth-guest,
+	.woocommerce-account:has(#customer_login) .slk-auth-reasons{max-width:980px}
+	.woocommerce-account .u-columns{
+		display:grid;grid-template-columns:1fr 1fr;gap:var(--slk-space-6);align-items:start;
+	}
+	.woocommerce-account .u-columns > .u-column1,
+	.woocommerce-account .u-columns > .u-column2{width:auto;min-width:0;float:none}
+	/* The 16px above the register card spaces the two cards when they stack;
+	   side by side the grid gap does that instead, and the margin would push
+	   the register card 16px below sign-in. Grid items open their own
+	   formatting context, so the child margin cannot collapse away — zero it
+	   explicitly or align-items:start starts the two cards unevenly. */
+	.woocommerce-account .u-columns > .u-column2 > .woocommerce-form-register{margin-top:0}
+	.woocommerce-account:has(#customer_login) .slk-auth-reasons{grid-template-columns:repeat(3,1fr)}
+}
+
+/* -- lost / reset password -------------------------------------------------
+   Single-card variant of the sign-in layout above: same .slk-auth-head,
+   one glass card instead of two, no col2-set involved. See
+   woocommerce/myaccount/form-lost-password.php and form-reset-password.php. */
+.woocommerce-account .slk-auth-single{max-width:420px;margin:0 auto;padding:var(--slk-space-6) var(--slk-space-4)}
+.woocommerce-account .slk-auth-single .woocommerce-ResetPassword{
+	background:var(--slk-glass-solid);border:1px solid var(--slk-glass-edge);
+	border-radius:var(--slk-radius-card);padding:var(--slk-space-6);
+	box-shadow:var(--slk-shadow-lift);
+}
 
 /* -- nav rail -------------------------------------------------------------
    Mobile: horizontal pill scroller. Desktop (>=1000px): sticky sidebar,
@@ -770,7 +1106,7 @@ add_action(
 	border-radius:var(--slk-radius-card);padding:var(--slk-space-6);
 }
 .woocommerce-account .form-row{margin:0 0 var(--slk-space-3)}
-.woocommerce-account .form-row label{display:block;font:500 12px/1 var(--slk-font-ui);margin-bottom:7px}
+.woocommerce-account .form-row label:not(.woocommerce-form-login__rememberme){display:block;font:500 12px/1 var(--slk-font-ui);margin-bottom:7px}
 .woocommerce-account .woocommerce-Input,
 .woocommerce-account select.woocommerce-Input{
 	width:100%;min-height:48px;border:1px solid var(--slk-field-border);background:var(--slk-color-white);
