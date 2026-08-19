@@ -1,0 +1,90 @@
+# Deploy MAVÉA theme + plugins to Hostinger.
+#
+# Mirrors local/deploy/deploy-code.sh exactly — code only, never the database,
+# never uploads, never a WooCommerce setting. The repo tree does not match the
+# server tree (local/themes/slk-child -> wp-content/themes/slk-child), so this
+# cannot be a plain `git pull` on the server: it tars the two source dirs and
+# unpacks them into their real homes, the same way the manual script does.
+#
+# ONE-TIME SETUP (see docs/DEPLOY-GITHUB-ACTIONS.md):
+#   Settings > Secrets and variables > Actions:
+#     SSH_PRIVATE_KEY  - contents of the deploy private key
+#     SSH_DEST         - user@host
+#     SSH_PORT         - 65002
+#
+# Deploys only from main, so work on a feature branch never reaches the live
+# store. Use "Run workflow" for a manual deploy from any branch.
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'local/themes/**'
+      - 'local/plugins/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+# One deploy at a time. A second push mid-deploy queues instead of racing a
+# half-unpacked theme onto the live site.
+concurrency:
+  group: hostinger-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint every PHP file before anything leaves the runner
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq php-cli
+          fail=0
+          while IFS= read -r f; do
+            php -l "$f" > /dev/null 2>&1 || { echo "LINT FAIL: $f"; php -l "$f"; fail=1; }
+          done < <(find local/themes local/plugins -name '*.php')
+          [ "$fail" = 0 ] || { echo "::error::PHP lint failed - nothing deployed"; exit 1; }
+          echo "All PHP files lint clean."
+
+      - name: Load the deploy key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${SSH_DEST#*@}" >> ~/.ssh/known_hosts 2>/dev/null
+        env:
+          SSH_DEST: ${{ secrets.SSH_DEST }}
+
+      - name: Push plugins and theme
+        env:
+          SSH_DEST: ${{ secrets.SSH_DEST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          WP_ROOT: domains/mavea.lk/public_html
+        run: |
+          run() { ssh -i ~/.ssh/id_ed25519 -p "$SSH_PORT" "$SSH_DEST" "$1"; }
+
+          echo "==> sanity: WordPress lives at ~/$WP_ROOT"
+          run "test -f '$WP_ROOT/wp-load.php'"
+
+          echo "==> plugins (land inactive; activation stays a hand-verified step)"
+          tar czf - -C local/plugins slk-checkout slk-order-flow slk-exchanges \
+            | run "tar xzf - -C '$WP_ROOT/wp-content/plugins'"
+
+          echo "==> theme (NOT activated here)"
+          tar czf - -C local/themes slk-child \
+            | run "tar xzf - -C '$WP_ROOT/wp-content/themes'"
+
+          echo "==> purge LiteSpeed so what is served is what was deployed"
+          run "cd '$WP_ROOT' && wp litespeed-purge all" || echo "    (purge failed - purge from wp-admin)"
+
+      - name: Confirm the storefront still answers
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://mavea.lk/?cb=$GITHUB_SHA")
+          echo "homepage: $code"
+          [ "$code" = 200 ] || { echo "::error::Homepage returned $code after deploy"; exit 1; }
+          for p in /shop/ /my-account/ /track-order/; do
+            c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://mavea.lk$p?cb=$GITHUB_SHA")
+            echo "$p -> $c"
+            [ "$c" = 200 ] || { echo "::error::$p returned $c"; exit 1; }
+          done

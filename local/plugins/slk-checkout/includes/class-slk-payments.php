@@ -237,7 +237,14 @@ final class SLK_Payments {
 		if ( null !== $total ) {
 			$minimum = SLK_Money::rupees( apply_filters( 'slk_koko_minimum_total', self::KOKO_MIN ) );
 			if ( $total < $minimum ) {
-				foreach ( (array) apply_filters( 'slk_koko_gateway_ids', array( 'koko', 'kokopayments', 'koko_payment' ) ) as $koko_id ) {
+				// 'darazbnpl' is the real one. paykoko-bnpl-payment-gateway 3.0.4
+				// registers its gateway as darazbnpl (class Darazbnpl_WC, option
+				// woocommerce_darazbnpl_settings) because the plugin is derived
+				// from a Daraz BNPL integration and kept the internal naming. The
+				// three guessed ids below never matched anything, so the minimum
+				// would not have applied and Koko would have shown on a Rs 2,000
+				// cart. Verified against the installed plugin 2026-08-19.
+				foreach ( (array) apply_filters( 'slk_koko_gateway_ids', array( 'darazbnpl', 'koko', 'kokopayments', 'koko_payment' ) ) as $koko_id ) {
 					unset( $gateways[ $koko_id ] );
 				}
 			}
@@ -245,7 +252,7 @@ final class SLK_Payments {
 
 		$preferred = (array) apply_filters(
 			'slk_gateway_order',
-			array( 'cod', 'payhere', 'payhere_gateway', 'bacs', 'mintpay', 'koko', 'kokopayments' )
+			array( 'cod', 'payhere', 'payhere_gateway', 'bacs', 'mintpay', 'darazbnpl', 'koko', 'kokopayments' )
 		);
 
 		$sorted = array();
@@ -269,13 +276,30 @@ final class SLK_Payments {
 	 * @param array $gateways Available gateways, keyed by id.
 	 */
 	private static function gate_unconfigured( $gateways ) {
-		$ids = (array) apply_filters( 'slk_credentialed_gateway_ids', array( 'payhere', 'payhere_gateway', 'mintpay' ) );
+		$ids = (array) apply_filters( 'slk_credentialed_gateway_ids', array( 'payhere', 'payhere_gateway', 'mintpay', 'darazbnpl' ) );
 
 		foreach ( $ids as $id ) {
 			if ( ! isset( $gateways[ $id ] ) || ! is_object( $gateways[ $id ] ) || ! method_exists( $gateways[ $id ], 'get_option' ) ) {
 				continue;
 			}
+
+			// No credentials — nothing to pay with.
 			if ( '' === trim( (string) $gateways[ $id ]->get_option( 'merchant_id' ) ) ) {
+				unset( $gateways[ $id ] );
+				continue;
+			}
+
+			/*
+			 * Credentials present but still in sandbox is the DANGEROUS state,
+			 * and it is the one the merchant-id check above waves through: the
+			 * method looks live at checkout and sends a real shopper to the
+			 * provider's sandbox, where no money moves. All three of these
+			 * plugins ship test_mode defaulting to 'yes' and none of them warns
+			 * in wp-admin. Hide the method until sandbox is switched off, so the
+			 * failure is a missing payment option — visible, and noticed before
+			 * launch — rather than a silent one taken at the checkout.
+			 */
+			if ( 'yes' === strtolower( trim( (string) $gateways[ $id ]->get_option( 'test_mode' ) ) ) ) {
 				unset( $gateways[ $id ] );
 			}
 		}
